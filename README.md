@@ -16,7 +16,9 @@ Design completo, notação das mensagens e respostas do formulário: [docs/plano
 
 ## Como jogar
 
-Baixe `BloonsBattles.exe` (um arquivo só, sem DLLs extras) e abra.
+Baixe `BloonsBattles.exe` na página
+[Releases](https://github.com/Luiz192512/bloons-battles/releases) e abra. É um arquivo só: não
+precisa instalar nada (nem o Visual C++ Redistributable).
 
 - **Solo:** "Jogar Solo", escolha mapa, dificuldade e herói.
 - **Batalha no mesmo PC:** abra o jogo duas vezes. Na primeira, "Batalha: Hospedar". Na
@@ -56,11 +58,21 @@ está marcada como **Privada** nas configurações do Windows.
 Precisa de CMake 3.16+, Git e um compilador C++17. A raylib 5.5 é baixada e compilada
 automaticamente na primeira vez.
 
-**Windows** (Visual Studio 2022 com "Desenvolvimento para desktop com C++", ou MinGW-w64):
+**Windows.** Se o PC ainda não tem as ferramentas, instale tudo com o winget (Git, CMake e
+Visual Studio 2022 Build Tools com C++, cerca de 3 GB):
+
+```bat
+scripts\instalar_dependencias.bat
+```
+
+Depois compile. O script acha o Visual Studio sozinho, mesmo sem o CMake no PATH:
 
 ```bat
 scripts\compilar.bat
 ```
+
+O executável sai em `build\Release\BloonsBattles.exe` (ou `build\BloonsBattles.exe` com MinGW) e
+já leva o runtime do C++ embutido, então roda em qualquer PC com Windows 10 ou 11.
 
 **Linux** (Ubuntu/Debian):
 
@@ -97,7 +109,14 @@ exclusão mútua com threads concorrentes e o servidor com clientes TCP reais.
 
 ## Entrega
 
-A partir do Linux ou do WSL (`sudo apt install mingw-w64 zip`):
+**No Windows**, o script abaixo compila, roda os testes, gera os dois zips de entrega em
+`entrega/` e publica tudo numa Release do GitHub (usa o GitHub CLI, não depende do GitHub Actions):
+
+```bat
+scripts\publicar_release.bat v1.0
+```
+
+**No Linux ou no WSL** (`sudo apt install mingw-w64 zip`):
 
 ```bash
 scripts/empacotar.sh
@@ -121,6 +140,7 @@ tests/       testes.cpp
 assets/      fontes (embutidas no executável na compilação)
 third_party/ nlohmann/json (efeitos dos upgrades, licença MIT)
 cmake/       embutir.cmake, mingw-w64.cmake
-scripts/     compilar.bat, empacotar.sh, liberar_firewall.bat
+scripts/     compilar.bat, instalar_dependencias.bat, ambiente.bat, publicar_release.bat,
+             empacotar.sh, liberar_firewall.bat
 docs/        plano.md, prompt-escolha-do-jogo.md
 ```
