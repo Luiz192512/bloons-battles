@@ -27,10 +27,14 @@ Conteúdo:
 
 Toda a arte é desenhada por código (não há imagens externas).
 
+Implementação em **C++17 com raylib** (janela, desenho e som), `std::thread`/`std::mutex` para
+concorrência e sockets TCP nativos (Winsock2 no Windows, POSIX no Linux). O executável do
+Windows é um `.exe` único, sem DLLs extras.
+
 ## 2. Arquitetura: lockstep determinístico
 
 ```
- [Cliente 1: pygame]                 [SERVIDOR]                  [Cliente 2: pygame]
+ [Cliente 1: raylib]                 [SERVIDOR]                  [Cliente 2: raylib]
   simula as 2 pistas   --comandos-->  ordena comandos  <--comandos--  simula as 2 pistas
                        <---ticks----  15 ticks/s       ----ticks--->
 ```
@@ -55,7 +59,7 @@ Threads:
 | Servidor | relógio | fecha um tick a cada 1/15 s e transmite (consumidora da fila) |
 | Cliente | rede-rx | recebe mensagens e as põe na fila local (produtora) |
 | Cliente | rede-hb | heartbeat a cada 2 s |
-| Cliente | principal (pygame) | consome a fila, simula e desenha |
+| Cliente | principal (raylib) | consome a fila, simula e desenha |
 
 ## 3. Notação de mensagens
 
@@ -86,23 +90,23 @@ daquela conexão (um cliente não consegue agir pelo outro).
 
 ## 4. Memória compartilhada e exclusão mútua
 
-Memória compartilhada do servidor ([partida.py](../bloons/servidor/partida.py)), cada região
-com seu próprio lock:
+Memória compartilhada do servidor ([sala.cpp](../src/servidor/sala.cpp)), cada região
+com seu próprio `std::mutex`:
 
 | Região | Lock | Quem disputa | Condição de corrida evitada |
 |---|---|---|---|
 | Jogadores e estado da sala | `lock_sala` | threads de clientes conectando ao mesmo tempo | dois clientes recebendo o mesmo número; partida iniciada duas vezes; "fim" transmitido duas vezes |
 | Fila de comandos | `lock_fila` | threads dos clientes (produtoras) e thread do relógio (consumidora) | comando perdido ou duplicado ao trocar a fila no meio de um `append`; comando entrando em dois ticks |
 | Hashes por tick | `lock_hash` | as duas threads de cliente | os dois hashes chegando juntos e nenhum dos dois comparando (ou os dois) |
-| Dicionário de sockets | `_lock_clientes` | aceitar, clientes saindo, relógio transmitindo | iterar o dicionário enquanto outro remove |
-| Envio por socket | um lock por conexão | relógio e thread do cliente enviando ao mesmo socket | duas mensagens intercaladas no meio da linha |
+| Mapa de sockets | `lock_clientes_` | aceitar, clientes saindo, relógio transmitindo | iterar o dicionário enquanto outro remove |
+| Envio por socket | um mutex por conexão | relógio e thread do cliente enviando ao mesmo socket | duas mensagens intercaladas no meio da linha |
 
-No cliente ([rede.py](../bloons/cliente/rede.py)): a fila de mensagens recebidas e o log de
-mensagens são protegidos por lock entre a thread de rede e a thread do pygame, e um lock de envio
-impede que o heartbeat e um comando se misturem no mesmo `sendall`.
+No cliente ([conexao.cpp](../src/cliente/conexao.cpp)): a fila de mensagens recebidas e o log de
+mensagens são protegidos por mutex entre a thread de rede e a thread da tela, e um mutex de envio
+impede que o heartbeat e um comando se misturem no mesmo `send`.
 
-Regras: seções críticas curtas (só troca de referências, nunca I/O de rede com um lock de estado
-seguro) e nunca segurar dois locks de estado ao mesmo tempo, o que elimina deadlock.
+Regras: seções críticas curtas (`std::lock_guard`, só troca de vetores, nunca I/O de rede com um
+mutex de estado seguro) e nunca segurar dois locks de estado ao mesmo tempo, o que elimina deadlock.
 
 Os testes provam isso: 8 threads disputam a sala 50 vezes e nunca repetem número; 2 produtoras
 enfileiram 6.000 comandos enquanto a consumidora fecha ticks, e nenhum se perde, duplica ou troca
@@ -133,13 +137,13 @@ de ordem.
 
 **Como é feito o gerenciamento da exclusão mútua?**
 
-> O servidor tem uma memória compartilhada (classe `Sala`) acessada por várias threads: uma por
+> O servidor (C++, `std::thread`) tem uma memória compartilhada (classe `Sala`) acessada por várias threads: uma por
 > cliente, que produz comandos, e a thread do relógio, que consome a fila a cada tick. Cada região
-> tem seu lock: `lock_sala` para entrada de jogadores e estado da partida, garantindo números
+> tem seu `std::mutex`: `lock_sala` para entrada de jogadores e estado da partida, garantindo números
 > únicos e início e fim uma só vez; `lock_fila` para a fila de comandos, cuja troca por uma lista
 > vazia e o avanço do tick são atômicos, então nenhum comando se perde nem aparece em dois ticks;
 > e `lock_hash` para a comparação de hashes. Há ainda um lock para o dicionário de sockets e um
 > lock de envio por conexão, para mensagens não se intercalarem. Nunca seguramos dois locks de
 > estado ao mesmo tempo, o que evita deadlock. No cliente, a fila de mensagens entre a thread de
-> rede e a do pygame também é protegida por lock. Testes automatizados com threads concorrentes
+> rede e a da tela também é protegida por mutex. Testes automatizados com threads concorrentes
 > comprovam que não há perda, duplicação ou números repetidos.

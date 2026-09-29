@@ -4,35 +4,33 @@ Trabalho 02 de Sistemas Operacionais (ESOFT 4S, prof. Maurilio Campano Jr): towe
 inspirado no Bloons TD Battles 2, com modo solo e modo Batalha em rede usando sockets TCP,
 threads, memória compartilhada e exclusão mútua.
 
-- 22 torres com 3 caminhos de 5 upgrades, 18 heróis, 17 tipos de bloon, 100 rodadas.
-- Modo Batalha 1v1 em lockstep: o servidor ordena os comandos e cada cliente simula as duas pistas.
-- Arte toda desenhada por código, sem imagens externas.
+- **C++17 + [raylib](https://www.raylib.com/)**, com `std::thread` e `std::mutex` para a
+  concorrência e sockets nativos (Winsock2 no Windows, POSIX no Linux).
+- 22 torres com 3 caminhos de 5 upgrades, 18 heróis, 17 tipos de bloon e 100 rodadas.
+- Modo Batalha 1v1 em lockstep: o servidor ordena os comandos e cada cliente simula as duas
+  pistas. A simulação é determinística, inclusive entre Windows e Linux.
+- Arte e sons gerados por código, sem imagens nem áudio externos. As fontes vão embutidas no
+  executável.
 
 Design completo, notação das mensagens e respostas do formulário: [docs/plano.md](docs/plano.md).
 
-## Como rodar
+## Como jogar
 
-Requer Python 3.11+.
-
-```bash
-python -m pip install -r requirements.txt
-```
-
-```bash
-python jogar.py
-```
+Baixe `BloonsBattles.exe` (um arquivo só, sem DLLs extras) e abra.
 
 - **Solo:** "Jogar Solo", escolha mapa, dificuldade e herói.
-- **Batalha no mesmo PC:** abra o jogo duas vezes. Na primeira, "Batalha: Hospedar". Na segunda,
-  "Batalha: Entrar" com IP `127.0.0.1`.
-- **Batalha em dois PCs:** quem hospeda vê o IP na sala de espera; o outro digita esse IP.
-  Libere a porta 5050 no firewall do Windows se pedir.
+- **Batalha no mesmo PC:** abra o jogo duas vezes. Na primeira, "Batalha: Hospedar". Na
+  segunda, "Batalha: Entrar" com IP `127.0.0.1`.
+- **Batalha em dois PCs:** quem hospeda vê o próprio IP na sala de espera e o outro digita esse
+  IP. Os dois precisam estar na mesma rede.
 
-Servidor avulso (opcional):
+### Firewall do Windows (dois PCs)
 
-```bash
-python -m bloons.servidor.servidor 5050
-```
+No PC que **hospeda**, na primeira vez o Windows pergunta se o jogo pode usar a rede: marque
+**Redes privadas** e clique em Permitir. Se a pergunta não aparecer ou o oponente não conseguir
+conectar, rode `scripts\liberar_firewall.bat` como administrador (clique com o botão direito >
+Executar como administrador). O script libera a porta TCP 5050. Confira também se a rede Wi-Fi
+está marcada como **Privada** nas configurações do Windows.
 
 ## Controles
 
@@ -49,39 +47,80 @@ python -m bloons.servidor.servidor 5050
 | Espaço | iniciar rodada / acelerar (solo) |
 | O | ver o mapa do oponente (batalha) |
 | F1 | painel de mensagens trocadas (batalha) |
+| F3 | mostrar FPS |
+| F12 | salvar captura de tela |
 | Esc | cancelar / menu |
+
+## Compilar
+
+Precisa de CMake 3.16+, Git e um compilador C++17. A raylib 5.5 é baixada e compilada
+automaticamente na primeira vez.
+
+**Windows** (Visual Studio 2022 com "Desenvolvimento para desktop com C++", ou MinGW-w64):
+
+```bat
+scripts\compilar.bat
+```
+
+**Linux** (Ubuntu/Debian):
+
+```bash
+sudo apt install build-essential cmake git libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libgl1-mesa-dev
+```
+
+```bash
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+```
+
+```bash
+cmake --build build --parallel
+```
+
+```bash
+./build/BloonsBattles
+```
+
+Servidor avulso, sem interface (opcional):
+
+```bash
+./build/bloons_servidor 5050
+```
 
 ## Testes
 
 ```bash
-python -m unittest discover -s tests -v
+ctest --test-dir build --output-on-failure
 ```
 
-Cobrem o protocolo, o servidor com clientes reais, a exclusão mútua com threads concorrentes e o
-determinismo da simulação.
+São 23 testes: protocolo, dados das torres, regras de upgrade, simulação e determinismo,
+exclusão mútua com threads concorrentes e o servidor com clientes TCP reais.
 
 ## Entrega
 
-```bash
-python -m pip install pyinstaller
-```
+A partir do Linux ou do WSL (`sudo apt install mingw-w64 zip`):
 
 ```bash
-python empacotar.py
+scripts/empacotar.sh
 ```
 
-Gera em `entrega/` o zip só com o código e o zip com o executável (`BloonsBattles.exe`).
+Gera em `entrega/` o zip só com o código e o zip com os executáveis do Windows.
 
 ## Estrutura
 
 ```
-bloons/
-  comum/     protocolo.py (notação das mensagens), constantes.py
-  servidor/  servidor.py (sockets e threads), partida.py (memória compartilhada + locks)
-  jogo/      sim.py (simulação determinística), torres_def.py, herois_def.py,
-             bloons_def.py, rodadas.py, mapas.py, stats.py
-  cliente/   cliente.py (app), cena_jogo.py, cenas_menu.py, render.py, arte.py, ui.py,
-             controle.py (solo e batalha), rede.py (threads de rede), som.py
+src/
+  comum/     protocolo.hpp/.cpp (notação das mensagens)
+  rede/      socket.hpp/.cpp (TCP igual no Windows e no Linux)
+  servidor/  servidor.cpp (threads aceitar, cliente e relógio), sala.cpp (memória compartilhada + mutex),
+             main_servidor.cpp
+  jogo/      sim.cpp (simulação determinística), stats.cpp (upgrades), dados.cpp (torres, heróis,
+             bloons, mapas e rodadas), mapas.cpp, rodadas.cpp, defs.cpp
+  cliente/   app.cpp (janela e cenas), cena_jogo.cpp, cenas_menu.cpp, render.cpp, arte.cpp,
+             ui.cpp, controle.cpp (solo e batalha), conexao.cpp (threads de rede), som.cpp
+tests/       testes.cpp
+assets/      fontes (embutidas no executável na compilação)
+third_party/ nlohmann/json (efeitos dos upgrades, licença MIT)
+cmake/       embutir.cmake, mingw-w64.cmake
+scripts/     compilar.bat, empacotar.sh, liberar_firewall.bat
 docs/        plano.md, prompt-escolha-do-jogo.md
-tests/
 ```
