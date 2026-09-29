@@ -11,6 +11,11 @@ endif()
 option(BLOONS_CLIENTE "Compilar o jogo com interface (precisa da raylib)" ON)
 option(BLOONS_TESTES "Compilar os testes automaticos" ON)
 
+# Runtime do C/C++ embutido no .exe no Visual Studio (/MT): o jogo abre em qualquer PC,
+# sem precisar instalar o "Visual C++ Redistributable".
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+set(USE_MSVC_RUNTIME_LIBRARY_DLL OFF CACHE BOOL "" FORCE)  # a raylib segue a mesma regra
+
 find_package(Threads REQUIRED)
 
 # ------------------------------------------------------------------ nucleo
@@ -38,7 +43,7 @@ else()
   target_compile_options(bloons_nucleo PRIVATE -Wall -Wextra -Wno-missing-field-initializers)
 endif()
 
-# Executavel estatico no Windows: um .exe so, sem DLLs do MinGW
+# Executavel estatico no Windows com MinGW: um .exe so, sem DLLs do MinGW
 if(MINGW)
   set(LINK_ESTATICO -static -static-libgcc -static-libstdc++)
 endif()

@@ -355,7 +355,7 @@ TESTE(mutex_fila_de_comandos_nao_perde_nem_duplica) {
     });
     std::vector<std::thread> prods;
     for (int j : {1, 2})
-        prods.emplace_back([&sala, j] {
+        prods.emplace_back([&sala, j, por_thread] {
             for (int i = 0; i < por_thread; ++i) sala.enfileirar(j, "Sr" + std::to_string(i));
         });
     for (auto& t : prods) t.join();
