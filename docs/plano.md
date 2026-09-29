@@ -1,216 +1,145 @@
-# Bloons TD Battles 1v1: plano do Trabalho 02 de SO
+# Bloons TD Battles: documento do trabalho
 
-Nome para a planilha: **Bloons TD Battles (tower defense 1v1)**
-Entrega: 15/11/2026 23:59 (cerca de 7 semanas a partir de 28/09/2026)
+Trabalho 02 de Sistemas Operacionais (prof. Maurilio Campano Jr, ESOFT 4S).
+Nome na planilha: **Bloons TD Battles (tower defense 1v1)**. Entrega: 15/11/2026 23:59.
 
-## 1. Como funciona o original
+## 1. O jogo
 
-Dois jogadores defendem trilhas separadas com torres de macacos. Cada um gasta dinheiro para
-enviar balões extras à trilha do adversário, o que também aumenta sua renda por rodada. Perde quem
-zerar as vidas primeiro.
+Tower defense inspirado no Bloons TD Battles 2. Bloons (balões) percorrem uma trilha e o jogador
+coloca macacos (torres) para estourá-los. Tem dois modos:
 
-## 2. Versão da dupla (MVP)
+- **Solo:** 4 mapas, 4 dificuldades (40, 60, 80 ou 100 rodadas), rodadas iniciadas pelo jogador,
+  velocidade 1x/3x e rodada automática.
+- **Batalha (2 jogadores em rede):** cada jogador defende a própria pista e gasta dinheiro para
+  **enviar bloons ao oponente**. Cada envio aumenta a renda (eco), paga a cada 6 s. Perde quem
+  zerar as 150 vidas primeiro.
 
-**Entra:**
-- 1 mapa, com a mesma trilha para os dois jogadores (justo e mais simples).
-- 3 torres:
-  - Dardo: barata, acerta 1 balão.
-  - Canhão: dano em área.
-  - Gelo: deixa os balões mais lentos.
-- 3 balões em camadas, como no original:
-  - Vermelho: 1 de vida.
-  - Azul: 2 de vida, vira vermelho ao ser atingido.
-  - Verde: 3 de vida, vira azul ao ser atingido.
-- Rodadas automáticas a cada 15 s, que ficam mais fortes com o tempo.
-- Envio de balões ao oponente, com custo e tempo de espera. Cada envio aumenta a renda de quem
-  enviou (a mecânica central do Battles).
-- 100 vidas por jogador, dinheiro inicial de 650.
-- 1 upgrade por torre e venda de torre.
+Conteúdo:
 
-**Fica de fora:** heróis, árvores de upgrade, habilidades ativas, vários mapas, ranking online,
-MOAB e balões camuflados.
+| Item | Quantidade |
+|---|---|
+| Torres (macacos) | 22, com 3 caminhos de 5 upgrades cada (330 upgrades) e regra de caminhos cruzados |
+| Heróis | 18, com níveis 1 a 20 e habilidades nos níveis 3 e 10 |
+| Bloons | 17 tipos (vermelho ao B.A.D.), com camo, regeneração e fortificado |
+| Rodadas | 100 |
+| Envios do modo Batalha | 23 |
+| Habilidades ativas | turbo, dano global, míssil em dirigível, congelar tudo, dinheiro, invocação etc. |
 
-**Extras se sobrar tempo:** modo espectador (terceiro cliente só assistindo), reconexão de
-jogador e replay a partir do log de mensagens.
+Toda a arte é desenhada por código (não há imagens externas).
 
-## 3. Arquitetura
+## 2. Arquitetura: lockstep determinístico
 
 ```
- [Cliente 1: pygame]  <--socket TCP-->  [SERVIDOR]  <--socket TCP-->  [Cliente 2: pygame]
-                                           |
-                     thread aceitar | thread cliente 1 | thread cliente 2 | thread game loop
-                                           |
-                               MEMÓRIA COMPARTILHADA (struct Partida)
-                               protegida por mutex (threading.Lock)
+ [Cliente 1: pygame]                 [SERVIDOR]                  [Cliente 2: pygame]
+  simula as 2 pistas   --comandos-->  ordena comandos  <--comandos--  simula as 2 pistas
+                       <---ticks----  15 ticks/s       ----ticks--->
 ```
 
-- **Servidor autoritativo:** só ele simula o jogo (movimento dos balões, tiros, dinheiro). Os
-  clientes enviam intenções ("quero colocar torre") e desenham o estado recebido. Isso impede
-  trapaça e dessincronização.
-- **Threads no servidor:**
-  - uma para aceitar conexões;
-  - uma por cliente, que lê os comandos dele;
-  - uma para o game loop, rodando a 20 ticks por segundo.
-- **Threads no cliente:**
-  - uma para receber mensagens, que atualiza o estado local;
-  - a principal, com o loop do pygame (desenho e entrada do jogador).
+- O servidor **não simula** o jogo. Ele só recebe comandos, os coloca numa fila compartilhada e,
+  15 vezes por segundo, transmite um **tick** com todos os comandos daquele intervalo.
+- Cada cliente aplica os comandos do tick na mesma ordem e avança 2 passos da simulação
+  (30 passos/s). A simulação é **determinística** (sem relógio, sem aleatório sem semente),
+  então os dois computadores chegam exatamente ao mesmo estado.
+- A cada 45 ticks cada cliente envia um **hash** do estado. Se os hashes diferirem, o servidor
+  avisa os dois (`0D`): detecção de dessincronia.
+- A variável de controle pedida no enunciado (como a "vez") é o **estado da sala**
+  (`AGUARDANDO`, `EM_JOGO`, `FIM`) e o **número do tick**, que existem nos dois processos e
+  só avançam pelas mensagens do servidor.
 
-## 4. Memória compartilhada
+Threads:
 
-```python
-class Jogador:
-    dinheiro: int
-    renda: int          # recebida a cada rodada
-    vidas: int
-    torres: list[Torre] # id, tipo, x, y, nivel, recarga
+| Processo | Thread | Papel |
+|---|---|---|
+| Servidor | aceitar | aceita conexões |
+| Servidor | uma por cliente | lê comandos e hashes (produtora da fila) |
+| Servidor | relógio | fecha um tick a cada 1/15 s e transmite (consumidora da fila) |
+| Cliente | rede-rx | recebe mensagens e as põe na fila local (produtora) |
+| Cliente | rede-hb | heartbeat a cada 2 s |
+| Cliente | principal (pygame) | consome a fila, simula e desenha |
 
-class Trilha:
-    baloes: list[Balao] # id, tipo(camada), progresso 0..1, lentidao
+## 3. Notação de mensagens
 
-class Partida:
-    estado: str         # AGUARDANDO | EM_JOGO | FIM (equivale à variável "vez" do enunciado)
-    tick: int
-    rodada: int
-    jogadores: [Jogador, Jogador]
-    trilhas:   [Trilha, Trilha]
-
-    lock_economia = Lock()           # dinheiro, renda e vidas
-    lock_trilha   = [Lock(), Lock()] # um por trilha
-```
-
-**Regra anti deadlock:** quando uma operação precisa de dois locks, ela os pega sempre na mesma
-ordem, `lock_economia` antes de `lock_trilha[i]`. Assim nunca há espera circular.
-
-## 5. Exclusão mútua: as condições de corrida reais
-
-| # | Seção crítica | Quem disputa | O que dá errado sem o lock | Solução |
-|---|---|---|---|---|
-| 1 | Lista de balões da trilha | A thread do jogador 1 insere os balões enviados na trilha do jogador 2, enquanto o game loop remove balões estourados | Lista corrompida, balão pulado ou estourado duas vezes, erro de iteração | `lock_trilha[i]` ao inserir e ao percorrer |
-| 2 | Compra de torre ou envio de balões | Duas mensagens seguidas do mesmo jogador, e o game loop creditando renda | Verificar e depois agir: as duas compras veem "tenho 650" e o dinheiro fica negativo | Verificar e debitar dentro do mesmo `with lock_economia:` |
-| 3 | Vidas | O game loop tira vidas quando um balão chega ao fim; a verificação de fim de jogo lê as vidas | O jogo declara vencedor errado ou continua depois de zerar | `lock_economia` e mudança do estado para `FIM` dentro dele |
-| 4 | Estado no cliente | A thread de recepção escreve o snapshot enquanto a thread de desenho lê | Quadro desenhado com metade do estado velho e metade novo | Lock curto: a recepção troca a referência do snapshot e o desenho copia a referência |
-
-Trecho central (caso 2):
-
-```python
-def comprar_torre(p, jog, tipo, x, y):
-    with p.lock_economia:                 # seção crítica
-        custo = CUSTO_TORRE[tipo]
-        if p.jogadores[jog].dinheiro < custo:
-            return "X1D"                  # erro: dinheiro insuficiente
-        p.jogadores[jog].dinheiro -= custo
-        p.jogadores[jog].torres.append(Torre(tipo, x, y))
-    return None
-```
-
-## 6. Notação de mensagens
-
-TCP com texto ASCII e uma mensagem por linha (terminada em `\n`), porque o TCP é um fluxo contínuo
-de bytes. A leitura acumula os bytes num buffer e separa as mensagens pelas quebras de linha.
-
-**Formato:** `<origem><comando><argumentos>`. A origem é `0` para o servidor, e `1` ou `2` para
-os jogadores.
+Uma mensagem por linha ASCII terminada em `\n`: `<origem><comando><argumentos>`.
+Origem `0` = servidor, `1`/`2` = jogador.
 
 | Mensagem | Sentido | Significado |
 |---|---|---|
-| `1J` | cliente para servidor | Pedido de entrada na partida |
-| `0J1` | servidor para cliente | Você é o jogador 1 |
-| `0I` | servidor para todos | Início da partida (estado `EM_JOGO`) |
-| `1T2@08,04` | cliente para servidor | Jogador 1 coloca torre tipo 2 (Canhão) na célula 8,4 |
-| `1U05` | cliente para servidor | Jogador 1 faz upgrade da torre de id 05 |
-| `1V05` | cliente para servidor | Jogador 1 vende a torre 05 |
-| `2S3x10` | cliente para servidor | Jogador 2 envia 10 balões tipo 3 (Verde) à trilha do adversário |
-| `0R07` | servidor para todos | Começou a rodada 7 |
-| `0E1234\|650,12,98\|420,9,87\|1:1,0.42;1:3,0.10;2:2,0.87` | servidor para todos, 10 vezes por segundo | Snapshot: tick 1234; J1 com 650 de dinheiro, 12 de renda e 98 vidas; J2 com 420, 9 e 87; balões no formato trilha:tipo,progresso |
-| `0A1T2@08,04#05` | servidor para todos | Confirmação: torre 05 criada para o jogador 1 |
-| `0X1D` | servidor para jogador | Erro do jogador 1: dinheiro insuficiente (`D`), posição inválida (`P`), em espera (`C`) |
-| `1P` / `0P` | nos dois sentidos | Heartbeat a cada 2 s; 5 s sem resposta = desconexão |
-| `0F2` | servidor para todos | Fim de jogo, jogador 2 venceu |
+| `1Jquincy,prado` | C→S | entrar com o herói Quincy, sugerindo o mapa "prado" |
+| `0J1` | S→C | você é o jogador 1 |
+| `0I8231,prado,quincy,adora` | S→todos | início: semente, mapa, herói do J1, herói do J2 |
+| `1Tdardo@230,250` | C→S | colocar Macaco Dardo em (230, 250) |
+| `1U12:0` | C→S | upgrade da torre 12 no caminho 0 |
+| `1V12` | C→S | vender a torre 12 |
+| `1M12:3` | C→S | alvo da torre 12: 0 primeiro, 1 último, 2 perto, 3 forte |
+| `1B12:0` | C→S | usar a habilidade 0 da torre 12 |
+| `2Sr8` | C→S | jogador 2 envia "8 Vermelhos" ao oponente |
+| `0K451\|1Tdardo@230,250\|2Sr8` | S→todos | tick 451 com os comandos a aplicar, em ordem |
+| `1H450,123456` | C→S | hash do estado no tick 450 |
+| `0D450` | S→todos | estados divergiram no tick 450 |
+| `1F` | C→S | desistir |
+| `0F2` | S→todos | fim de jogo, jogador 2 venceu |
+| `0X1M` | S→C | erro do jogador 1 (M = mensagem inválida, S = sala cheia, O = fora de hora) |
+| `1P` / `0P` | ambos | heartbeat (8 s sem nada = desconectado) |
 
-## 7. Telas e interface
+O servidor valida a sintaxe de todo comando e recusa comando com origem diferente do jogador
+daquela conexão (um cliente não consegue agir pelo outro).
 
-1. **Menu:** logo, campo de IP e porta, botões "Hospedar" (sobe o servidor e conecta) e
-   "Conectar".
-2. **Lobby:** "Aguardando oponente..." com animação simples; mostra jogador 1 e jogador 2
-   conectados.
-3. **Partida:**
-   - Esquerda (70%): sua trilha em tamanho grande, com grade para posicionar torres, alcance
-     da torre ao passar o mouse e a torre fantasma antes de confirmar.
-   - Direita (30%): miniatura da trilha do oponente, ao vivo.
-   - HUD no topo: dinheiro, renda (+12), suas vidas e as do oponente, rodada e timer da próxima
-     rodada.
-   - Painel inferior de torres com ícone, custo e tecla (1, 2, 3).
-   - Painel lateral de envio de balões com botões de custo, espera visível e aumento de renda.
-   - Log das últimas mensagens trocadas (liga e desliga com F1). Ótimo para o vídeo e para
-     mostrar a comunicação ao professor.
-4. **Fim:** "VITÓRIA" ou "DERROTA", estatísticas (balões estourados e enviados, dinheiro gasto) e
-   botão de revanche.
+## 4. Memória compartilhada e exclusão mútua
 
-## 8. Stack e assets
+Memória compartilhada do servidor ([partida.py](../bloons/servidor/partida.py)), cada região
+com seu próprio lock:
 
-- **Linguagem:** Python 3.12.
-- **Gráfico:** `pygame-ce`.
-- **Rede e concorrência:** `socket` (TCP) e `threading` (Lock, Thread) da biblioteca padrão, com
-  socket puro, como exige o enunciado.
-- **Executável:** `pyinstaller --onefile` (para o upload "com executável").
-- **Assets:** Kenney.nl, pacote "Tower Defense (Top-Down)", licença CC0 (livre para uso). Os
-  balões podem ser círculos coloridos com brilho desenhados pelo próprio pygame. Não usar sprites
-  oficiais da Ninja Kiwi.
-- **Alternativa em C:** se a dupla preferir partir do código base do professor, use raylib para
-  a parte gráfica, winsock2 para a rede e `pthread_mutex_t` no lugar dos locks. A arquitetura e a
-  notação continuam iguais.
+| Região | Lock | Quem disputa | Condição de corrida evitada |
+|---|---|---|---|
+| Jogadores e estado da sala | `lock_sala` | threads de clientes conectando ao mesmo tempo | dois clientes recebendo o mesmo número; partida iniciada duas vezes; "fim" transmitido duas vezes |
+| Fila de comandos | `lock_fila` | threads dos clientes (produtoras) e thread do relógio (consumidora) | comando perdido ou duplicado ao trocar a fila no meio de um `append`; comando entrando em dois ticks |
+| Hashes por tick | `lock_hash` | as duas threads de cliente | os dois hashes chegando juntos e nenhum dos dois comparando (ou os dois) |
+| Dicionário de sockets | `_lock_clientes` | aceitar, clientes saindo, relógio transmitindo | iterar o dicionário enquanto outro remove |
+| Envio por socket | um lock por conexão | relógio e thread do cliente enviando ao mesmo socket | duas mensagens intercaladas no meio da linha |
 
-Estrutura de pastas:
+No cliente ([rede.py](../bloons/cliente/rede.py)): a fila de mensagens recebidas e o log de
+mensagens são protegidos por lock entre a thread de rede e a thread do pygame, e um lock de envio
+impede que o heartbeat e um comando se misturem no mesmo `sendall`.
 
-```
-bloons-battles/
-  servidor/  servidor.py  partida.py  simulacao.py  protocolo.py
-  cliente/   cliente.py   rede.py     telas/ (menu, lobby, partida, fim)  render.py
-  comum/     protocolo.py (parse e montagem das mensagens)  constantes.py
-  assets/    sprites/  sons/
-  README.md
-```
+Regras: seções críticas curtas (só troca de referências, nunca I/O de rede com um lock de estado
+seguro) e nunca segurar dois locks de estado ao mesmo tempo, o que elimina deadlock.
 
-## 9. Cronograma até 15/11
+Os testes provam isso: 8 threads disputam a sala 50 vezes e nunca repetem número; 2 produtoras
+enfileiram 6.000 comandos enquanto a consumidora fecha ticks, e nenhum se perde, duplica ou troca
+de ordem.
 
-| Semana | Entrega |
-|---|---|
-| 29/09 a 05/10 | Protocolo em `protocolo.py` com testes; servidor aceita 2 clientes; lobby funcionando |
-| 06/10 a 12/10 | Game loop no servidor: trilha, balões se movendo, snapshot `0E` |
-| 13/10 a 19/10 | Cliente pygame desenha o snapshot; colocar torre (`T`) com validação e locks |
-| 20/10 a 26/10 | Tiros, estouro de camadas, dinheiro, vidas, fim de jogo |
-| 27/10 a 02/11 | Envio de balões (`S`), renda, rodadas, upgrade e venda |
-| 03/11 a 09/11 | Interface final, sprites, sons, log F1, tratamento de desconexão |
-| 10/11 a 15/11 | Testes, pyinstaller, vídeo de 1 min, formulário. **Entregar até dia 14** por segurança |
+## 5. Roteiro do vídeo (1 min)
 
-## 10. Roteiro do vídeo (1 min)
+- **0 a 10 s:** menu; o jogador 1 hospeda, escolhe mapa e herói; o jogador 2 entra pelo IP.
+- **10 a 30 s:** colocar torres e upgrades com o painel F1 aberto, mostrando `1Tdardo@...` saindo
+  e voltando dentro de `0K...`.
+- **30 a 45 s:** enviar bloons ao oponente (aviso "Oponente enviou..." do outro lado) e abrir o
+  mapa do oponente (tecla O).
+- **45 a 60 s:** usar uma habilidade, vidas zerando, tela de vitória e derrota.
 
-- **0 a 10 s:** menu; o jogador 1 hospeda e o jogador 2 conecta (duas janelas lado a lado).
-- **10 a 30 s:** colocar torres, estourar a primeira rodada e mostrar o log F1 com as mensagens
-  `1T2@08,04` e `0A...`.
-- **30 a 45 s:** jogador 2 envia balões verdes; eles aparecem na trilha do jogador 1 e a renda
-  sobe.
-- **45 a 60 s:** vidas caindo, tela de vitória e derrota.
-
-## 11. Rascunho das respostas do formulário
+## 6. Respostas do formulário
 
 **Como e quais informações são trocadas entre os processos?**
 
-> O jogo usa arquitetura cliente/servidor com sockets TCP. Cada mensagem é uma linha de texto no
-> formato `<origem><comando><argumentos>`, com origem 0 = servidor e 1 ou 2 = jogador. Os clientes
-> enviam intenções: colocar torre (`1T2@08,04`), upgrade (`1U05`), venda (`1V05`) e envio de
-> balões ao oponente (`2S3x10`). O servidor, que é autoritativo, valida cada intenção e responde
-> com confirmação (`0A`) ou erro (`0X1D`). Dez vezes por segundo ele transmite um snapshot (`0E`)
-> com dinheiro, renda, vidas e posição dos balões dos dois jogadores. Há também mensagens de
-> controle: entrada (`J`), início (`I`), rodada (`R`), heartbeat (`P`) e fim (`F`).
+> Arquitetura cliente/servidor com sockets TCP, no modelo lockstep. Cada mensagem é uma linha de
+> texto `<origem><comando><argumentos>` (origem 0 = servidor, 1 ou 2 = jogador). Os clientes
+> enviam só as ações do jogador: colocar torre (`1Tdardo@230,250`), upgrade (`1U12:0`), venda
+> (`1V12`), prioridade de alvo (`1M12:3`), habilidade (`1B12:0`) e envio de bloons ao oponente
+> (`2Sr8`). O servidor põe as ações numa fila e, 15 vezes por segundo, transmite um tick com todas
+> elas em ordem (`0K451|1Tdardo@230,250|2Sr8`). Os dois clientes aplicam os mesmos comandos no
+> mesmo tick numa simulação determinística e chegam ao mesmo estado. Também trocamos entrada
+> (`J`), início com semente, mapa e heróis (`I`), hash do estado para detectar dessincronia
+> (`H`/`D`), fim de jogo (`F`), erros (`X`) e heartbeat (`P`).
 
 **Como é feito o gerenciamento da exclusão mútua?**
 
-> O estado da partida fica numa estrutura compartilhada no servidor, acessada por várias threads:
-> uma por cliente e uma do game loop. Usamos um lock para a economia (dinheiro, renda e vidas) e
-> um lock por trilha de balões. A compra de torre verifica e debita o dinheiro dentro do mesmo
-> lock, evitando que duas compras simultâneas deixem o saldo negativo. A inserção de balões
-> enviados pelo oponente e a remoção de balões estourados pelo game loop são protegidas pelo lock
-> da trilha. Para evitar deadlock, os locks são sempre adquiridos na mesma ordem (economia antes
-> de trilha). No cliente, um lock curto protege a troca do snapshot entre a thread de rede e a
-> thread de desenho.
+> O servidor tem uma memória compartilhada (classe `Sala`) acessada por várias threads: uma por
+> cliente, que produz comandos, e a thread do relógio, que consome a fila a cada tick. Cada região
+> tem seu lock: `lock_sala` para entrada de jogadores e estado da partida, garantindo números
+> únicos e início e fim uma só vez; `lock_fila` para a fila de comandos, cuja troca por uma lista
+> vazia e o avanço do tick são atômicos, então nenhum comando se perde nem aparece em dois ticks;
+> e `lock_hash` para a comparação de hashes. Há ainda um lock para o dicionário de sockets e um
+> lock de envio por conexão, para mensagens não se intercalarem. Nunca seguramos dois locks de
+> estado ao mesmo tempo, o que evita deadlock. No cliente, a fila de mensagens entre a thread de
+> rede e a do pygame também é protegida por lock. Testes automatizados com threads concorrentes
+> comprovam que não há perda, duplicação ou números repetidos.
