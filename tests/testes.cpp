@@ -285,6 +285,36 @@ TESTE(btd6_armadilha_e_emprestimo) {
     CHECA_IGUAL(pi.divida, 75.0);
 }
 
+TESTE(btd6_criticos_a_cada_n_tiros) {
+    Partida p = solo();
+    Pista& pi = p.pista(1);
+    pi.dinheiro = 1e6;
+    CHECA_IGUAL(p.aplicar(1, "Tdardo@230,250"), OK);
+    for (int k = 0; k < 4; ++k) CHECA_IGUAL(p.aplicar(1, "U1:2"), OK);  // Sharp Shooter: 50 a cada 10 tiros
+    Torre& t = *pi.torres.at(1);
+    std::vector<int> crit;
+    for (int k = 1; k <= 30; ++k)
+        if (pi.critico(t, 0, t.ats[0])->dano == 50) crit.push_back(k);
+    CHECA((crit == std::vector<int>{10, 20, 30}));
+    CHECA_IGUAL(t.ats[0]->dano, 6.0);
+    CHECA_IGUAL(p.aplicar(1, "U1:2"), OK);  // Crossbow Master: 80 a cada 5 tiros
+    int c80 = 0;
+    for (int k = 0; k < 20; ++k) c80 += pi.critico(t, 0, t.ats[0])->dano == 80;
+    CHECA_IGUAL(c80, 4);
+    // Robo Monkey: +9 de dano a cada 15 a 20 tiros
+    CHECA_IGUAL(p.aplicar(1, "Tsuper@600,500"), OK);
+    const int id = pi.torres.rbegin()->first;
+    for (int k = 0; k < 3; ++k) CHECA_IGUAL(p.aplicar(1, "U" + std::to_string(id) + ":1"), OK);
+    Torre& r = *pi.torres.at(id);
+    int ultimo = 0;
+    for (int k = 1; k <= 200; ++k)
+        if (pi.critico(r, 0, r.ats[0])->dano == r.ats[0]->dano + 9) {
+            CHECA(k - ultimo >= 15 && k - ultimo <= 20);
+            ultimo = k;
+        }
+    CHECA(ultimo >= 180);
+}
+
 TESTE(sim_vazamento_tira_vidas_pelo_rbe) {
     Partida p = solo();
     Pista& pi = p.pista(1);

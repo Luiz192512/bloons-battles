@@ -60,8 +60,8 @@ static DefTorre t_dardo() {
             U("Dardos de Longo Alcance", 90, "+8 de alcance.", {{"alcance", 32}, {"dist", 60}}),
             U("Visão Aprimorada", 200, "+8 de alcance e detecta camo.", {{"alcance", 32}, {"camo", true}, {"vel", 1.1667}}),
             U("Besta", 575, "Besta: 3 de dano, pierce 4, alcance 60.", {{"alcance", 48}, {"dano", 2}, {"pierce", 2}, {"vel", 1.1}, {"visual", "flecha"}}),
-            U("Atirador Afiado", 2050, "6 de dano e ataca 2x mais rápido.", {{"cad", 0.5}, {"dano", 3}}),
-            U("Mestre da Besta", 21500, "8 de dano, pierce 8, alcance 80, 2x mais rápido, estoura tudo.", {{"cad", 0.5}, {"dano", 2}, {"pierce", 4}, {"alcance", 80}, {"dtype", "normal"}}),
+            U("Atirador Afiado", 2050, "6 de dano, 2x mais rápido e crítico de 50 a cada 10 tiros.", {{"cad", 0.5}, {"dano", 3}, {"crit_cada", 10}, {"crit_dano", 50}}),
+            U("Mestre da Besta", 21500, "8 de dano, pierce 8, alcance 80, 2x mais rápido, estoura tudo; crítico de 80 a cada 5 tiros.", {{"cad", 0.5}, {"dano", 2}, {"pierce", 4}, {"alcance", 80}, {"dtype", "normal"}, {"crit_cada", 5}, {"crit_dano", 80}}),
         },
     };
     t.desc = "Atira dardos. Barato e versátil.";
@@ -501,7 +501,7 @@ static DefTorre t_super() {
         {
             U("Super Alcance", 1500, "+10 de alcance e +1 pierce.", {{"alcance", 40}, {"pierce", 1}}),
             U("Alcance Épico", 1900, "+12 de alcance, +2 pierce.", {{"alcance", 48}, {"pierce", 2}, {"vel", 1.4}}),
-            U("Robô Macaco", 7500, "Atira com os 2 braços.", {{"n", 1}, {"spread", 12}, {"pierce", 1}}),
+            U("Robô Macaco", 7500, "Atira com os 2 braços; crítico de +9 de dano a cada 15 a 20 tiros.", {{"n", 1}, {"spread", 12}, {"pierce", 1}, {"crit_cada", 15}, {"crit_max", 20}, {"crit_mais", 9}}),
             U("Terror Tecnológico", 25000, "Habilidade: aniquilação (2.600 de dano).", {{"pierce", 2}, {"hab", H("Aniquilação", "dano_global", 45, {{"valor", 2600}})}}),
             U("O Anti-Bloon", 70000, "5 de dano, pierce 12. Habilidade de 10.400.", {{"dano", 4}, {"pierce", 5}, {"alcance", 40}, {"hab", H("Erradicação", "dano_global", 30, {{"valor", 10400}})}}),
         },

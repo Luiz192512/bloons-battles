@@ -58,6 +58,9 @@ struct Ataque {
     double dur = 0.0;
     std::string base;
     double nivel_inv = 0;
+    // critico: a cada crit_cada tiros (sorteado ate crit_max, se maior), o tiro da crit_dano no lugar do
+    // dano normal, ou soma crit_mais (Sharp Shooter, Crossbow Master, Robo Monkey)
+    double crit_cada = 0, crit_max = 0, crit_dano = 0, crit_mais = 0;
 };
 
 // Cria um ataque a partir dos valores padrao + os campos do objeto.

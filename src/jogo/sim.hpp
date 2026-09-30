@@ -112,6 +112,7 @@ struct Torre {
     Stats st;
     std::vector<AtaqueP> ats;  // st.ataques congelados (projeteis guardam o ataque que os criou)
     std::vector<double> recargas;
+    std::vector<int> crit_conta;  // tiros que faltam para o proximo critico, por ataque
     std::vector<double> hab_rec;
 };
 using TorreP = std::shared_ptr<Torre>;
@@ -181,6 +182,7 @@ public:
     void xp(double v);
     void pagar_renda();
     void receber(double v);  // entrada de dinheiro; metade vai para a divida do emprestimo
+    AtaqueP critico(Torre& t, size_t i, const AtaqueP& at);  // conta o tiro; no critico devolve o ataque forte
     void evento(Evento e);
 
     void passo();

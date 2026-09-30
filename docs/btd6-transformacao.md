@@ -64,12 +64,15 @@ A pesquisa foi feita em 30/09/2026, com os dados que a Blooncyclopedia mostra ho
 6. **Empréstimo com dívida:** o IMF Loan dá $9.000 e metade da renda seguinte paga a dívida.
 7. **Lead to Gold:** paga $50 por chumbo estourado (`ouro_chumbo`).
 8. **Rampa de freeplay** (vida e velocidade) e **renda por estouro por rodada**.
+9. **Crítico a cada N tiros** (`crit_cada`, `crit_max`, `crit_dano`, `crit_mais`), com contador por ataque na torre e sorteio pelo gerador da pista (determinístico). Fonte [B1], páginas "Sharp Shooter (BTD6)", "Crossbow Master (BTD6)" e "Robo Monkey (BTD6)":
+   - Dardo 3-4: a cada 10º tiro, crítico de 50 de dano no lugar do normal.
+   - Dardo 3-5: a cada 5º tiro, crítico de 80.
+   - Super 2-3: a cada 15 a 20 tiros, crítico com +9 de dano.
 
 ## Pendências
 
 Ficaram de fora porque não há fonte com o número ou porque o motor ainda não tem a mecânica:
 
-- **Críticos:** Dardo 3-4 e 3-5 e Super 2-3 ganharam só o dano normal.
 - **Transformar torres:** Fan Club (Dardo 2-4 e 2-5) e Total Transformation viraram turbo de velocidade em área.
 - **Sacrifícios:** Sun Temple e True Sun God, e a Monkeyopolis, que sacrifica fazendas. Esta última ficou sem efeito.
 - **Passivos de vazamento:**

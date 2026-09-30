@@ -88,6 +88,9 @@ void Torre::recalcular(int extra_nivel_inv) {
     ats.clear();
     for (const Ataque& at : st.ataques) ats.push_back(std::make_shared<const Ataque>(at));
     recargas.resize(st.ataques.size(), 0.0);
+    crit_conta.resize(st.ataques.size(), 0);
+    for (size_t i = 0; i < crit_conta.size(); ++i)  // upgrade que encurta o intervalo do critico
+        if (crit_conta[i] > std::max(st.ataques[i].crit_cada, st.ataques[i].crit_max)) crit_conta[i] = 0;
     for (size_t i = hab_rec.size(); i < st.habs.size(); ++i)
         hab_rec.push_back(st.habs[i]["recarga"].get<double>() * 0.5);
     hab_rec.resize(st.habs.size());
@@ -698,18 +701,19 @@ void Pista::passo_torre(const TorreP& tp) {
         Bloon* a = alvo(t, at, alcance);
         if (!a) continue;
         t.recargas[i] = cad;
+        const AtaqueP atc = critico(t, i, atp);
         const double ang = graus(std::atan2(a->y - t.y, a->x - t.x));
         if (i == 0 && t.dfn->mov == Mov::FIXO) t.ang = ang;
         if (tipo == TipoAtaque::HITSCAN) {
-            hitscan(tp, atp, *a);
+            hitscan(tp, atc, *a);
         } else if (tipo == TipoAtaque::CADEIA) {
-            cadeia(tp, atp, *a);
+            cadeia(tp, atc, *a);
         } else if (tipo == TipoAtaque::MORTEIRO) {
             for (int k = 0; k < static_cast<int>(at.n); ++k) {
                 const double im = at.impreciso;
                 double x = a->x + rng.uniform(-im, im);
                 double y = a->y + rng.uniform(-im, im);
-                auto p = std::make_unique<Projetil>(nid(), x, y, 0, atp, tp);
+                auto p = std::make_unique<Projetil>(nid(), x, y, 0, atc, tp);
                 p->vx = p->vy = 0.0;
                 p->fusivel = 0.7;
                 projeteis.push_back(std::move(p));
@@ -719,16 +723,32 @@ void Pista::passo_torre(const TorreP& tp) {
             const int n = static_cast<int>(at.n);
             const double spread = at.spread;
             if (n <= 1) {
-                disparar(tp, atp, ang, a);
+                disparar(tp, atc, ang, a);
             } else if (spread >= 360) {
-                for (int k = 0; k < n; ++k) disparar(tp, atp, ang + k * 360.0 / n, a);
+                for (int k = 0; k < n; ++k) disparar(tp, atc, ang + k * 360.0 / n, a);
             } else {
                 const double passo = spread / (n - 1);
-                for (int k = 0; k < n; ++k) disparar(tp, atp, ang - spread / 2 + k * passo, a);
+                for (int k = 0; k < n; ++k) disparar(tp, atc, ang - spread / 2 + k * passo, a);
             }
             evento({"tiro", t.x, t.y, 0, 0, 0, t.chave});
         }
     }
+}
+
+// Conta os tiros de um ataque com critico; no tiro critico devolve uma copia com o dano do critico.
+AtaqueP Pista::critico(Torre& t, size_t i, const AtaqueP& at) {
+    if (at->crit_cada <= 0 || i >= t.crit_conta.size()) return at;
+    int& falta = t.crit_conta[i];
+    auto sortear = [&] {
+        const int a = static_cast<int>(at->crit_cada), b = static_cast<int>(std::max(at->crit_cada, at->crit_max));
+        return b > a ? a + rng.randrange(b - a + 1) : a;
+    };
+    if (falta <= 0) falta = sortear();
+    if (--falta > 0) return at;
+    falta = sortear();
+    auto c = std::make_shared<Ataque>(*at);
+    c->dano = at->crit_dano > 0 ? at->crit_dano : at->dano + at->crit_mais;
+    return c;
 }
 
 AtaqueP Pista::ataque_efetivo(const Torre& t, const AtaqueP& at) const {

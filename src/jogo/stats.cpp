@@ -27,7 +27,8 @@ const std::map<std::string, double Ataque::*> NUMEROS = {
     {"quica", &Ataque::quica}, {"raio_aura", &Ataque::raio_aura}, {"pilha_pierce", &Ataque::pilha_pierce},
     {"pilha_vida", &Ataque::pilha_vida}, {"saltos", &Ataque::saltos}, {"valor", &Ataque::valor},
     {"fusivel", &Ataque::fusivel}, {"impreciso", &Ataque::impreciso}, {"dur", &Ataque::dur},
-    {"nivel_inv", &Ataque::nivel_inv},
+    {"nivel_inv", &Ataque::nivel_inv}, {"crit_cada", &Ataque::crit_cada}, {"crit_max", &Ataque::crit_max},
+    {"crit_dano", &Ataque::crit_dano}, {"crit_mais", &Ataque::crit_mais},
 };
 
 const std::map<std::string, bool Ataque::*> LOGICOS = {
