@@ -28,7 +28,8 @@ const std::map<std::string, double Ataque::*> NUMEROS = {
     {"pilha_vida", &Ataque::pilha_vida}, {"saltos", &Ataque::saltos}, {"valor", &Ataque::valor},
     {"fusivel", &Ataque::fusivel}, {"impreciso", &Ataque::impreciso}, {"dur", &Ataque::dur},
     {"nivel_inv", &Ataque::nivel_inv}, {"crit_cada", &Ataque::crit_cada}, {"crit_max", &Ataque::crit_max},
-    {"crit_dano", &Ataque::crit_dano}, {"crit_mais", &Ataque::crit_mais},
+    {"crit_dano", &Ataque::crit_dano}, {"crit_mais", &Ataque::crit_mais}, {"pocao_max", &Ataque::pocao_max},
+    {"pocao_bloq", &Ataque::pocao_bloq},
 };
 
 const std::map<std::string, bool Ataque::*> LOGICOS = {
@@ -37,7 +38,7 @@ const std::map<std::string, bool Ataque::*> LOGICOS = {
     {"moab_lento", &Ataque::moab_lento}, {"moab_congela", &Ataque::moab_congela},
     {"moab_cola", &Ataque::moab_cola}, {"moab_atordoa", &Ataque::moab_atordoa},
     {"na_trilha", &Ataque::na_trilha}, {"linha", &Ataque::linha},
-    {"armadilha", &Ataque::armadilha}, {"prende_moab", &Ataque::prende_moab},
+    {"armadilha", &Ataque::armadilha}, {"prende_moab", &Ataque::prende_moab}, {"pocao", &Ataque::pocao},
 };
 
 TipoAtaque tipo_de(const std::string& s) {
@@ -123,27 +124,60 @@ void Buffs::mesclar(const Buffs& o) {
     if (o.vazio) return;
     cad *= o.cad;
     alcance_pct += o.alcance_pct;
+    alcance += o.alcance;
     pierce += o.pierce;
+    pierce_pct += o.pierce_pct;
+    vel_pct += o.vel_pct;
     dano += o.dano;
     moab += o.moab;
+    cer += o.cer;
+    fort += o.fort;
     ouro += o.ouro;
     camo = camo || o.camo;
     dtype_normal = dtype_normal || o.dtype_normal;
+    chumbo = chumbo || o.chumbo;
     vazio = false;
+}
+
+void Buffs::melhor(const Buffs& o) {
+    if (o.vazio) return;
+    if (vazio) {
+        *this = o;
+        return;
+    }
+    cad = std::min(cad, o.cad);
+    for (auto campo : {&Buffs::alcance_pct, &Buffs::alcance, &Buffs::pierce, &Buffs::pierce_pct, &Buffs::vel_pct,
+                       &Buffs::dano, &Buffs::moab, &Buffs::cer, &Buffs::fort, &Buffs::ouro})
+        this->*campo = std::max(this->*campo, o.*campo);
+    camo = camo || o.camo;
+    dtype_normal = dtype_normal || o.dtype_normal;
+    chumbo = chumbo || o.chumbo;
 }
 
 void Buffs::mesclar(const J& novos) {
     for (auto& [k, v] : novos.items()) {
-        vazio = false;
-        if (k == "cad") cad *= num(v);
-        else if (k == "alcance_pct") alcance_pct += num(v);
-        else if (k == "pierce") pierce += num(v);
-        else if (k == "dano") dano += num(v);
-        else if (k == "moab") moab += num(v);
-        else if (k == "ouro") ouro += num(v);
-        else if (k == "camo") camo = v.get<bool>();
-        else if (k == "dtype_normal") dtype_normal = v.get<bool>();
-        else throw std::invalid_argument("buff desconhecido: " + k);
+        if (k == "escopo") escopo = v.get<std::string>();
+        else if (k == "global_") global_ = v.get<bool>();
+        else if (k == "sem_si") sem_si = v.get<bool>();
+        else if (k == "acumula") acumula = v.get<int>();
+        else {
+            vazio = false;
+            if (k == "cad") cad *= num(v);
+            else if (k == "alcance_pct") alcance_pct += num(v);
+            else if (k == "alcance") alcance += num(v);
+            else if (k == "pierce") pierce += num(v);
+            else if (k == "pierce_pct") pierce_pct += num(v);
+            else if (k == "vel_pct") vel_pct += num(v);
+            else if (k == "dano") dano += num(v);
+            else if (k == "moab") moab += num(v);
+            else if (k == "cer") cer += num(v);
+            else if (k == "fort") fort += num(v);
+            else if (k == "ouro") ouro += num(v);
+            else if (k == "camo") camo = v.get<bool>();
+            else if (k == "dtype_normal") dtype_normal = v.get<bool>();
+            else if (k == "chumbo") chumbo = v.get<bool>();
+            else throw std::invalid_argument("buff desconhecido: " + k);
+        }
     }
 }
 

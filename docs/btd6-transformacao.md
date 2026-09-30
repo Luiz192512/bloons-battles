@@ -68,6 +68,17 @@ A pesquisa foi feita em 30/09/2026, com os dados que a Blooncyclopedia mostra ho
    - Dardo 3-4: a cada 10º tiro, crítico de 50 de dano no lugar do normal.
    - Dardo 3-5: a cada 5º tiro, crítico de 80.
    - Super 2-3: a cada 15 a 20 tiros, crítico com +9 de dano.
+10. **Buffs com escopo e sem acúmulo** (`escopo`, `global_`, `sem_si`, `acumula` nos buffs). Fontes do mesmo tipo de torre não somam; vale o melhor valor de cada campo. Fonte [B1], páginas das upgrades citadas:
+    - Vila 1-3 a 1-5: o buff de Primárias (+1 pierce e +10% de alcance, +5 de alcance no 1-4, +3 pierce no 1-5) só vale para torres Primárias. Jungle Drums continua para todas.
+    - Druida 3-4 (Poplust): +15% de velocidade e de pierce só nos outros Druidas, acumulando até 5 vezes.
+    - Ninja 2-3 (Shinobi Tactics): Ninjas no alcance, inclusive ele, ×0,92 de recarga e +8% de pierce, acumulando até 20 vezes.
+    - Bucaneiro 1-5 (Carrier Flagship): torres na água e Ases no mapa todo, ×0,8 de recarga. A página da wiki diz 20% no resumo e 15% na seção do buff; ficou 20%.
+    - Sniper 2-5 (Elite Sniper): os outros Snipers do mapa atacam com ×0,75 de recarga.
+11. **Poções do Alquimista por torre** (`pocao`, com tiros, segundos e bloqueio):
+    - Acidic Mixture Dip (1-2): a cada 10 s, numa torre sorteada no alcance (prefere as sem a poção). Dá chumbo, +1 em cerâmica e +1 em M.O.A.B. por 10 ataques, acumulando até 30.
+    - Berserker Brew (1-3): a cada 8 s, na torre mais próxima. Dá +1 de dano, +2 pierce, +10% de alcance e ×0,9 de recarga por 25 tiros ou 5 s; a torre só recebe outra depois de 5 s.
+    - Stronger Stimulant (1-4): +1 de dano, +3 pierce, +15% de alcance, ×0,85 de recarga, por 40 tiros ou 12 s.
+    - Permanent Brew (1-5): as poções novas ficam para sempre.
 
 ## Pendências
 
@@ -78,11 +89,11 @@ Ficaram de fora porque não há fonte com o número ou porque o motor ainda não
 - **Passivos de vazamento:**
   - Legend of the Night (Super 3-5) ficou sem efeito.
   - A passiva da Bomb Blitz virou a habilidade de dano global que já existia.
-- **Buffs com escopo por categoria:**
-  - Vila 1-3 a 1-5 dá o buff para todas as torres, não só as Primárias.
-  - Druida 3-4 dá o buff para todas as torres, não só os Druidas.
-  - O Carrier Flagship dá o buff para as torres no alcance, não só as de água.
-  - O bônus do Elite Sniper para todos os Snipers não foi aplicado.
+- **Detalhes de buff ainda fora:**
+  - Primary Training: +25% de velocidade do projétil nas Primárias.
+  - Primary Mentoring e Expertise: tiers 1 e 2 grátis e recarga de habilidade 15% e 25% menor.
+  - Berserker Brew com o cruzamento 3-2-0 (40 tiros ou 6 s).
+  - AMD: +1 só em chumbo fortificado (o motor não separa chumbo fortificado de outros fortificados).
 - **Mecânicas sem suporte:**
   - Coleta manual de bananas e juros reais do Monkey Bank (virou ×1,15 na renda).
   - Mira no cursor do Dartling e do Morteiro.
@@ -102,7 +113,6 @@ Ficaram de fora porque não há fonte com o número ou porque o motor ainda não
   - Stun do Relentless Glue.
   - Unstable Concoction (20 de dano em MOAB).
   - Recarga de algumas habilidades que a wiki não listava (mantidas como estavam).
-- **Buffs de alquimista e vila** continuam permanentes e acumulando entre si (no BTD6 o Berserker Brew é temporário e por torre).
 - **Heróis:** os níveis 2 a 20 e as habilidades seguem o molde genérico do clone. Jericho é do BTDB2 e não existe no BTD6. Dan D'Monke falta porque precisa de arte.
 - **Torres novas do BTD6** (Beast Handler, Desperado, Mermonkey, Skywarden) não foram criadas porque precisam de arte e mecânicas próprias.
 - **Super Cerâmicas depois da R80** (vida maior e menos filhos) não foram aplicadas.

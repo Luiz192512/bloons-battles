@@ -13,14 +13,23 @@ namespace bl {
 enum class TipoAtaque { PROJETIL, RADIAL, AURA, HITSCAN, CADEIA, MORTEIRO, PILHA, QUEDA, RENDA, BUFF, INVOCAR };
 
 // Buffs que torres de suporte dao as vizinhas. "cad" multiplica; o resto soma (ou liga).
+// Os campos de escopo dizem quem recebe o buff (BTD6): "escopo" lista chaves, categorias ou "agua"
+// separadas por "|"; "global_" vale no mapa todo; "sem_si" nao vale para a propria torre; "acumula"
+// e quantas fontes iguais somam (1 = nao acumula: vale o melhor valor de cada campo).
 struct Buffs {
     double cad = 1.0;
-    double alcance_pct = 0, pierce = 0, dano = 0, moab = 0, ouro = 0;
-    bool camo = false, dtype_normal = false;
+    double alcance_pct = 0, alcance = 0, pierce = 0, pierce_pct = 0, vel_pct = 0, dano = 0, moab = 0, cer = 0,
+           fort = 0, ouro = 0;
+    bool camo = false, dtype_normal = false, chumbo = false;
     bool vazio = true;
+    std::string escopo;
+    bool global_ = false, sem_si = false;
+    int acumula = 1;
 
     void mesclar(const Buffs& o);
     void mesclar(const J& novos);
+    void melhor(const Buffs& o);  // campo a campo, fica o mais forte (fontes iguais nao acumulam)
+    double mult_cad() const { return cad / (1.0 + vel_pct); }
 };
 
 struct Ataque {
@@ -61,6 +70,11 @@ struct Ataque {
     // critico: a cada crit_cada tiros (sorteado ate crit_max, se maior), o tiro da crit_dano no lugar do
     // dano normal, ou soma crit_mais (Sharp Shooter, Crossbow Master, Robo Monkey)
     double crit_cada = 0, crit_max = 0, crit_dano = 0, crit_mais = 0;
+    // pocao do Alquimista: em vez de aura, joga "buffs" numa torre por vez (Berserker Brew, AMD).
+    // valor = tiros que dura, dur = segundos (<= 0: sem limite), pocao_max = teto de tiros ao
+    // acumular (0 = substitui), pocao_bloq = segundos ate a mesma torre poder receber outra
+    bool pocao = false;
+    double pocao_max = 0, pocao_bloq = 0;
 };
 
 // Cria um ataque a partir dos valores padrao + os campos do objeto.

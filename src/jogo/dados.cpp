@@ -240,7 +240,7 @@ static DefTorre t_sniper() {
             U("Tiro de Estilhaços", 450, "5 estilhaços por tiro.", {{"frag", {{"n", 5}, {"dano", 1}, {"pierce", 2}, {"dtype", "afiado"}, {"visual", "fragmento"}}}}),
             U("Bala Ricochete", 2100, "A bala quica 2 vezes.", {{"quica", 2}}),
             U("Lançamento de Suprimentos", 7600, "Quica 4 vezes. Habilidade: caixa de $1.100.", {{"quica", 2}, {"dtype", "normal"}, {"frag", {{"n", 5}, {"dano", 1}, {"pierce", 5}, {"dtype", "afiado"}, {"visual", "fragmento"}}}, {"hab", H("Suprimentos", "dinheiro", 60, {{"valor", 1100}})}}),
-            U("Atirador de Elite", 12000, "Muito mais rápido. Habilidade: caixa de $3.000.", {{"cad", 0.4}, {"hab", H("Suprimentos de Elite", "dinheiro", 90, {{"valor", 3000}})}}),
+            U("Atirador de Elite", 12000, "Muito mais rápido; os outros Snipers do mapa atacam 33% mais rápido. Habilidade: caixa de $3.000.", {{"cad", 0.4}, {"buffs", {{"cad", 0.75}, {"escopo", "sniper"}, {"global_", true}, {"sem_si", true}}}, {"hab", H("Suprimentos de Elite", "dinheiro", 90, {{"valor", 3000}})}}),
         },
         {
             U("Disparo Rápido", 450, "", {{"cad", 0.7}}),
@@ -298,7 +298,7 @@ static DefTorre t_bucaneiro() {
             U("Tiro Duplo", 425, "", {{"n", 2}}),
             U("Destróier", 3350, "Ataca 5x mais rápido.", {{"a", "todos"}, {"cad", 0.2}}),
             U("Porta-Aviões", 8000, "Aviões atacam em todo o mapa.", {{"novo", A("radial", {{"cad", 0.6}, {"dano", 2}, {"pierce", 5}, {"n", 4}, {"vel", 700}, {"dist", 300}, {"visual", "aviaozinho"}, {"global_", true}})}}),
-            U("Nau Capitânia", 26000, "Torres por perto atacam 25% mais rápido.", {{"buffs", {{"cad", 0.8}}}}),
+            U("Nau Capitânia", 26000, "Torres na água e Ases em todo o mapa atacam 25% mais rápido.", {{"buffs", {{"cad", 0.8}, {"escopo", "agua|as"}, {"global_", true}}}}),
         },
         {
             U("Tiro de Uva", 550, "Dispara 5 uvas em leque.", {{"novo", A("projetil", {{"cad", 1.35}, {"dano", 1}, {"pierce", 1}, {"n", 5}, {"spread", 90}, {"vel", 700}, {"dist", 260}, {"visual", "uva"}})}}),
@@ -534,7 +534,7 @@ static DefTorre t_ninja() {
         {
             U("Distração", 250, "Empurra bloons.", {{"empurra", 25}}),
             U("Contraespionagem", 400, "Remove camo dos bloons atingidos.", {{"a", "todos"}, {"retira_camo", true}}),
-            U("Táticas Shinobi", 1200, "Ninjas por perto (e ele) atacam 8% mais rápido.", {{"cad", 0.92}, {"buffs", {{"cad", 0.92}}}}),
+            U("Táticas Shinobi", 1200, "Ninjas no alcance (e ele) atacam 8% mais rápido e ganham +8% de pierce (acumula até 20).", {{"buffs", {{"cad", 0.92}, {"pierce_pct", 0.08}, {"escopo", "ninja"}, {"acumula", 20}}}}),
             U("Sabotagem Bloon", 5200, "Habilidade: bloons na metade da velocidade por 15 s.", {{"hab", H("Sabotagem", "lentidao", 60, {{"dur", 15}, {"valor", 0.5}})}}),
             U("Grande Sabotador", 22000, "Sabotagem de 30 s.", {{"hab", H("Grande Sabotagem", "lentidao", 60, {{"dur", 30}, {"valor", 0.5}})}}),
         },
@@ -559,10 +559,10 @@ static DefTorre t_alquimista() {
     t.caminhos = {
         {
             U("Poções Maiores", 250, "Poções maiores: +5 pierce, +50% de área.", {{"splash", 15}, {"spierce", 5}}),
-            U("Mistura Ácida", 350, "Torres próximas causam mais dano em dirigíveis.", {{"novo", A("buff", {{"buffs", {{"moab", 1}}}})}}),
-            U("Poção do Berserker", 1400, "Torres próximas: +1 de dano, +2 pierce, +10% alcance, 10% mais rápidas.", {{"a", "buff"}, {"buffs", {{"dano", 1}, {"cad", 0.9}, {"pierce", 2}, {"alcance_pct", 0.1}}}}),
-            U("Estimulante Forte", 2850, "Poção mais forte: +3 pierce, +15% alcance, 15% mais rápidas.", {{"a", "buff"}, {"buffs", {{"cad", 0.944}, {"pierce", 1}, {"alcance_pct", 0.05}}}}),
-            U("Poção Permanente", 48000, "Os buffs ficam permanentes.", J::object()),
+            U("Mistura Ácida", 350, "A cada 10 s, uma torre no alcance estoura chumbo e dá +1 em cerâmica e M.O.A.B. por 10 ataques (acumula até 30).", {{"novo", A("buff", {{"pocao", true}, {"cad", 10.0}, {"valor", 10}, {"pocao_max", 30}, {"visual", "pocao_acido"}, {"buffs", {{"chumbo", true}, {"cer", 1}, {"moab", 1}}}})}}),
+            U("Poção do Berserker", 1400, "A cada 8 s, a torre mais próxima ganha +1 de dano, +2 pierce, +10% de alcance e 10% de velocidade por 25 tiros ou 5 s.", {{"novo", A("buff", {{"pocao", true}, {"cad", 8.0}, {"valor", 25}, {"dur", 5}, {"pocao_bloq", 5}, {"visual", "pocao_brew"}, {"buffs", {{"dano", 1}, {"cad", 0.9}, {"pierce", 2}, {"alcance_pct", 0.1}}}})}}),
+            U("Estimulante Forte", 2850, "Poção mais forte: +3 pierce, +15% de alcance e 15% de velocidade por 40 tiros ou 12 s.", {{"a", "pocao_brew"}, {"buffs", {{"cad", 0.9444}, {"pierce", 1}, {"alcance_pct", 0.05}}}, {"valor", 15}, {"dur", 12}}),
+            U("Poção Permanente", 48000, "As poções novas (estimulante e ácido) ficam permanentes.", J::array({{{"a", "pocao_brew"}, {"valor_x", 0}, {"dur", 0}}, {{"a", "pocao_acido"}, {"valor_x", 0}, {"dur", 0}}})),
         },
         {
             U("Ácido Forte", 250, "Ácido mais rápido.", {{"queima", J::array({0.667, 4.5})}}),
@@ -607,7 +607,7 @@ static DefTorre t_druida() {
             U("Alcance Druídico", 100, "+10 de alcance.", {{"alcance", 40}, {"dist", 60}}),
             U("Coração da Vingança", 300, "+10% de velocidade.", {{"cad", 0.91}}),
             U("Druida da Ira", 600, "Mais rápido enquanto estoura bloons.", {{"cad", 0.8}}),
-            U("Luxúria de Estouros", 2350, "Druidas por perto atacam 15% mais rápido.", {{"novo", A("buff", {{"buffs", {{"cad", 0.87}}}})}}),
+            U("Luxúria de Estouros", 2350, "Outros Druidas no alcance: +15% de velocidade e de pierce (acumula até 5 vezes).", {{"novo", A("buff", {{"buffs", {{"vel_pct", 0.15}, {"pierce_pct", 0.15}, {"escopo", "druida"}, {"acumula", 5}}}})}}),
             U("Avatar da Ira", 45000, "+3 de dano e 2x mais rápido.", {{"alcance", 20}, {"dano", 3}, {"cad", 0.5}}),
         },
     };
@@ -689,9 +689,9 @@ static DefTorre t_vila() {
         {
             U("Raio Maior", 400, "+8 de alcance.", {{"alcance", 32}}),
             U("Tambores da Selva", 1500, "Torres próximas atacam 15% mais rápido.", {{"buffs", {{"cad", 0.85}}}}),
-            U("Treinamento Primário", 800, "Torres próximas: +1 pierce e +10% de alcance.", {{"buffs", {{"pierce", 1}, {"alcance_pct", 0.1}}}}),
-            U("Mentoria Primária", 2500, "+7 de alcance.", {{"alcance", 28}}),
-            U("Especialização Primária", 25000, "+2 pierce nas torres próximas; balista gigante.", {{"buffs", {{"pierce", 2}}}, {"novo", A("projetil", {{"cad", 4.0}, {"dano", 10}, {"cer", 270}, {"pierce", 100}, {"vel", 1200}, {"dist", 2500}, {"busca", true}, {"global_", true}, {"dtype", "normal"}, {"alvo", "forte"}, {"visual", "balista"}, {"raio_proj", 12}})}}),
+            U("Treinamento Primário", 800, "Torres Primárias próximas: +1 pierce e +10% de alcance.", {{"novo", A("buff", {{"visual", "buff_primaria"}, {"buffs", {{"pierce", 1}, {"alcance_pct", 0.1}, {"escopo", "primaria"}}}})}}),
+            U("Mentoria Primária", 2500, "+7 de alcance; Primárias próximas ganham +5 de alcance.", J::array({{{"alcance", 28}}, {{"a", "buff_primaria"}, {"buffs", {{"alcance", 20}}}}})),
+            U("Especialização Primária", 25000, "Primárias próximas: +3 pierce no total; balista gigante.", {{"a", "buff_primaria"}, {"buffs", {{"pierce", 2}}}, {"novo", A("projetil", {{"cad", 4.0}, {"dano", 10}, {"cer", 270}, {"pierce", 100}, {"vel", 1200}, {"dist", 2500}, {"busca", true}, {"global_", true}, {"dtype", "normal"}, {"alvo", "forte"}, {"visual", "balista"}, {"raio_proj", 12}})}}),
         },
         {
             U("Bloqueador de Crescimento", 250, "Remove regeneração.", {{"novo", A("aura", {{"cad", 0.5}, {"dano", 0}, {"pierce", 999}, {"retira_regen", true}, {"visual", "nenhum"}})}}),

@@ -89,7 +89,7 @@ using AtaqueP = std::shared_ptr<const Ataque>;
 struct Torre {
     Torre(int id, const std::string& chave, int dono, double x, double y, double custo, double temporaria = 0.0);
     void recalcular(int extra_nivel_inv = 0);
-    double alcance() const { return st.alcance * (1.0 + buff.alcance_pct); }
+    double alcance() const { return (st.alcance + buff.alcance) * (1.0 + buff.alcance_pct); }
     bool detecta_camo() const { return st.camo || buff.camo; }
 
     int id;
@@ -113,6 +113,13 @@ struct Torre {
     std::vector<AtaqueP> ats;  // st.ataques congelados (projeteis guardam o ataque que os criou)
     std::vector<double> recargas;
     std::vector<int> crit_conta;  // tiros que faltam para o proximo critico, por ataque
+    // pocoes do Alquimista recebidas, por tipo de pocao (visual do ataque): buff, segundos e tiros que faltam
+    struct Pocao {
+        Buffs b;
+        double t = 0, tiros = 0;
+    };
+    std::map<std::string, Pocao> pocoes;
+    std::map<std::string, double> pocao_bloq;  // segundos ate poder receber outra pocao do mesmo tipo
     std::vector<double> hab_rec;
 };
 using TorreP = std::shared_ptr<Torre>;
@@ -183,6 +190,7 @@ public:
     void pagar_renda();
     void receber(double v);  // entrada de dinheiro; metade vai para a divida do emprestimo
     AtaqueP critico(Torre& t, size_t i, const AtaqueP& at);  // conta o tiro; no critico devolve o ataque forte
+    bool jogar_pocao(const TorreP& f, const Ataque& at);     // Alquimista joga uma pocao numa torre no alcance
     void evento(Evento e);
 
     void passo();

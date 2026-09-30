@@ -315,6 +315,48 @@ TESTE(btd6_criticos_a_cada_n_tiros) {
     CHECA(ultimo >= 180);
 }
 
+TESTE(btd6_buffs_por_escopo_sem_acumular_e_pocao_por_torre) {
+    Partida p = solo();
+    Pista& pi = p.pista(1);
+    pi.dinheiro = 1e7;
+    auto colocar = [&](const std::string& k, int x, int y, std::vector<int> ups) {
+        const char e = p.aplicar(1, "T" + k + "@" + std::to_string(x) + "," + std::to_string(y));
+        if (e) throw Falha{"nao colocou " + k + " (" + std::to_string(e) + ")"};
+        const int id = pi.torres.rbegin()->first;
+        for (int u : ups) CHECA_IGUAL(p.aplicar(1, "U" + std::to_string(id) + ":" + std::to_string(u)), OK);
+        return id;
+    };
+    const int dardo = colocar("dardo", 290, 225, {});
+    const int mago = colocar("mago", 330, 380, {});
+    colocar("vila", 350, 200, {0, 0, 0});  // Jungle Drums + Primary Training
+    p.passo();
+    // Primary Training so vale para Primarias: o dardo ganha +1 pierce, o mago nao
+    CHECA_IGUAL(pi.torres.at(dardo)->buff.pierce, 1.0);
+    CHECA_IGUAL(pi.torres.at(mago)->buff.pierce, 0.0);
+    CHECA(std::abs(pi.torres.at(mago)->buff.cad - 0.85) < 1e-9);
+    // uma segunda Vila igual nao acumula Jungle Drums
+    colocar("vila", 230, 250, {0, 0});
+    pi.buff_t = 0;
+    p.passo();
+    CHECA(std::abs(pi.torres.at(dardo)->buff.cad - 0.85) < 1e-9);
+    // Berserker Brew: pocao numa torre, gasta 1 por tiro
+    const int alq = colocar("alquimista", 240, 340, {0, 0, 0});
+    Torre& a = *pi.torres.at(alq);
+    size_t idx = 0;
+    for (size_t i = 0; i < a.ats.size(); ++i)
+        if (a.ats[i]->visual == "pocao_brew") idx = i;
+    a.recargas[idx] = 0;
+    p.passo();
+    int com = 0;
+    Torre* alvo_ = nullptr;
+    for (auto& [id, t] : pi.torres)
+        if (t->pocoes.count("pocao_brew")) com++, alvo_ = t.get();
+    CHECA_IGUAL(com, 1);
+    CHECA_IGUAL(alvo_->pocoes["pocao_brew"].tiros, 25.0);
+    p.passo();
+    CHECA_IGUAL(alvo_->buff.dano, 1.0);
+}
+
 TESTE(sim_vazamento_tira_vidas_pelo_rbe) {
     Partida p = solo();
     Pista& pi = p.pista(1);

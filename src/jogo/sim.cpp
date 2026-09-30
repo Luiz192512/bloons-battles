@@ -188,6 +188,7 @@ bool Pista::aplicar_dano(Bloon& b, double dano, const Ataque& at, Torre* torre, 
     if (!dtype) dtype = at.dtype;
     if (torre && torre->buff.dtype_normal) dtype = DT_NORMAL;
     const TipoBloon& tp = *b.tipo;
+    if (torre && torre->buff.chumbo && tp.nome == "chumbo") dtype = DT_NORMAL;  // Acidic Mixture Dip
     // remover camo e regen nao depende do tipo de dano (Signal Flare, Shimmer e a espuma pegam o DDT)
     if (at.retira_camo) b.camo = false;
     if (at.retira_regen) b.regen = false;
@@ -551,19 +552,104 @@ std::vector<Bloon*> Pista::vizinhos(double x, double y, double r) const {
     return out;
 }
 
+namespace {
+// O buff vale para esta torre? O escopo lista chaves de torre, categorias ou "agua", separados por "|".
+bool no_escopo(const Torre& t, const std::string& escopo) {
+    if (escopo.empty()) return true;
+    size_t i = 0;
+    while (i <= escopo.size()) {
+        size_t j = escopo.find('|', i);
+        if (j == std::string::npos) j = escopo.size();
+        const std::string tok = escopo.substr(i, j - i);
+        if (tok == t.chave) return true;
+        if (!t.dfn->heroi && (tok == t.dfn->categoria || (tok == "agua" && t.dfn->agua))) return true;
+        i = j + 1;
+    }
+    return false;
+}
+
+bool ataca(const Torre& t) {
+    for (const AtaqueP& a : t.ats)
+        if (a->tipo != TipoAtaque::BUFF && a->tipo != TipoAtaque::RENDA) return true;
+    return false;
+}
+}  // namespace
+
 void Pista::recalcular_buffs() {
-    for (auto& [id, t] : torres) t->buff = Buffs{};
+    // por torre alvo: fonte (chave da torre + indice do ataque) -> buffs recebidos dessa fonte.
+    // Fontes iguais nao acumulam no BTD6 (duas Vilas nao dao 2x Jungle Drums): fica o melhor de cada
+    // campo. Excecoes com "acumula" > 1: Shinobi Tactics (20) e Poplust (5).
+    std::map<int, std::map<std::string, std::vector<const Buffs*>>> por_alvo;
     for (auto& [fid, f] : torres) {
-        for (const Ataque& at : f->st.ataques) {
-            if (at.buffs.vazio) continue;
-            const double r2 = quad(f->alcance());
+        const double r2 = quad(f->alcance());
+        for (size_t i = 0; i < f->st.ataques.size(); ++i) {
+            const Ataque& at = f->st.ataques[i];
+            const Buffs& b = at.buffs;
+            if (b.vazio || at.pocao) continue;
+            const std::string fonte = f->chave + "#" + std::to_string(i);
             for (auto& [tid, t] : torres) {
-                if (t == f && at.tipo == TipoAtaque::BUFF) continue;
-                if (quad(t->x - f->x) + quad(t->y - f->y) <= r2) t->buff.mesclar(at.buffs);
+                if (t == f && (at.tipo == TipoAtaque::BUFF || b.sem_si)) continue;
+                if (!b.global_ && quad(t->x - f->x) + quad(t->y - f->y) > r2) continue;
+                if (!no_escopo(*t, b.escopo)) continue;
+                por_alvo[tid][fonte].push_back(&b);
             }
         }
     }
-    for (auto& [id, t] : torres) t->buff.cad = std::max(0.4, t->buff.cad);
+    for (auto& [id, t] : torres) {
+        t->buff = Buffs{};
+        auto it = por_alvo.find(id);
+        if (it != por_alvo.end()) {
+            for (auto& [fonte, lista] : it->second) {
+                const size_t max = static_cast<size_t>(std::max(1, lista.front()->acumula));
+                if (max > 1) {
+                    for (size_t k = 0; k < lista.size() && k < max; ++k) t->buff.mesclar(*lista[k]);
+                } else {
+                    Buffs m;
+                    for (const Buffs* b : lista) m.melhor(*b);
+                    t->buff.mesclar(m);
+                }
+            }
+        }
+        for (auto& [tipo, p] : t->pocoes) t->buff.mesclar(p.b);
+    }
+}
+
+// Berserker Brew vai na torre mais proxima; o AMD vai numa torre sorteada. As duas preferem torres que
+// ainda nao tem aquela pocao.
+bool Pista::jogar_pocao(const TorreP& fp, const Ataque& at) {
+    const Torre& f = *fp;
+    const std::string& tipo = at.visual;
+    const double r2 = quad(f.alcance());
+    std::vector<Torre*> livres, todas;
+    for (auto& [id, t] : torres) {
+        if (t.get() == &f || !ataca(*t)) continue;
+        if (quad(t->x - f.x) + quad(t->y - f.y) > r2) continue;
+        auto bl = t->pocao_bloq.find(tipo);
+        if (bl != t->pocao_bloq.end() && bl->second > 0) continue;
+        auto p = t->pocoes.find(tipo);
+        if (p == t->pocoes.end()) livres.push_back(t.get());
+        else if (at.pocao_max <= 0 || p->second.tiros < at.pocao_max) todas.push_back(t.get());
+    }
+    std::vector<Torre*>& cand = livres.empty() ? todas : livres;
+    if (cand.empty()) return false;
+    Torre* alvo_ = nullptr;
+    if (at.pocao_max > 0) {
+        alvo_ = cand[static_cast<size_t>(rng.randrange(static_cast<int>(cand.size())))];
+    } else {
+        for (Torre* t : cand)
+            if (!alvo_ || quad(t->x - f.x) + quad(t->y - f.y) < quad(alvo_->x - f.x) + quad(alvo_->y - f.y)) alvo_ = t;
+    }
+    constexpr double SEMPRE = 1e18;
+    Torre::Pocao& p = alvo_->pocoes[tipo];
+    const double tiros = at.valor > 0 ? at.valor : SEMPRE;
+    if (at.pocao_max > 0 && p.tiros > 0 && p.tiros < SEMPRE) p.tiros = std::min(at.pocao_max, p.tiros + tiros);
+    else p.tiros = tiros;
+    p.t = at.dur > 0 ? at.dur : SEMPRE;
+    p.b = at.buffs;
+    alvo_->pocao_bloq[tipo] = at.pocao_bloq;
+    buff_t = 0;
+    evento({"tiro", f.x, f.y, 0, 0, 0, f.chave});
+    return true;
 }
 
 // ---------------------------------------------------------------- torres
@@ -633,13 +719,29 @@ void Pista::passo_torre(const TorreP& tp) {
     }
     for (double& r : t.hab_rec)
         if (r > 0) r -= DT;
-    const double mult_cad = t.turbo * t.buff.cad;
+    for (auto& [tipo, s] : t.pocao_bloq) s -= DT;
+    for (auto it = t.pocoes.begin(); it != t.pocoes.end();) {
+        it->second.t -= DT;
+        if (it->second.t <= 0 || it->second.tiros <= 0) {
+            it = t.pocoes.erase(it);
+            buff_t = 0;  // recalcula os buffs no proximo passo
+        } else {
+            ++it;
+        }
+    }
+    const double mult_cad = t.turbo * std::max(0.1, t.buff.mult_cad());
     const double alcance = t.alcance();
     const std::vector<AtaqueP> ats = t.ats;  // o heroi pode subir de nivel no meio do laco
+    const std::vector<double> antes = t.recargas;
     for (size_t i = 0; i < ats.size(); ++i) {
         const AtaqueP& atp = ats[i];
         const Ataque& at = *atp;
         const TipoAtaque tipo = at.tipo;
+        if (tipo == TipoAtaque::BUFF && at.pocao) {
+            t.recargas[i] -= DT;
+            if (t.recargas[i] <= 0 && jogar_pocao(tp, at)) t.recargas[i] = std::max(0.02, at.cad * mult_cad);
+            continue;
+        }
         if (tipo == TipoAtaque::BUFF || tipo == TipoAtaque::RENDA) continue;
         t.recargas[i] -= DT;
         if (t.recargas[i] > 0) continue;
@@ -733,6 +835,14 @@ void Pista::passo_torre(const TorreP& tp) {
             evento({"tiro", t.x, t.y, 0, 0, 0, t.chave});
         }
     }
+    // cada ataque disparado gasta um tiro das pocoes recebidas (Berserker Brew dura 25 tiros)
+    if (!t.pocoes.empty())
+        for (size_t i = 0; i < ats.size() && i < antes.size() && i < t.recargas.size(); ++i) {
+            const TipoAtaque tipo = ats[i]->tipo;
+            if (tipo == TipoAtaque::BUFF || tipo == TipoAtaque::RENDA || tipo == TipoAtaque::INVOCAR) continue;
+            if (t.recargas[i] > antes[i] - DT + 1e-9)
+                for (auto& [nome, p] : t.pocoes) p.tiros -= 1;
+        }
 }
 
 // Conta os tiros de um ataque com critico; no tiro critico devolve uma copia com o dano do critico.
@@ -753,10 +863,11 @@ AtaqueP Pista::critico(Torre& t, size_t i, const AtaqueP& at) {
 
 AtaqueP Pista::ataque_efetivo(const Torre& t, const AtaqueP& at) const {
     const Buffs& b = t.buff;
-    if (b.vazio || (!b.dano && !b.pierce && !b.dtype_normal)) return at;
+    if (b.vazio || (!b.dano && !b.pierce && !b.pierce_pct && !b.cer && !b.fort && !b.dtype_normal)) return at;
     auto ef = std::make_shared<Ataque>(*at);
     ef->dano = at->dano + (at->dano > 0 ? b.dano : 0);
-    ef->pierce = at->pierce + b.pierce;
+    ef->pierce = (at->pierce + b.pierce) * (1.0 + b.pierce_pct);
+    if (at->dano > 0) ef->cer = at->cer + b.cer, ef->fort = at->fort + b.fort;
     if (at->sdano) ef->sdano = at->sdano + b.dano;
     if (b.dtype_normal) {
         ef->dtype = DT_NORMAL;
