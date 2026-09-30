@@ -119,4 +119,7 @@ Resultado:
 
 - **Testes:** `27 ok, 0 falha(s)`.
 - **Cliente:** `src/cliente/vitrine.cpp` compila com os headers da raylib (`g++ -fsyntax-only`). O build do cliente não roda neste ambiente por falta das bibliotecas de janela do sistema.
-- **Partidas automáticas** com um robô simples em quatro mapas e dificuldades, no modo solo e no modo batalha, rodaram sem erro. Uma rodada de estresse com dinheiro ilimitado chegou à rodada final; o resultado está na descrição do commit.
+- **Partidas automáticas** (robô simples) sem erro em quatro mapas e nas 4 dificuldades do modo solo, e no modo batalha.
+- **Estresse com dinheiro e vidas ilimitados:**
+  - Solo no Impossível até a **rodada 170** (passa pelo freeplay depois da R140): 2,8 milhões de estouros, 11 s de execução.
+  - Batalha na Encruzilhada até a **rodada 394**: 143 torres e 1.442 upgrades, sem travar.
