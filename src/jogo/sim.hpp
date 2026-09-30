@@ -257,6 +257,8 @@ public:
     void passo();
     double tempo_para_rodada() const;
     double tempo_para_eco() const;
+    // Segundos ate o jogador poder repetir este envio (0 = liberado). So leitura, para a interface.
+    double recarga_envio(int jogador, const std::string& chave) const;
     std::uint32_t hash() const;
     Pista& pista(int j) { return *pistas.at(j); }
     const Pista& pista(int j) const { return *pistas.at(j); }

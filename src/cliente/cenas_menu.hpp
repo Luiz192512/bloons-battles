@@ -46,10 +46,10 @@ public:
     void desenhar() override;
 
 private:
-    Rectangle rect_mapa(size_t i) const { return {60 + i * 250.0f, 90, 230, 150}; }
-    Rectangle rect_dif(size_t i) const { return {60 + i * 250.0f, 312, 230, 50}; }
+    Rectangle rect_mapa(size_t i) const { return {40 + i * 304.5f, 124, 286.5f, 172}; }
+    Rectangle rect_dif(size_t i) const { return {40 + i * 302.5f, 368, 292.5f, 56}; }
     std::string mapa_ = "prado", dif_ = "medio";
-    GradeHerois herois_{60, 410, 9, 62};
+    GradeHerois herois_{40, 496, 9, 58};
     ui::Botao voltar_, jogar_;
 };
 
@@ -60,12 +60,14 @@ public:
     void atualizar(double) override {}
     void desenhar() override;
 
-private:
     void conectar();
-    Rectangle rect_mapa(size_t i) const { return {60 + i * 250.0f, 90, 230, 160}; }
+    void ip_teste(const std::string& ip, const std::string& porta) { ip_.valor = ip, porta_.valor = porta; }
+
+private:
+    Rectangle rect_mapa(size_t i) const { return {40 + i * 304.5f, 124, 286.5f, 172}; }
     bool hospedar_;
     std::string mapa_ = "prado";
-    GradeHerois herois_{60, 330, 9, 62};
+    GradeHerois herois_{40, 496, 9, 58};
     ui::CampoTexto ip_, porta_;
     ui::Botao voltar_, ir_;
     std::string erro_;
@@ -91,6 +93,11 @@ private:
     bool iniciou_ = false;
 };
 
-void titulo(float y = 110);
+// Logo: "BLOONS TD" com a faixa vermelha "BATTLES" (escala 1 = menu principal).
+void titulo(float y = 110, float escala = 1);
+// Painel de passo numerado ("1 · Mapa") nas telas de escolha.
+Rectangle painel_passo(Rectangle r, const std::string& rotulo);
+// Card grande do heroi escolhido (retrato animado, nome, preco e habilidades).
+void info_heroi_card(const DefTorre& h, Rectangle r);
 
 }  // namespace bl

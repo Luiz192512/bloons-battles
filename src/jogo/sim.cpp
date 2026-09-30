@@ -1275,6 +1275,11 @@ double Partida::tempo_para_rodada() const {
 
 double Partida::tempo_para_eco() const { return modo != "batalha" ? 0.0 : std::max(0.0, prox_eco_t - tempo); }
 
+double Partida::recarga_envio(int jogador, const std::string& chave) const {
+    auto it = envio_rec.find({jogador, chave});
+    return it == envio_rec.end() ? 0.0 : std::max(0.0, it->second - tempo);
+}
+
 std::uint32_t Partida::hash() const {
     std::uint32_t h = static_cast<std::uint32_t>(tick);
     for (auto& [j, p] : pistas) h = crc32(std::to_string(p->hash()), h);
