@@ -32,8 +32,9 @@ mkdir entrega\tmp
 git archive --format=zip --prefix=BloonsBattles/ -o entrega\BloonsBattles_codigo.zip HEAD || goto erro
 copy /y "%BIN%\BloonsBattles.exe" entrega\ >nul || goto erro
 copy /y "%BIN%\bloons_servidor.exe" entrega\ >nul || goto erro
+copy /y "%BIN%\bloons_monitor.exe" entrega\ >nul || goto erro
 powershell -NoProfile -Command ^
-  "Expand-Archive entrega\BloonsBattles_codigo.zip entrega\tmp; Copy-Item entrega\BloonsBattles.exe,entrega\bloons_servidor.exe entrega\tmp\BloonsBattles; Compress-Archive entrega\tmp\BloonsBattles entrega\BloonsBattles_com_executavel.zip -Force" || goto erro
+  "Expand-Archive entrega\BloonsBattles_codigo.zip entrega\tmp; Copy-Item entrega\BloonsBattles.exe,entrega\bloons_servidor.exe,entrega\bloons_monitor.exe entrega\tmp\BloonsBattles; Compress-Archive entrega\tmp\BloonsBattles entrega\BloonsBattles_com_executavel.zip -Force" || goto erro
 rmdir /s /q entrega\tmp
 
 echo === Publicando a release %VERSAO%

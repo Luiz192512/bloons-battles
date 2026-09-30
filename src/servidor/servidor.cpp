@@ -11,6 +11,15 @@ namespace P = proto;
 
 Servidor::Servidor(const std::string& host, int porta) : sock_(rede::Socket::ouvir(host, porta)) {
     porta_ = sock_.porta_local();
+    try {
+        placar_ = ipc::PlacarCompartilhado::criar(porta_);
+    } catch (const std::exception&) {
+        placar_.reset();  // sem memoria compartilhada o jogo funciona igual, so nao ha placar externo
+    }
+}
+
+void Servidor::publicar(const std::function<void(ipc::Placar&)>& f) {
+    if (placar_) placar_->atualizar(f);
 }
 
 Servidor::~Servidor() { parar(); }
@@ -100,6 +109,12 @@ void Servidor::relogio() {
     auto proximo = relog::now();
     while (rodando_ && sala.em_jogo()) {
         auto [numero, comandos] = sala.fechar_tick();
+        // o placar e atualizado antes do envio: quem recebe o tick ja o encontra publicado
+        const long long n_comandos = static_cast<long long>(comandos.size());
+        publicar([&](ipc::Placar& pl) {
+            pl.tick = numero;
+            pl.comandos += n_comandos;
+        });
         transmitir(P::tick(numero, comandos));
         proximo += intervalo;
         auto agora = relog::now();
@@ -144,9 +159,17 @@ void Servidor::atender(ConexaoP con, std::string endereco) {
                     std::lock_guard<std::mutex> trava(lock_clientes_);
                     clientes_[numero] = con;
                 }
+                publicar([&](ipc::Placar& pl) {
+                    pl.jogador[numero].conectado = 1;
+                    ipc::copiar_texto(pl.jogador[numero].heroi, sizeof pl.jogador[numero].heroi, heroi);
+                });
                 enviar(numero, P::boas_vindas(numero));
                 registrar("jogador " + std::to_string(numero) + " entrou de " + endereco + " (" + heroi + ")");
                 if (auto ini = sala.iniciar()) {
+                    publicar([&](ipc::Placar& pl) {
+                        pl.estado = ipc::EM_JOGO;
+                        ipc::copiar_texto(pl.mapa, sizeof pl.mapa, ini->mapa);
+                    });
                     std::random_device rd;
                     long long seed = std::uniform_int_distribution<long long>(1, 999999)(rd);
                     transmitir(P::inicio(seed, ini->mapa, ini->heroi1, ini->heroi2));
@@ -167,7 +190,14 @@ void Servidor::atender(ConexaoP con, std::string endereco) {
         }
         bool estava_em_jogo = sala.remover(numero);
         registrar("jogador " + std::to_string(numero) + " saiu");
-        if (estava_em_jogo && sala.encerrar()) transmitir(P::fim_jogo(Sala::oponente(numero)));
+        publicar([&](ipc::Placar& pl) { pl.jogador[numero].conectado = 0; });
+        if (estava_em_jogo && sala.encerrar()) {
+            publicar([&](ipc::Placar& pl) {
+                pl.estado = ipc::FIM;
+                pl.vencedor = Sala::oponente(numero);
+            });
+            transmitir(P::fim_jogo(Sala::oponente(numero)));
+        }
     }
     con->sock.fechar();
 }
@@ -193,7 +223,13 @@ void Servidor::tratar(int numero, const P::Mensagem& msg) {
             transmitir(P::dessinc(msg.tick));
         }
     } else if (cmd == P::FIM_JOGO) {
-        if (sala.encerrar()) transmitir(P::fim_jogo(Sala::oponente(numero)));
+        if (sala.encerrar()) {
+            publicar([&](ipc::Placar& pl) {
+                pl.estado = ipc::FIM;
+                pl.vencedor = Sala::oponente(numero);
+            });
+            transmitir(P::fim_jogo(Sala::oponente(numero)));
+        }
     }
 }
 

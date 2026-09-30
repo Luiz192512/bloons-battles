@@ -31,11 +31,19 @@ add_library(bloons_nucleo STATIC
   src/rede/socket.cpp
   src/servidor/sala.cpp
   src/servidor/servidor.cpp
+  src/ipc/memoria.cpp
+  src/ipc/placar.cpp
 )
 target_include_directories(bloons_nucleo PUBLIC src third_party)
 target_link_libraries(bloons_nucleo PUBLIC Threads::Threads)
 if(WIN32)
   target_link_libraries(bloons_nucleo PUBLIC ws2_32)
+else()
+  # shm_open/sem_open: ficam na librt em glibc antiga (nas novas ja estao na libc)
+  find_library(LIB_RT rt)
+  if(LIB_RT)
+    target_link_libraries(bloons_nucleo PUBLIC ${LIB_RT})
+  endif()
 endif()
 if(MSVC)
   target_compile_options(bloons_nucleo PUBLIC /utf-8 /W3)
@@ -51,11 +59,16 @@ endif()
 add_executable(bloons_servidor src/servidor/main_servidor.cpp)
 target_link_libraries(bloons_servidor PRIVATE bloons_nucleo ${LINK_ESTATICO})
 
+# Monitor: processo separado que le o placar da sala em memoria compartilhada
+add_executable(bloons_monitor src/ipc/main_monitor.cpp)
+target_link_libraries(bloons_monitor PRIVATE bloons_nucleo ${LINK_ESTATICO})
+
 # ------------------------------------------------------------------ testes
 if(BLOONS_TESTES)
   enable_testing()
   add_executable(bloons_testes tests/testes.cpp)
   target_link_libraries(bloons_testes PRIVATE bloons_nucleo ${LINK_ESTATICO})
+  add_dependencies(bloons_testes bloons_monitor)  # um teste abre o monitor como outro processo
   add_test(NAME bloons_testes COMMAND bloons_testes)
 endif()
 

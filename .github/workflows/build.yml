@@ -40,3 +40,4 @@ jobs:
           path: |
             build-win/BloonsBattles.exe
             build-win/bloons_servidor.exe
+            build-win/bloons_monitor.exe

@@ -364,7 +364,8 @@ void CenaLobby::atualizar(double dt) {
             std::vector<P::Mensagem> pendentes(msgs.begin() + static_cast<long>(i) + 1, msgs.end());
             auto ctl = std::make_unique<ControladorBatalha>(
                 con_, con_->numero(), msg.seed, msg.mapa,
-                std::map<int, std::string>{{1, msg.herois[1]}, {2, msg.herois[2]}}, servidor_, std::move(pendentes));
+                std::map<int, std::string>{{1, msg.herois[1]}, {2, msg.herois[2]}}, servidor_, std::move(pendentes),
+                porta_);
             iniciou_ = true;
             som::tocar("rodada");
             app.iniciar_jogo(std::move(ctl));

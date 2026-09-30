@@ -45,10 +45,33 @@ void ControladorSolo::atualizar(double dt) {
 // ---------------------------------------------------------------- batalha
 ControladorBatalha::ControladorBatalha(std::shared_ptr<Conexao> conexao, int numero, long long seed,
                                        const std::string& mapa, const std::map<int, std::string>& herois,
-                                       std::shared_ptr<Servidor> servidor, std::vector<P::Mensagem> pendentes)
+                                       std::shared_ptr<Servidor> servidor, std::vector<P::Mensagem> pendentes,
+                                       int porta)
     : conexao_(std::move(conexao)), servidor_(std::move(servidor)), pendentes_(std::move(pendentes)) {
     meu = numero;
     partida = std::make_unique<Partida>("batalha", mapa, static_cast<int>(seed), "medio", herois);
+    if (meu == 1 || meu == 2) placar_ = ipc::PlacarCompartilhado::abrir(porta);
+}
+
+void ControladorBatalha::publicar_placar() {
+    if (!placar_) return;
+    const Pista& p = pista();
+    // copia os numeros antes de travar: a secao critica so copia bytes
+    ipc::PlacarJogador linha{};
+    linha.conectado = 1;
+    ipc::copiar_texto(linha.heroi, sizeof linha.heroi, p.heroi_escolhido);
+    linha.vidas = p.vidas;
+    linha.dinheiro = static_cast<std::int64_t>(p.dinheiro);
+    linha.eco = static_cast<std::int32_t>(p.eco);
+    linha.rodada = partida->rodada;
+    linha.pops = p.pops_total;
+    linha.torres = static_cast<std::int32_t>(p.torres.size());
+    linha.bloons = static_cast<std::int32_t>(p.bloons.size());
+    linha.hash = p.hash();
+    linha.tick = tick_;
+    linha.pid = ipc::pid_atual();
+    const int j = meu;
+    placar_->atualizar([&](ipc::Placar& pl) { pl.jogador[j] = linha; });
 }
 
 char ControladorBatalha::checar(const std::string& cmd) {
@@ -103,6 +126,7 @@ void ControladorBatalha::atualizar(double) {
             if (partida->fim) continue;
             for (auto& [jogador, cmd] : msg.comandos) partida->aplicar(jogador, cmd);
             for (int i = 0; i < PASSOS_POR_TICK; ++i) partida->passo();
+            publicar_placar();
             if (tick_ % HASH_A_CADA == 0) conexao_->enviar(P::hash_estado(meu, tick_, partida->hash()));
         } else if (msg.comando == P::DESSINC) {
             dessinc_ = true;
