@@ -460,7 +460,8 @@ void CenaJogo::painel_lateral(Vector2 mouse) {
     arte::icone("rodada", pr.x + 12, pr.y + 12, 32);
     ui::texto("RODADA", pr.x + 50, pr.y + 13, 9, ui::BEGE, 0);
     const std::string rod = ctl_->online() ? std::to_string(std::max(1, p.rodada))
-                                           : std::to_string(std::max(1, p.rodada)) + "/" + std::to_string(p.ultima_rodada);
+                   : ctl_->partida->em_freeplay ? std::to_string(std::max(1, p.rodada))
+                                                : std::to_string(std::max(1, p.rodada)) + "/" + std::to_string(p.ultima_rodada);
     ui::texto(rod, pr.x + 48, pr.y + 36, 23, ui::BRANCO, 4, Ancora::MIDLEFT);
     const float dx = pr.x + pr.width - 12;
     if (ctl_->online()) {
@@ -1004,11 +1005,15 @@ void CenaJogo::tela_fim() {
                                    "Vidas restantes: " + std::to_string(std::max(0, p.vidas))};
     for (int i = 0; i < 3; ++i) ui::texto(linhas[i], r.x + r.width / 2, r.y + 118 + i * 32.0f, 20, ui::BRANCO, 3, Ancora::CENTER);
     std::vector<std::tuple<std::string, Acao, Color>> opcoes;
+    if (!ctl_->online() && ganhou)
+        opcoes.emplace_back("Continuar em freeplay", [this] { ctl_->partida->continuar_freeplay(); }, ui::AMARELO);
     if (!ctl_->online()) opcoes.emplace_back("Jogar novamente", [this] { reiniciar(); }, ui::VERDE);
     opcoes.emplace_back("Menu principal", [this] { app.ir_menu(); }, ui::AZUL);
+    const bool tres = opcoes.size() > 2;  // com o freeplay os botoes ficam mais juntos para caber no painel
     for (size_t i = 0; i < opcoes.size(); ++i) {
         auto& [rot, acao, cor] = opcoes[i];
-        ui::Botao b{{r.x + 110, r.y + 240 + i * 66.0f, r.width - 220, 54}, rot, cor, 20};
+        ui::Botao b{{r.x + 110, r.y + (tres ? 222 : 240) + i * (tres ? 62.0f : 66.0f), r.width - 220, tres ? 50.0f : 54.0f},
+                    rot, cor, 20};
         b.desenhar();
         botoes_menu_.push_back({b, acao});
     }

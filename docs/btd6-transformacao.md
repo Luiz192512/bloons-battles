@@ -79,6 +79,10 @@ A pesquisa foi feita em 30/09/2026, com os dados que a Blooncyclopedia mostra ho
     - Berserker Brew (1-3): a cada 8 s, na torre mais próxima. Dá +1 de dano, +2 pierce, +10% de alcance e ×0,9 de recarga por 25 tiros ou 5 s; a torre só recebe outra depois de 5 s.
     - Stronger Stimulant (1-4): +1 de dano, +3 pierce, +15% de alcance, ×0,85 de recarga, por 40 tiros ou 12 s.
     - Permanent Brew (1-5): as poções novas ficam para sempre.
+12. **Freeplay do BTD6 a partir da R81** (só no solo). Fonte [B1], "Ceramic Bloon (BTD6)", seção Super Ceramic Bloons, e "Freeplay":
+    - As cerâmicas viram Super Cerâmicas: 60 de vida (120 fortificadas) e $87 ao estourar a camada, multiplicado pela renda da rodada.
+    - Bloons que não são dirigíveis soltam um filho só; o vazamento em vidas segue essa regra.
+    - Depois de vencer, a tela de vitória oferece "Continuar em freeplay", que segue sem última rodada.
 
 ## Pendências
 
@@ -115,7 +119,9 @@ Ficaram de fora porque não há fonte com o número ou porque o motor ainda não
   - Recarga de algumas habilidades que a wiki não listava (mantidas como estavam).
 - **Heróis:** os níveis 2 a 20 e as habilidades seguem o molde genérico do clone. Jericho é do BTDB2 e não existe no BTD6. Dan D'Monke falta porque precisa de arte.
 - **Torres novas do BTD6** (Beast Handler, Desperado, Mermonkey, Skywarden) não foram criadas porque precisam de arte e mecânicas próprias.
-- **Super Cerâmicas depois da R80** (vida maior e menos filhos) não foram aplicadas.
+- **Freeplay, aproximações:**
+  - Vazamento da Super Cerâmica: o motor conta 68 vidas (60 + arco-íris em fila); a wiki lista 65. O M.O.A.B. dá 472 contra 460.
+  - As rodadas depois da R140 vêm de um gerador próprio; o BTD6 sorteia grupos de um conjunto fixo.
 - **Modos do BTD6:** CHIMPS, Half Cash e Deflate não foram criados; só as 4 dificuldades.
 - **Categorias de dificuldade dos mapas:** o jogo usa Beginner, Intermediate, Advanced e Expert. Os 4 mapas do clone continuam com os rótulos próprios.
 

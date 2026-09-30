@@ -186,6 +186,7 @@ public:
     bool aplicar_dano(Bloon& b, double dano, const Ataque& at, Torre* torre, Projetil* proj = nullptr,
                       DType dtype = 0);
     int rbe_restante(const Bloon& b) const;
+    int rbe_tipo(const TipoBloon& tp, bool fort) const;  // RBE de um bloon novo, com as regras do freeplay
     void xp(double v);
     void pagar_renda();
     void receber(double v);  // entrada de dinheiro; metade vai para a divida do emprestimo
@@ -205,6 +206,9 @@ public:
     double mult_renda = 1.0;  // dinheiro por estouro conforme a rodada (BTD6)
     double mult_vida = 1.0;   // vida dos dirigiveis no freeplay
     double mult_vel = 1.0;    // velocidade dos bloons no freeplay
+    // freeplay do BTD6 (R81 em diante, so no solo): Super Ceramicas (60 de vida, $87 na camada) e
+    // bloons que nao sao dirigiveis soltam um filho so
+    bool freeplay = false;
     double mult_custo;
     std::vector<BloonP> bloons;
     std::vector<std::unique_ptr<Projetil>> projeteis;
@@ -269,6 +273,9 @@ public:
     char aplicar(int jogador, const std::string& cmd);
     char enviar(int jogador, const std::string& chave);
     char iniciar_rodada();
+    // BTD6: depois de vencer no solo, da para seguir jogando em freeplay (sem ultima rodada)
+    bool continuar_freeplay();
+    bool em_freeplay = false;
     void passo();
     double tempo_para_rodada() const;
     double tempo_para_eco() const;

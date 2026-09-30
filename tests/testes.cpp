@@ -357,6 +357,31 @@ TESTE(btd6_buffs_por_escopo_sem_acumular_e_pocao_por_torre) {
     CHECA_IGUAL(alvo_->buff.dano, 1.0);
 }
 
+TESTE(btd6_freeplay_super_ceramica_e_filho_unico) {
+    Partida p = solo();
+    Pista& pi = p.pista(1);
+    CHECA_IGUAL(pi.rbe_restante(*pi.criar_bloon("ceramica", 100)), 104);
+    pi.freeplay = true;
+    pi.mult_renda = 1.0;
+    BloonP c = pi.criar_bloon("ceramica", 100);
+    CHECA_IGUAL(c->vida, 60.0);
+    CHECA_IGUAL(pi.rbe_restante(*c), 68);  // 60 + arco-iris com um filho so ate o vermelho
+    const double antes = pi.dinheiro;
+    const size_t n = pi.bloons.size();
+    pi.aplicar_dano(*c, 60, novo_ataque({{"dano", 60}, {"dtype", "normal"}}), nullptr);
+    CHECA(!c->vivo);
+    CHECA_IGUAL(pi.bloons.size(), n + 1);  // um arco-iris so
+    CHECA_IGUAL(pi.dinheiro, antes + 87);
+    CHECA_IGUAL(pi.criar_bloon("ceramica", 100, -1, false, false, true)->vida, 120.0);
+    CHECA_IGUAL(pi.rbe_restante(*pi.criar_bloon("moab", 100)), 200 + 4 * 68);
+    // depois de vencer da para continuar em freeplay; na batalha, nao
+    CHECA(!p.continuar_freeplay());
+    p.fim = true;
+    p.vencedor = 1;
+    CHECA(p.continuar_freeplay());
+    CHECA(!p.fim && p.em_freeplay && p.ultima_rodada > 1000);
+}
+
 TESTE(sim_vazamento_tira_vidas_pelo_rbe) {
     Partida p = solo();
     Pista& pi = p.pista(1);

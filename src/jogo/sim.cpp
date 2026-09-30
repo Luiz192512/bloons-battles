@@ -11,6 +11,9 @@
 
 namespace bl {
 
+// Super Ceramica do BTD6 (Blooncyclopedia, "Ceramic Bloon (BTD6)", secao Super Ceramic Bloons)
+constexpr double SUPER_CERAMICA = 60, SUPER_CERAMICA_FORT = 120, SUPER_CERAMICA_DINHEIRO = 87;
+
 const char* const MODOS_ALVO[4] = {"primeiro", "ultimo", "perto", "forte"};
 
 namespace {
@@ -157,6 +160,7 @@ BloonP Pista::criar_bloon(const std::string& nome, double d, int cam, bool camo,
     b->cam = cam;
     b->fort = fort && tipo.vida_fortificado;
     b->vida = (b->fort ? tipo.vida_fortificado : tipo.vida) * (tipo.moab ? mult_vida : 1.0);
+    if (freeplay && tipo.nome == "ceramica") b->vida = b->fort ? SUPER_CERAMICA_FORT : SUPER_CERAMICA;
     b->vida_max = b->vida;
     b->camo = camo || tipo.camo_nativo;
     b->regen = regen;
@@ -177,9 +181,24 @@ void Pista::agendar(const std::string& nome, double atraso, bool camo, bool rege
     fila.push_back({tempo + atraso, nome, camo, regen, fort});
 }
 
+int Pista::rbe_tipo(const TipoBloon& tp, bool fort) const {
+    if (!freeplay) return rbe(tp.id, fort);
+    fort = fort && tp.vida_fortificado;
+    int r = static_cast<int>(tp.nome == "ceramica" ? (fort ? SUPER_CERAMICA_FORT : SUPER_CERAMICA)
+                                                   : (fort ? tp.vida_fortificado : tp.vida));
+    const size_t n = tp.moab ? tp.filhos.size() : std::min<size_t>(1, tp.filhos.size());
+    for (size_t i = 0; i < n; ++i) r += rbe_tipo(tipo_bloon(tp.filhos[i]), fort);
+    return r;
+}
+
 int Pista::rbe_restante(const Bloon& b) const {
     int filhos = 0;
-    for (int f : b.tipo->filhos_id) filhos += rbe(f, b.fort);
+    if (freeplay) {
+        const size_t n = b.tipo->moab ? b.tipo->filhos.size() : std::min<size_t>(1, b.tipo->filhos.size());
+        for (size_t i = 0; i < n; ++i) filhos += rbe_tipo(tipo_bloon(b.tipo->filhos[i]), b.fort);
+    } else {
+        for (int f : b.tipo->filhos_id) filhos += rbe(f, b.fort);
+    }
     return std::max(1, static_cast<int>(b.vida)) + filhos;
 }
 
@@ -237,12 +256,13 @@ void Pista::estourar(Bloon& b, double excesso, DType dtype, Torre* torre, Projet
         ouro = torre->st.ouro + torre->buff.ouro;
         if (b.tipo->nome == "chumbo") ouro += torre->st.ouro_chumbo;
     }
-    receber((1 + ouro) * mult_renda);
+    const double base = freeplay && b.tipo->nome == "ceramica" ? SUPER_CERAMICA_DINHEIRO : 1.0;
+    receber((base + ouro) * mult_renda);
     pops_total += 1;
     xp(1.0);
     evento({"pop", b.x, b.y, 0, 0, 0, b.tipo->nome});
     const TipoBloon& tp = *b.tipo;
-    const int n = static_cast<int>(tp.filhos.size());
+    const int n = freeplay && !tp.moab ? std::min(1, static_cast<int>(tp.filhos.size())) : static_cast<int>(tp.filhos.size());
     if (!n) return;
     const double passo = tp.moab ? 22.0 : 7.0;
     const bool filho_camo = b.camo || tp.nome == "ddt";
@@ -1366,6 +1386,15 @@ char Partida::enviar(int jogador, const std::string& chave) {
     return OK;
 }
 
+bool Partida::continuar_freeplay() {
+    if (modo != "solo" || !fim || vencedor != 1) return false;
+    fim = false;
+    vencedor = 0;
+    em_freeplay = true;
+    ultima_rodada = 1000000000;
+    return true;
+}
+
 char Partida::iniciar_rodada() {
     if (modo != "solo" || em_rodada || fim) return ERRO_INVALIDO;
     rodada += 1;
@@ -1374,6 +1403,7 @@ char Partida::iniciar_rodada() {
     p.mult_renda = mult_renda_da_rodada(rodada);
     p.mult_vida = mult_vida_moab(rodada);
     p.mult_vel = mult_velocidade(rodada);
+    p.freeplay = rodada > 80;
     for (auto& [t, g] : agenda_da_rodada(rodada)) p.agendar(g.tipo, t, g.camo, g.regen, g.fort);
     return OK;
 }
