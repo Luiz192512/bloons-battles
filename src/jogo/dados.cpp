@@ -1555,11 +1555,17 @@ const std::map<int, std::vector<Grupo>> RODADAS = {
 };
 
 // Dificuldades do modo solo: {chave, nome, vidas, multiplicador de custo, ultima rodada}
+// Dificuldades e modos do BTD6 (Blooncyclopedia: "Easy", "Medium", "Hard", "Impoppable (BTD6)", "CHIMPS",
+// "Half Cash" e "Deflation (BTD6)"). O Dificil comeca na R3 e o Impossivel e o CHIMPS na R6; no Dificil os
+// bloons andam 13,6% mais rapido que no Medio e 25% mais que no Facil.
 const std::vector<Dificuldade> DIFICULDADES = {
-    {"facil", "Fácil", 200, 0.85, 40},
-    {"medio", "Médio", 150, 1.0, 60},
-    {"dificil", "Difícil", 100, 1.08, 80},
-    {"impossivel", "Impossível", 1, 1.2, 100},
+    {"facil", "Fácil", 200, 0.85, 40, 1, 1.0 / 1.1},
+    {"medio", "Médio", 150, 1.0, 60, 1, 1.0},
+    {"dificil", "Difícil", 100, 1.08, 80, 3, 1.25 / 1.1},
+    {"impossivel", "Impossível", 1, 1.2, 100, 6, 1.25 / 1.1},
+    {"chimps", "CHIMPS", 1, 1.08, 100, 6, 1.25 / 1.1, 650, 1.0, true, true},
+    {"metade", "Meio Dinheiro", 100, 1.08, 80, 3, 1.25 / 1.1, 325, 0.5},
+    {"deflacao", "Deflação", 200, 0.85, 60, 31, 1.0 / 1.1, 20000, 0.0},
 };
 
 // Envios do modo Batalha (inspirados no Battles 2): custo, efeito na renda (eco) e desbloqueio

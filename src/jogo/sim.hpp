@@ -210,6 +210,10 @@ public:
     // bloons que nao sao dirigiveis soltam um filho so
     bool freeplay = false;
     bool xp_por_estouro = true;  // Battles: estouros dao XP; no solo do BTD6, so as rodadas
+    // modos do BTD6: renda multiplicada (Half Cash, Deflation), venda e renda extra bloqueadas (CHIMPS)
+    double mult_dinheiro = 1.0;
+    bool sem_venda = false, so_estouro_e_rodada = false;
+    double mult_vel_dificuldade = 1.0;
     double mult_custo;
     std::vector<BloonP> bloons;
     std::vector<std::unique_ptr<Projetil>> projeteis;

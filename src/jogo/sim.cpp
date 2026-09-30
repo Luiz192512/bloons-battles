@@ -361,6 +361,7 @@ char Pista::upar(int tid, int p) {
 char Pista::vender(int tid) {
     TorreP t = torre(tid);
     if (!t || t->temporaria) return ERRO_INVALIDO;
+    if (sem_venda) return ERRO_BLOQUEADO;  // CHIMPS
     dinheiro += valor_venda(*t);
     torres.erase(tid);
     if (t->dfn->heroi) tem_heroi = false;
@@ -482,12 +483,15 @@ void Pista::executar_habilidade(const TorreP& tp, const J& h) {
                 b->cong_t = std::max(b->cong_t, h["dur"].get<double>() * (b->tipo->moab ? 0.5 : 1.0));
         evento({"flash", 0, 0, 0, 0, 0, "", {180, 230, 255}});
     } else if (tipo == "dinheiro") {
-        dinheiro += h["valor"].get<double>();
-        evento({"dinheiro", t.x, t.y, h["valor"].get<double>()});
+        // CHIMPS nao deixa gerar dinheiro por habilidade; Half Cash e Deflation multiplicam
+        const double v = so_estouro_e_rodada ? 0.0 : h["valor"].get<double>() * mult_dinheiro;
+        dinheiro += v;
+        evento({"dinheiro", t.x, t.y, v});
     } else if (tipo == "emprestimo") {
-        dinheiro += h["valor"].get<double>();
-        divida += h["valor"].get<double>();
-        evento({"dinheiro", t.x, t.y, h["valor"].get<double>()});
+        const double v = so_estouro_e_rodada ? 0.0 : h["valor"].get<double>() * mult_dinheiro;
+        dinheiro += v;
+        divida += v;
+        evento({"dinheiro", t.x, t.y, v});
     } else if (tipo == "roubo") {
         dinheiro += h["valor"].get<double>();
         if (oponente) oponente->dinheiro = std::max(0.0, oponente->dinheiro - h["valor"].get<double>());
@@ -1313,6 +1317,7 @@ void Pista::regenerar(Bloon& b) {
 
 // ---------------------------------------------------------------- rodada
 void Pista::receber(double v) {
+    v *= mult_dinheiro;
     if (divida > 0) {
         const double pago = std::min(divida, v * 0.5);
         divida -= pago;
@@ -1322,6 +1327,7 @@ void Pista::receber(double v) {
 }
 
 void Pista::pagar_renda() {
+    if (so_estouro_e_rodada) return;  // CHIMPS: fazendas, bancos e renda de heroi nao pagam
     for (auto& [id, t] : torres) {
         for (const Ataque& at : t->st.ataques) {
             if (at.tipo == TipoAtaque::RENDA && at.valor) {
@@ -1350,8 +1356,15 @@ Partida::Partida(const std::string& modo_, const std::string& chave_mapa, int se
         if (!d) throw std::out_of_range("dificuldade desconhecida: " + dif);
         dificuldade = dif;
         ultima_rodada = d->ultima_rodada;
-        pistas[1] = std::make_unique<Pista>(1, mapa, seed, d->vidas, DINHEIRO_INICIAL, d->mult_custo);
-        pistas[1]->xp_por_estouro = false;
+        rodada = d->primeira_rodada - 1;
+        pistas[1] = std::make_unique<Pista>(1, mapa, seed, d->vidas, d->dinheiro_inicial, d->mult_custo);
+        Pista& p = *pistas[1];
+        p.xp_por_estouro = false;
+        p.mult_dinheiro = d->mult_dinheiro;
+        p.sem_venda = d->sem_venda;
+        p.so_estouro_e_rodada = d->so_estouro_e_rodada;
+        p.mult_vel_dificuldade = d->mult_vel;
+        p.mult_vel = d->mult_vel;
     } else {
         dificuldade = "medio";
         ultima_rodada = 1000000000;
@@ -1439,7 +1452,7 @@ char Partida::iniciar_rodada() {
     Pista& p = *pistas[1];
     p.mult_renda = mult_renda_da_rodada(rodada);
     p.mult_vida = mult_vida_moab(rodada);
-    p.mult_vel = mult_velocidade(rodada);
+    p.mult_vel = mult_velocidade(rodada) * p.mult_vel_dificuldade;
     p.freeplay = rodada > 80;
     for (auto& [t, g] : agenda_da_rodada(rodada)) p.agendar(g.tipo, t, g.camo, g.regen, g.fort);
     return OK;

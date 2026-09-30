@@ -411,6 +411,44 @@ TESTE(btd6_freeplay_super_ceramica_e_filho_unico) {
     CHECA(!p.fim && p.em_freeplay && p.ultima_rodada > 1000);
 }
 
+TESTE(btd6_modos_chimps_meio_dinheiro_e_deflacao) {
+    {
+        Partida p("solo", "prado", 1, "chimps", {});
+        Pista& pi = p.pista(1);
+        CHECA_IGUAL(pi.vidas, 1);
+        CHECA_IGUAL(p.ultima_rodada, 100);
+        CHECA_IGUAL(p.aplicar(1, "Tdardo@230,250"), OK);
+        CHECA_IGUAL(p.aplicar(1, "V1"), ERRO_BLOQUEADO);  // sem venda
+        CHECA_IGUAL(p.aplicar(1, "N"), OK);
+        CHECA_IGUAL(p.rodada, 6);  // comeca na R6
+        const double antes = pi.dinheiro;
+        pi.pagar_renda();
+        CHECA_IGUAL(pi.dinheiro, antes);
+    }
+    {
+        Partida p("solo", "prado", 1, "metade", {});
+        Pista& pi = p.pista(1);
+        CHECA_IGUAL(pi.dinheiro, 325.0);
+        const double antes = pi.dinheiro;
+        pi.aplicar_dano(*pi.criar_bloon("vermelho", 100), 1, novo_ataque({{"dano", 1}}), nullptr);
+        CHECA_IGUAL(pi.dinheiro, antes + 0.5);
+    }
+    {
+        Partida p("solo", "prado", 1, "deflacao", {});
+        Pista& pi = p.pista(1);
+        CHECA_IGUAL(pi.dinheiro, 20000.0);
+        CHECA_IGUAL(p.aplicar(1, "N"), OK);
+        CHECA_IGUAL(p.rodada, 31);
+        const double antes = pi.dinheiro;
+        pi.aplicar_dano(*pi.criar_bloon("vermelho", 100), 1, novo_ataque({{"dano", 1}}), nullptr);
+        CHECA_IGUAL(pi.dinheiro, antes);  // estourar nao paga
+        CHECA_IGUAL(p.aplicar(1, "Tdardo@230,250"), OK);
+        const int id = pi.torres.rbegin()->first;
+        CHECA_IGUAL(p.aplicar(1, "V" + std::to_string(id)), OK);  // vender funciona
+        CHECA(pi.dinheiro > antes - 200);
+    }
+}
+
 TESTE(sim_vazamento_tira_vidas_pelo_rbe) {
     Partida p = solo();
     Pista& pi = p.pista(1);

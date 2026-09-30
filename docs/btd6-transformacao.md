@@ -89,6 +89,11 @@ A pesquisa foi feita em 30/09/2026, com os dados que a Blooncyclopedia mostra ho
     - Habilidades novas no motor: `recarregar` (Artillery Command zera a recarga das Bombas e Morteiros), `sem_regen` (Heartstopper) e `pct` (MOAB Hex tira parte da vida máxima). O `turbo_area` agora aceita `buffs` temporários (Rallying Roar, Biohack, Naval Tactics, Long Arm of Light) e `n` (as torres mais próximas).
     - XP oficial (módulo "BTD6 hero xp" e página "Experience"): 180 a 17.280 por nível; no solo, só as rodadas dão XP (20r+20, 40r-380 e 90r-2880), ×1,1 a ×1,3 conforme o mapa, e o freeplay depois de vencer corta 70% até a R100 e 90% depois. Na Batalha continua a XP por estouro.
     - **Jericho saiu** (é do Battles 2) e entrou **Dan D'Monke** ($650, escala de XP 1,425), com a arte do Jericho e espada até ter arte própria. Decisão do dono em 30/09/2026.
+14. **Dificuldades e modos do BTD6** no menu solo (páginas "Hard", "CHIMPS", "Half Cash" e "Deflation (BTD6)" da [B1]):
+    - O Difícil começa na R3 e o Impossível na R6. Os bloons andam no Fácil ×0,91, no Médio ×1 e no Difícil e Impossível ×1,136 (Difícil é 13,6% mais rápido que o Médio e 25% mais que o Fácil).
+    - **CHIMPS:** preços do Difícil, 1 vida, R6 a R100, sem vender, sem renda de fazenda, banco ou herói e sem habilidade de dinheiro. Só o estouro e o bônus de rodada pagam.
+    - **Meio Dinheiro (Half Cash):** Difícil, R3 a R80, todo dinheiro pela metade, inclusive o inicial ($325).
+    - **Deflação:** Fácil, R31 a R60, começa com $20.000 e não ganha mais dinheiro, mas vender funciona.
 
 ## Pendências
 
@@ -136,7 +141,8 @@ Ficaram de fora porque não há fonte com o número ou porque o motor ainda não
 - **Freeplay, aproximações:**
   - Vazamento da Super Cerâmica: o motor conta 68 vidas (60 + arco-íris em fila); a wiki lista 65. O M.O.A.B. dá 472 contra 460.
   - As rodadas depois da R140 vêm de um gerador próprio; o BTD6 sorteia grupos de um conjunto fixo.
-- **Modos do BTD6:** CHIMPS, Half Cash e Deflate não foram criados; só as 4 dificuldades.
+- **Modos, detalhes fora:** no CHIMPS, a Bloon Trap ainda paga o bônus por RBE (no BTD6 paga só o valor do estouro) e a Monkey Town ainda dá o extra por estouro.
+- **Robô:** a batalha automática nos mapas Lago e Espiral passa de 3 minutos sem terminar, também na versão anterior a estas mudanças; Prado e Encruzilhada terminam normalmente.
 - **Categorias de dificuldade dos mapas:** o jogo usa Beginner, Intermediate, Advanced e Expert. Os 4 mapas do clone continuam com os rótulos próprios.
 
 ## Verificação

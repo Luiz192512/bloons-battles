@@ -123,6 +123,12 @@ struct Dificuldade {
     int vidas;
     double mult_custo;
     int ultima_rodada;
+    int primeira_rodada = 1;
+    double mult_vel = 1.0;          // velocidade dos bloons (Medio = 1)
+    int dinheiro_inicial = 650;
+    double mult_dinheiro = 1.0;     // Half Cash: 0,5; Deflation: 0 (so a venda devolve dinheiro)
+    bool sem_venda = false;         // CHIMPS
+    bool so_estouro_e_rodada = false;  // CHIMPS: sem fazendas, bancos, heroi de renda nem habilidade de dinheiro
 };
 
 struct Envio {
