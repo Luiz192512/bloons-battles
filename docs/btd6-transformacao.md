@@ -137,7 +137,7 @@ Ficaram de fora porque não há fonte com o número ou porque o motor ainda não
   - Dan D'Monke: a segunda forma (Masqued Macaque), a rede, o escudo etéreo e a recuperação de vidas não entraram; Rabble Rouser dá +1 de dano em vez de ×1,5.
   - Passivas que dependem de sub-torre ou de mecânica própria: totem do Obyn, Pyrotechnics Expert da Gwendolin, Cyber Security e Trojan do Benjamin, Adrenaline Rush e granadas da Rosalia, Ice Walls e fragmentos do Silas, tapa do Pat.
   - Rapid Shot, Armor Piercing Shells e Transformation têm a duração do nível citado; o BTD6 soma 0,5 s por nível em algumas.
-- **Torres novas do BTD6** (Beast Handler, Desperado, Mermonkey, Skywarden) não foram criadas porque precisam de arte e mecânicas próprias.
+- **Torres novas do BTD6** (Beast Handler, Desperado, Mermonkey, Skywarden) não foram criadas: precisam de arte e mecânicas próprias, e o dono decidiu deixá-las para depois (30/09/2026).
 - **Freeplay, aproximações:**
   - Vazamento da Super Cerâmica: o motor conta 68 vidas (60 + arco-íris em fila); a wiki lista 65. O M.O.A.B. dá 472 contra 460.
   - As rodadas depois da R140 vêm de um gerador próprio; o BTD6 sorteia grupos de um conjunto fixo.
@@ -156,7 +156,7 @@ cmake -S . -B build -DBLOONS_CLIENTE=OFF && cmake --build build
 
 Resultado:
 
-- **Testes:** `27 ok, 0 falha(s)`.
+- **Testes:** `35 ok, 0 falha(s)` (eram 27 na nuvem; entraram testes de crítico, buffs e poções, freeplay, heróis e modos).
 - **Cliente:** `src/cliente/vitrine.cpp` compila com os headers da raylib (`g++ -fsyntax-only`). O build do cliente não roda neste ambiente por falta das bibliotecas de janela do sistema.
 - **Partidas automáticas** (robô simples) sem erro em quatro mapas e nas 4 dificuldades do modo solo, e no modo batalha.
 - **Estresse com dinheiro e vidas ilimitados:**

@@ -8,7 +8,7 @@ Estes são os scripts usados na sessão em nuvem. O objetivo é que outra conver
 - `docs/analise-jogo-real.md`: análise do Bloons TD Battles 2 real e comparação com o clone.
 - `prompts/analise-jogo-real-btdb2.md` e `prompts/transformar-em-btd6.md`: prompts usados.
 - `docs/btd6-transformacao.md`: o que já foi aplicado do BTD6 e a **lista de pendências**. É por ela que a próxima conversa deve começar.
-- Os testes (`bloons_testes`) passam: 30 ok.
+- Os testes (`bloons_testes`) passam: 35 ok.
 
 ## Arquivos
 
@@ -29,6 +29,14 @@ cmake -S . -B build -DBLOONS_CLIENTE=OFF && cmake --build build
 g++ -O2 -std=c++17 -Isrc -Ithird_party tools/analise/dump.cpp build/libbloons_nucleo.a -lpthread -o dump
 g++ -O2 -std=c++17 -Isrc -Ithird_party tools/analise/partida.cpp build/libbloons_nucleo.a -lpthread -o partida
 ```
+
+No Windows com Visual Studio (dentro de `scriptsmbiente.bat`), a biblioteca é `buildloons_nucleo.lib` e o runtime precisa ser estático:
+
+```
+cl /O2 /EHsc /std:c++17 /MT /D_USE_MATH_DEFINES /Isrc /Ithird_party toolsnalise\partida.cpp buildloons_nucleo.lib ws2_32.lib /Febuilderr\partida.exe
+```
+
+O robô aceita também as dificuldades novas (`chimps`, `metade`, `deflacao`).
 
 ## Formato dos patches (`python3 tools/analise/patch.py arquivo.txt`)
 
