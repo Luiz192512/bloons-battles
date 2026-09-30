@@ -30,10 +30,10 @@ g++ -O2 -std=c++17 -Isrc -Ithird_party tools/analise/dump.cpp build/libbloons_nu
 g++ -O2 -std=c++17 -Isrc -Ithird_party tools/analise/partida.cpp build/libbloons_nucleo.a -lpthread -o partida
 ```
 
-No Windows com Visual Studio (dentro de `scriptsmbiente.bat`), a biblioteca é `buildloons_nucleo.lib` e o runtime precisa ser estático:
+No Windows com Visual Studio (dentro de `scripts\ambiente.bat`), a biblioteca é `build\bloons_nucleo.lib` e o runtime precisa ser estático:
 
 ```
-cl /O2 /EHsc /std:c++17 /MT /D_USE_MATH_DEFINES /Isrc /Ithird_party toolsnalise\partida.cpp buildloons_nucleo.lib ws2_32.lib /Febuilderr\partida.exe
+cl /O2 /EHsc /std:c++17 /MT /D_USE_MATH_DEFINES /Isrc /Ithird_party tools\analise\partida.cpp build\bloons_nucleo.lib ws2_32.lib /Febuild\ferr\partida.exe
 ```
 
 O robô aceita também as dificuldades novas (`chimps`, `metade`, `deflacao`).
