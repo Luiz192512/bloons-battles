@@ -66,7 +66,8 @@ Opções de linha de comando para conferir o visual:
 
 | Opção | O que faz |
 |---|---|
-| `--vitrine [0-10]` | galeria de sprites; a página 9 toca as animações e mostra as curvas de cada clipe |
+| `--vitrine [0-11]` | galeria de sprites; a página 9 toca as animações com as curvas de cada clipe e a 11 mostra a mira 3/4 |
+| `--fps` | mostra o FPS desde o início |
 | `--demo solo` / `--demo batalha` | partida local já montada, com torres, upgrades e bloons |
 | `--tela solo\|hospedar\|entrar\|entrar-erro\|lobby` | abre direto uma tela de menu |
 | `--captura arquivo.png [s] [n] [intervalo]` | salva n capturas depois de s segundos e fecha |

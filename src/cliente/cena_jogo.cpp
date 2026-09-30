@@ -411,8 +411,8 @@ void CenaJogo::previa(Vector2 mouse) {
         DrawRing(mouse, raio - 1.5f, raio + 1.5f, 0, 360, 72, rgb(22, 20, 26, 128));
         DrawRing(mouse, raio - 4, raio - 1, 0, 360, 72, c);
     }
-    const float tam = dfn.heroi ? 70.0f : static_cast<float>(dfn.raio) * 3.0f;
-    arte::torre(colocando_, {}, mouse.x, mouse.y, tam, 0, nullptr, 215);
+    const float tam = dfn.heroi ? 74.0f : static_cast<float>(dfn.raio) * 3.2f;
+    arte::torre_mapa(colocando_, {}, mouse.x, mouse.y, tam, nullptr, 215);
     if (!pos_ok) {
         for (float s : {1.0f, -1.0f}) {
             DrawLineEx({mouse.x - 12, mouse.y - 12 * s}, {mouse.x + 12, mouse.y + 12 * s}, 8, ui::TINTA);

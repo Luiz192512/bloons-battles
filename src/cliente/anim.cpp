@@ -212,6 +212,75 @@ const Clipe& clipe_habilidade(const std::string& efeito) {
 
 const std::vector<const Clipe*>& todos_os_clipes() { return bib().todos; }
 
+// ---------------------------------------------------------------- mira 3/4
+TipoMira tipo_mira(const std::string& k) {
+    static const std::set<std::string> fixa{"tachinha", "vila", "fazenda", "espinhos", "morteiro"};
+    static const std::set<std::string> torreta{"bomba", "sentinela", "churchill"};
+    static const std::set<std::string> espelha{"submarino", "bucaneiro", "as", "heli", "fenix"};
+    if (fixa.count(k)) return TipoMira::FIXA;
+    if (torreta.count(k)) return TipoMira::TORRETA;
+    if (espelha.count(k)) return TipoMira::ESPELHA;
+    return TipoMira::MACACO;
+}
+
+namespace {
+float graus(float rad) { return rad * 180 / PI_F; }
+// aproxima 'atual' de 'alvo' (angulos em graus, pelo caminho mais curto)
+float aproximar_angulo(float atual, float alvo, float k) {
+    float d = std::fmod(alvo - atual + 540.0f, 360.0f) - 180.0f;
+    return atual + d * k;
+}
+}  // namespace
+
+void Mira::atualizar(const std::string& chave, double ang_graus, double agora) {
+    tipo_ = tipo_mira(chave);
+    const float a = static_cast<float>(ang_graus) * PI_F / 180;
+    const float dx = std::cos(a), dy = std::sin(a);
+    // histerese: so troca de lado quando o alvo passa ~10 graus do eixo vertical
+    int lado = lado_;
+    if (dx > 0.17f) lado = 1;
+    else if (dx < -0.17f) lado = -1;
+    const float braco_alvo = std::clamp(graus(std::atan2(lado * dx, -dy)) - 18, BRACO_MIN, BRACO_MAX);
+    const float inclina_alvo = INCLINA_MAX * std::clamp(dx, -1.0f, 1.0f);
+    const float torreta_alvo = graus(std::atan2(dx, -dy));
+    if (!iniciada_) {
+        iniciada_ = true;
+        lado_ = lado_antes_ = lado;
+        braco_ = braco_alvo, inclina_ = inclina_alvo, torreta_ = torreta_alvo;
+        ultimo_ = agora;
+        return;
+    }
+    if (lado != lado_) {
+        lado_antes_ = lado_;
+        lado_ = lado;
+        t_virada_ = agora;
+    }
+    const float dt = static_cast<float>(std::clamp(agora - ultimo_, 0.0, 0.1));
+    ultimo_ = agora;
+    const float k = 1 - std::exp(-dt * 12);
+    braco_ += (braco_alvo - braco_) * k;
+    inclina_ += (inclina_alvo - inclina_) * (1 - std::exp(-dt * 6));
+    torreta_ = aproximar_angulo(torreta_, torreta_alvo, 1 - std::exp(-dt * 10));
+}
+
+void Mira::aplicar(Quadro& q, double agora) const {
+    if (!iniciada_ || tipo_ == TipoMira::FIXA) return;
+    if (tipo_ == TipoMira::TORRETA) {
+        q.pose.torreta = torreta_;
+        return;
+    }
+    // virada: a escala X encolhe ate quase sumir e abre do outro lado com uma pequena volta
+    const float u = static_cast<float>((agora - t_virada_) / DUR_VIRADA);
+    if (u >= 1) q.sx = static_cast<float>(lado_);
+    else if (u < 0.5f) q.sx = lado_antes_ * (1 - 1.7f * u);
+    else q.sx = lado_ * (0.15f + 0.85f * suavizar(Curva::SAI_VOLTA, (u - 0.5f) * 2));
+    if (tipo_ == TipoMira::MACACO) {
+        q.pose.mirando = true;
+        q.pose.mira = braco_;
+        q.inclina = inclina_;
+    }
+}
+
 // ---------------------------------------------------------------- animador
 void Animador::observar(const Pista& pista, double agora) {
     std::set<int> vivas;
@@ -243,6 +312,7 @@ void Animador::observar(const Pista& pista, double agora) {
         }
         e.rec = t.recargas;
         e.hab = t.hab_rec;
+        e.mira.atualizar(t.chave, t.ang, agora);
     }
     for (auto it = est_.begin(); it != est_.end();) it = vivas.count(it->first) ? std::next(it) : est_.erase(it);
 }
@@ -251,15 +321,17 @@ Quadro Animador::quadro(int id, double agora) const {
     auto it = est_.find(id);
     if (it == est_.end()) return {};
     const Estado& e = it->second;
+    Quadro q;
     // a habilidade tem prioridade sobre o disparo
     if (e.hab_clipe && agora - e.t_hab < e.hab_clipe->dur) {
-        Quadro q = avaliar(*e.hab_clipe, static_cast<float>(agora - e.t_hab));
+        q = avaliar(*e.hab_clipe, static_cast<float>(agora - e.t_hab));
         q.cor = e.cor;
         q.habilidade = true;
-        return q;
+    } else if (e.disparo && agora - e.t_disparo < e.disparo->dur) {
+        q = avaliar(*e.disparo, static_cast<float>(agora - e.t_disparo));
     }
-    if (e.disparo && agora - e.t_disparo < e.disparo->dur) return avaliar(*e.disparo, static_cast<float>(agora - e.t_disparo));
-    return {};
+    e.mira.aplicar(q, agora);
+    return q;
 }
 
 void Animador::tocar_disparo(int id, const std::string& chave, double agora) {

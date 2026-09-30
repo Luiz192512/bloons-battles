@@ -67,8 +67,35 @@ struct Quadro {
     float escala = 1, salto = 0, corpo_recuo = 0, brilho = 0, onda = 0, onda_alfa = 0;
     Color cor = WHITE;  // cor da habilidade (brilho e onda)
     bool habilidade = false;
+    // mira na vista 3/4: espelho (com a animacao de virada) e inclinacao do corpo
+    float sx = 1, inclina = 0;
 };
 Quadro avaliar(const Clipe& c, float t);
+
+// Como cada torre mira no mapa sem deitar o sprite 3/4.
+enum class TipoMira {
+    MACACO,   // vira de lado, braco aponta para o alvo, corpo inclina de leve
+    TORRETA,  // maquina parada; so a torreta/canos giram (bomba, sentinela, churchill)
+    ESPELHA,  // navios e aeronaves: so viram para o lado do alvo ou do movimento
+    FIXA,     // construcoes e tubos simetricos: nao mudam
+};
+TipoMira tipo_mira(const std::string& chave);
+
+// Estado da mira de uma torre (so no cliente). Le o angulo de mira da simulacao (Torre::ang).
+class Mira {
+public:
+    static constexpr float DUR_VIRADA = 0.16f;  // s
+    static constexpr float BRACO_MIN = -50, BRACO_MAX = 75, INCLINA_MAX = 7;
+    void atualizar(const std::string& chave, double ang_graus, double agora);
+    void aplicar(Quadro& q, double agora) const;
+
+private:
+    TipoMira tipo_ = TipoMira::MACACO;
+    bool iniciada_ = false;
+    int lado_ = 1, lado_antes_ = 1;
+    double t_virada_ = -100, ultimo_ = 0;
+    float braco_ = 0, inclina_ = 0, torreta_ = 0;
+};
 
 // Biblioteca de clipes
 const Clipe& clipe_disparo(const std::string& chave_torre);
@@ -86,6 +113,7 @@ public:
 
 private:
     struct Estado {
+        Mira mira;
         std::vector<double> rec, hab;
         const Clipe* disparo = nullptr;
         double t_disparo = -1;

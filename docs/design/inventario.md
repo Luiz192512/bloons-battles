@@ -142,3 +142,28 @@ Geradas com `BloonsBattles --captura` (a mesma captura do F12):
 | `04_partida_solo.png`, `05_partida_batalha.png`, `06_pausa.png` | `--demo solo`, `--demo batalha`, `--demo solo --pausa` |
 | `07_habilidade_em_uso_sequencia.png` | 6 quadros de `--demo solo` (0,1 s entre eles): habilidades disparadas pelo comando normal `B`, com brilho e onda |
 | `10_...` a `20_...` | `--vitrine 0..10` (torres, tiers, heróis, bloons, dirigíveis, projéteis, efeitos, habilidades, animações, mapas) |
+
+## 5. Macacos 3/4 no mapa
+
+No mapa as torres passaram a usar só a vista 3/4 de frente (a dos cards e menus). A vista de
+cima continua em `sprites.cpp` e aparece na vitrine (página Torres, marcada "cima: só vitrine").
+
+Como a 3/4 não pode girar inteira sem deitar, a mira virou um conjunto de mudanças visuais
+(`anim::Mira`, só no cliente, lendo `Torre::ang`):
+
+- virar de lado: espelho horizontal com animação de virada de 0,16 s (a escala X encolhe até
+  0,15 e abre do outro lado com uma pequena volta) e histerese de ~10 graus em torno da vertical;
+- braço de ataque aponta para o alvo, entre -50 e +75 graus, somado ao giro dos clipes de disparo;
+- corpo inclina até 7 graus na direção do alvo, suavizado;
+- máquinas: a torreta/canos giram (grupo `Anim::RECUO`) sem espelhar o corpo.
+
+| Torre/herói | Vira de lado | Braço mira | Inclina | Torreta gira | Exceção e motivo |
+|---|---|---|---|---|---|
+| Macacos (dardo, bumerangue, gelo, cola, atirador, dartling, mago, super, ninja, alquimista, druida, engenheiro) | sim | sim (-50° a +75°) | até 7° | não se aplica | nenhuma |
+| 17 heróis macacos | sim | sim | até 7° | não se aplica | nenhuma |
+| Canhão Bomba, Torreta (sentinela), Capitão Churchill | não | não | não | sim | corpo é uma base redonda/tanque: espelhar não muda nada, girar os canos mostra a mira |
+| Submarino, Bucaneiro, Ás, Helicóptero, Fênix | sim | não | não | não | navios e aeronaves não têm braço; inclinar deformaria a arte achatada da base |
+| Tachinhas, Vila, Fazenda, Fábrica de Espinhos, Morteiro | não | não | não | não | construções e tubos simétricos, atacam em volta ou pela trilha |
+
+Verificação: `--vitrine 11` (alvo girando em volta de cada macaco e herói), capturas antes e
+depois em `capturas/mira_3-4/` e FPS em 60 no `--demo batalha --fps`.

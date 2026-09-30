@@ -130,6 +130,34 @@ void desenhar_camadas(const Camadas& c, float x, float y, float escala, float ro
     }
 }
 
+// Mesmo que desenhar_camadas, mas com uma transformacao qualquer (caixa -> tela) aplicada pela
+// funcao 'xf': as texturas sao desenhadas nas coordenadas da caixa, entao espelho e rotacao em
+// volta de qualquer ponto funcionam igual para as partes em cache e as ao vivo.
+void desenhar_camadas_xf(const Camadas& c, const std::function<void()>& xf, unsigned char alfa, const Desenho& desenho,
+                         double t, const spr::Pose& pose) {
+    const float mx = c.bw * MARGEM, my = c.bh * MARGEM;
+    for (int k = 0; k <= c.grupos; ++k) {
+        rlPushMatrix();
+        xf();
+        if (c.seg[k]) {
+            const Texture2D& tx = c.seg[k]->rt.texture;
+            DrawTexturePro(tx, {0, 0, static_cast<float>(tx.width), -static_cast<float>(tx.height)},
+                           {-mx, -my, c.bw + 2 * mx, c.bh + 2 * my}, {0, 0}, 0, Color{255, 255, 255, alfa});
+        }
+        if (k < c.grupos) {
+            Caneta p;
+            p.modo = Caneta::Modo::VIVO;
+            p.alvo = k;
+            p.t = static_cast<float>(t);
+            p.pose = pose;
+            p.em_jogo = true;
+            p.reiniciar(alfa / 255.0f);
+            desenho(p);
+        }
+        rlPopMatrix();
+    }
+}
+
 // Tudo ao vivo (sem cache): menus animados, efeitos e vitrine.
 void desenhar_vivo(float bw, float bh, float x, float y, float esc, float rotacao, const Desenho& desenho, double t,
                    const spr::Pose& pose = {}, bool em_jogo = false, float alfa = 1) {
@@ -241,6 +269,37 @@ Visual visual(const Torre& t) {
         return v;
     }
     return visual_caminhos(t.caminhos);
+}
+
+namespace {
+// Na caixa 3/4 o pe do macaco fica em (64, 116) e o corpo em volta de (64, 92): esse ponto vai
+// sobre a posicao da torre, para o boneco ficar em pe onde foi colocado.
+constexpr float PE_Y = 116, CORPO_Y = 92;
+}  // namespace
+
+float pe_torre_mapa(float tam) { return (PE_Y - CORPO_Y) * tam / 128; }
+
+void torre_mapa(const std::string& chave, const Visual& v, float x, float y, float tam, const anim::Quadro* q,
+                unsigned char alfa) {
+    const std::string k = "tf:" + chave + ":" + std::to_string(v.cam) + ":" + std::to_string(v.tier) + ":" +
+                          std::to_string(v.nivel) + ":" + num(tam);
+    const Desenho d = desenho_torre(chave, v, spr::Vista::FRENTE);
+    const float s = tam / 128;
+    const Camadas& c = camadas(k, 128, 128, s, d);
+    anim::Quadro neutro;
+    const anim::Quadro& qq = q ? *q : neutro;
+    const float esc = qq.pose.ativa ? qq.escala : 1.0f;
+    const float salto = qq.pose.ativa ? qq.salto : 0.0f;
+    // o corpo recua um pouco para o lado contrario ao que esta virado
+    const float recuo = qq.pose.ativa ? -qq.corpo_recuo * (qq.sx < 0 ? -1.0f : 1.0f) : 0.0f;
+    const float pe_x = x + recuo, pe_y = y + pe_torre_mapa(tam) + salto;
+    auto xf = [&] {
+        rlTranslatef(pe_x, pe_y, 0);
+        if (qq.inclina != 0) rlRotatef(qq.inclina, 0, 0, 1);
+        rlScalef(s * esc * qq.sx, s * esc, 1);
+        rlTranslatef(-64, -PE_Y, 0);
+    };
+    desenhar_camadas_xf(c, xf, alfa, d, ui::tempo(), qq.pose);
 }
 
 void torre(const std::string& chave, const Visual& v, float x, float y, float tam, float rotacao, const anim::Quadro* q,

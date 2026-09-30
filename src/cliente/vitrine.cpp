@@ -15,8 +15,8 @@ using ui::rgb;
 namespace {
 
 const char* const PAGINAS[] = {"Torres", "Tiers (1/2)", "Tiers (2/2)", "Heróis", "Bloons", "Dirigíveis",
-                               "Projéteis", "Efeitos", "Habilidades", "Animações", "Mapas"};
-constexpr int N_PAGINAS = 11;
+                               "Projéteis", "Efeitos", "Habilidades", "Animações", "Mapas", "Mira 3/4"};
+constexpr int N_PAGINAS = 12;
 
 struct HabInfo {
     std::string dono, efeito, nome;
@@ -100,6 +100,7 @@ private:
     void pag_habilidades();
     void pag_animacoes();
     void pag_mapas();
+    void pag_mira();
     void celula(Rectangle r, Color fundo);
     anim::Quadro quadro_loop(const anim::Clipe& c, double atraso, float pausa = 0.5f) const;
 
@@ -108,6 +109,7 @@ private:
     double t_ = 0;
     std::vector<HabInfo> habs_;
     std::vector<Rectangle> alvos_;
+    std::vector<anim::Mira> miras_ = std::vector<anim::Mira>(40);
 };
 
 void CenaVitrine::celula(Rectangle r, Color fundo) {
@@ -156,7 +158,8 @@ void CenaVitrine::desenhar() {
         case 7: pag_efeitos(); break;
         case 8: pag_habilidades(); break;
         case 9: pag_animacoes(); break;
-        default: pag_mapas(); break;
+        case 10: pag_mapas(); break;
+        default: pag_mira(); break;
     }
     cabecalho();
 }
@@ -170,6 +173,9 @@ void CenaVitrine::torres_base() {
         const anim::Quadro q = quadro_loop(anim::clipe_disparo(ts[i].chave), i * 0.13, 0.9f);
         arte::torre_viva(ts[i].chave, {}, x + 54, y + 70, 104, t_, &q, true);
         arte::torre_icone(ts[i].chave, {}, x + 54, y + 190, 96);
+        // a vista de cima fica so aqui; no mapa os macacos usam a 3/4
+        ui::texto("cima: só vitrine", x + 54, y + 12, 8, rgb(233, 255, 217), 0, Ancora::CENTER, ui::Peso::TEXTO);
+        ui::texto("3/4: mapa", x + 54, y + 132, 8, rgb(233, 255, 217), 0, Ancora::CENTER, ui::Peso::TEXTO);
         ui::texto(ts[i].nome, x + 54, y + 262, 10, ui::BRANCO, 3, Ancora::CENTER);
         ui::tecla_centro(std::string(1, static_cast<char>(std::toupper(ts[i].tecla[0]))), x + 54, y + 286, 9);
     }
@@ -371,6 +377,28 @@ void CenaVitrine::pag_animacoes() {
     std::string leg = "curvas: ";
     for (size_t i = 0; i < curvas.size(); ++i) leg += (i ? ", " : "") + curvas[i];
     ui::texto(leg, painel.x + 16, painel.y + painel.height - 20, 11, ui::TEXTO_ESCURO, 0, Ancora::MIDLEFT, ui::Peso::TEXTO);
+}
+
+// Mira na vista 3/4: um alvo gira em volta de cada macaco; ele vira de lado, aponta o braco,
+// inclina e atira (as maquinas giram a torreta).
+void CenaVitrine::pag_mira() {
+    std::vector<std::string> chaves;
+    for (const DefTorre& t : torres()) chaves.push_back(t.chave);
+    for (const DefTorre& h : herois()) chaves.push_back(h.chave);
+    for (size_t i = 0; i < chaves.size() && i < miras_.size(); ++i) {
+        const float x = 12 + (i % 10) * 126.0f, y = 72 + (i / 10) * 160.0f;
+        celula({x, y, 120, 154}, rgb(109, 190, 69));
+        const float cx = x + 60, cy = y + 84;
+        const double giro = t_ * 0.8 + i * 0.7;
+        const float ax = cx + static_cast<float>(std::cos(giro)) * 50, ay = cy + static_cast<float>(std::sin(giro)) * 42;
+        arte::bloon_vivo("vermelho", false, false, false, ax, ay, 30, t_);
+        const double ang = std::atan2(ay - cy, ax - cx) * 180 / 3.14159265;
+        miras_[i].atualizar(chaves[i], ang, t_);
+        anim::Quadro q = quadro_loop(anim::clipe_disparo(chaves[i]), i * 0.23, 0.9f);
+        miras_[i].aplicar(q, t_);
+        arte::torre_mapa(chaves[i], {}, cx, cy, 86, &q);
+        ui::texto(definicao(chaves[i]).nome, x + 60, y + 144, 8, ui::BRANCO, 2, Ancora::CENTER);
+    }
 }
 
 void CenaVitrine::pag_mapas() {

@@ -24,8 +24,14 @@ struct Visual {
 Visual visual(const Torre& t);
 Visual visual_caminhos(const std::array<int, 3>& caminhos);
 
-// Torre no mapa (vista de cima), centrada em (x, y). tam = lado da caixa do sprite em px.
-// rotacao em graus (0 = olhando para cima). q = quadro de animacao (disparo/habilidade).
+// Torre no mapa na vista 3/4 de frente, em pe sobre (x, y). tam = lado da caixa do sprite em px.
+// q = quadro de animacao: disparo/habilidade, espelho da virada, inclinacao, braco e torreta.
+void torre_mapa(const std::string& chave, const Visual& v, float x, float y, float tam, const anim::Quadro* q = nullptr,
+                unsigned char alfa = 255);
+// Pe do sprite 3/4 em relacao ao ponto da torre (para sombra, anel de selecao e nivel).
+float pe_torre_mapa(float tam);
+
+// Vista de cima (nao e mais usada no mapa; fica na vitrine). rotacao em graus (0 = para cima).
 void torre(const std::string& chave, const Visual& v, float x, float y, float tam, float rotacao,
            const anim::Quadro* q = nullptr, unsigned char alfa = 255);
 // Icone da torre (vista 3/4 de frente), parado, para cards, painel e menus.

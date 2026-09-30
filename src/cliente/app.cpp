@@ -78,6 +78,8 @@ App::App(const std::vector<std::string>& args) {
                 if (t == "lobby") b->conectar();
             }
             if (proxima_) cena_ = std::move(proxima_);
+        } else if (args[i] == "--fps") {
+            mostrar_fps_ = true;
         } else if (args[i] == "--pausa") {
             if (auto* j = dynamic_cast<CenaJogo*>(cena_.get())) j->abrir_pausa();
         } else if (args[i] == "--demo") {

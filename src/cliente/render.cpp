@@ -30,7 +30,7 @@ Color cor_efeito(const std::string& vis, Color padrao) {
 
 // Tamanho da caixa do sprite de uma torre no mapa
 float tamanho_torre(const Torre& t) {
-    float tam = t.dfn->heroi ? 70.0f : static_cast<float>(t.dfn->raio) * 3.0f;
+    float tam = t.dfn->heroi ? 74.0f : static_cast<float>(t.dfn->raio) * 3.2f;
     if (t.temporaria) tam *= 0.8f;
     return tam;
 }
@@ -139,19 +139,21 @@ void RenderPista::desenhar_torre(const Torre& t, bool sel) {
             DrawTriangle(p0, {x + std::cos(a) * l, y + std::sin(a) * l}, p1, ui::com_alfa(ui::BRANCO, static_cast<int>(120 * q.brilho)));
         }
     }
-    if (sel) {
-        // selecionada: elipse amarela na base (como no mockup)
-        const float rx = tam * 0.5f + 2;
+    // anel no chao, em volta do pe do boneco 3/4 (selecao em amarelo, turbo em laranja)
+    const float pe = y + arte::pe_torre_mapa(tam);
+    auto anel_chao = [&](Color cor, float folga) {
+        const float rx = tam * 0.32f + folga;
         rlPushMatrix();
-        rlTranslatef(x, y + tam * 0.12f, 0);
-        rlScalef(1, 0.72f, 1);
-        DrawRing({0, 0}, rx - 5, rx + 2, 0, 360, 48, ui::com_alfa(ui::TINTA, 150));
-        DrawRing({0, 0}, rx - 4, rx, 0, 360, 48, ui::AMARELO);
+        rlTranslatef(x, pe, 0);
+        rlScalef(1, 0.4f, 1);
+        DrawRing({0, 0}, rx - 6, rx + 2, 0, 360, 48, ui::com_alfa(ui::TINTA, 150));
+        DrawRing({0, 0}, rx - 5, rx, 0, 360, 48, cor);
         rlPopMatrix();
-    }
-    arte::torre(t.chave, arte::visual(t), x, y, tam, static_cast<float>(t.ang) + 90, &q);
-    if (t.dfn->heroi) ui::tecla_centro(std::to_string(t.nivel), x + tam * 0.3f, y + tam * 0.3f);
-    if (t.turbo < 1.0) DrawRing({x, y}, tam * 0.46f, tam * 0.46f + 3, 0, 360, 48, ui::com_alfa(ui::AMARELO, 200));
+    };
+    if (sel) anel_chao(ui::AMARELO, 6);
+    if (t.turbo < 1.0) anel_chao(rgb(255, 170, 40), sel ? 14.0f : 6.0f);
+    arte::torre_mapa(t.chave, arte::visual(t), x, y, tam, &q);
+    if (t.dfn->heroi) ui::tecla_centro(std::to_string(t.nivel), x + tam * 0.3f, pe - 4);
 }
 
 void RenderPista::desenhar_habilidades_em_uso() {
@@ -266,8 +268,9 @@ void RenderPista::desenhar_mini(Rectangle r) {
     for (auto& s : pista_.pilhas) arte::pilha(*s, r.x, r.y, esc);
     for (auto& [id, t] : pista_.torres) {
         const float tam = std::max(14.0f, std::round(tamanho_torre(*t) * esc * 1.3f));
-        arte::torre(t->chave, arte::visual(*t), r.x + std::floor(static_cast<float>(t->x) * esc),
-                    r.y + std::floor(static_cast<float>(t->y) * esc), tam, static_cast<float>(t->ang) + 90);
+        const anim::Quadro q = animador_.quadro(t->id, ui::tempo());
+        arte::torre_mapa(t->chave, arte::visual(*t), r.x + std::floor(static_cast<float>(t->x) * esc),
+                         r.y + std::floor(static_cast<float>(t->y) * esc), tam, &q);
     }
     for (auto& b : pista_.bloons) {
         if (!b->vivo) continue;

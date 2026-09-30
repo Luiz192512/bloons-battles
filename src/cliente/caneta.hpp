@@ -77,6 +77,10 @@ struct Pose {
     float estica = 0;     // avanco do braco (unidades da caixa 128)
     float flash = 0;      // 0..1 clarao na ponta do item
     float ergue = 0;      // 0..1 braco erguido (habilidade)
+    // mira no mapa (vista 3/4): o braco de ataque aponta para o alvo e a torreta das maquinas gira
+    bool mirando = false;
+    float mira = 0;       // graus no braco de ataque, somados ao giro do clipe
+    float torreta = 0;    // graus da torreta/canos (maquinas)
 };
 
 class Caneta {

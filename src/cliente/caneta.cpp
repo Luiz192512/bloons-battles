@@ -153,7 +153,10 @@ void Caneta::aplicar_anim(const Anim& a) {
         case Anim::GIRA: rlRotatef(std::fmod(tt * 360 / a.dur * a.dir, 360.0f), 0, 0, 1); break;
         case Anim::BALANCA: rlRotatef(a.amp * onda(f), 0, 0, 1); break;
         case Anim::FLUTUA: rlTranslatef(a.dx * onda(f), a.dy * onda(f), 0); break;
-        case Anim::RECUO: rlTranslatef(0, a.dy * (em_jogo ? pose.recuo : recuo(f)), 0); break;
+        case Anim::RECUO:
+            if (em_jogo && pose.torreta != 0) rlRotatef(pose.torreta, 0, 0, 1);
+            rlTranslatef(0, a.dy * (em_jogo ? pose.recuo : recuo(f)), 0);
+            break;
         case Anim::VOA: rlTranslatef(a.dx * fase, a.dy * fase, 0); break;
         case Anim::PULSA: {
             const float s = a.s0 + (a.s1 - a.s0) * onda(f);
@@ -168,11 +171,13 @@ void Caneta::aplicar_anim(const Anim& a) {
         case Anim::PISCA: alfa_ *= a.a0 + (a.a1 - a.a0) * onda(f); break;
         case Anim::SOME: alfa_ *= fase < 0.4f ? 1 : 1 - (fase - 0.4f) / 0.6f; break;
         case Anim::BRACO:
+            if (pose.mirando) rlRotatef(pose.mira, 0, 0, 1);
             if (pose.ativa) {
                 rlTranslatef(0, -pose.estica, 0);
                 rlRotatef(pose.giro, 0, 0, 1);
             } else {
-                rlRotatef(a.amp * onda(f), 0, 0, 1);
+                // parado: balanca como no design (mais contido enquanto mira)
+                rlRotatef(a.amp * onda(f) * (pose.mirando ? 0.3f : 1.0f), 0, 0, 1);
             }
             break;
     }
