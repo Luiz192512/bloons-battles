@@ -1,0 +1,80 @@
+@bomba base
+A("projetil", {{"cad", 1.5}, {"dano", 1}, {"pierce", 1}, {"vel", 600}, {"dist", 260}, {"visual", "bomba"}, {"raio_proj", 7}, {"splash", 45}, {"sdano", 1}, {"spierce", 22}, {"sdtype", "explosao"}})
+@dardo 1-2 | Dardos estouram +2 bloons.
+{{"pierce", 2}}
+@dardo 1-3 | Bolas de espinhos: 2 de dano, pierce 18, quicam em obstáculos.
+{{"dano", 1}, {"pierce", 13}, {"cad", 1.21}, {"raio_proj", 6}, {"vel", 0.5}, {"alcance", 19}, {"visual", "bola_espinho"}}
+@dardo 1-4 | Bola gigante: pierce 60, estoura chumbo, +3 em cerâmica e +2 em fortificado.
+{{"cad", 0.87}, {"pierce", 42}, {"dtype", "normal"}, {"cer", 3}, {"fort", 2}, {"raio_proj", 6}, {"vel", 2.0}, {"visual", "juggernaut"}}
+@dardo 1-5 | 5 de dano, pierce 210; se divide em 6 juggernauts.
+{{"dano", 3}, {"fort", 3}, {"cer", 5}, {"pierce", 150}, {"raio_proj", 4}, {"frag", {{"n", 6}, {"dano", 2}, {"pierce", 50}, {"dtype", "normal"}, {"cer", 3}, {"fort", 2}, {"visual", "juggernaut"}}}}
+@dardo 2-2 | Atira ainda mais rápido.
+{{"cad", 0.788}}
+@dardo 2-3 | Atira 3 dardos por vez, mais rápido.
+{{"n", 2}, {"spread", 30}, {"cad", 0.75}}
+@dardo 2-4 | Atira 2x mais rápido. Habilidade: até 10 dardos viram Super Macacos por 15 s.
+{{"cad", 0.5}, {"hab", H("Fã-Clube Super Macaco", "turbo_area", 50, {{"dur", 15}, {"valor", 0.19}, {"filtro", "dardo"}})}}
+@dardo 2-5 | Habilidade: até 20 dardos viram Macacos Plasma por 15 s.
+{{"dano", 1}, {"pierce", 3}, {"dtype", "normal"}, {"hab", H("Fã-Clube Macaco Plasma", "turbo_area", 50, {{"dur", 15}, {"valor", 0.095}, {"filtro", "dardo"}})}}
+@dardo 3-1 | +8 de alcance.
+{{"alcance", 32}, {"dist", 60}}
+@dardo 3-2 | +8 de alcance e detecta camo.
+{{"alcance", 32}, {"camo", true}, {"vel", 1.1667}}
+@dardo 3-3 | Besta: 3 de dano, pierce 4, alcance 60.
+{{"alcance", 48}, {"dano", 2}, {"pierce", 2}, {"vel", 1.1}, {"visual", "flecha"}}
+@dardo 3-4 | 6 de dano e ataca 2x mais rápido.
+{{"cad", 0.5}, {"dano", 3}}
+@dardo 3-5 | 8 de dano, pierce 8, alcance 80, 2x mais rápido, estoura tudo.
+{{"cad", 0.5}, {"dano", 2}, {"pierce", 4}, {"alcance", 80}, {"dtype", "normal"}}
+@bumerangue 1-1 | Pierce 8.
+{{"pierce", 4}}
+@bumerangue 1-2 | Glaives: pierce 13.
+{{"pierce", 5}, {"visual", "glaive"}}
+@bumerangue 1-3 | Glaives em linha reta que ricocheteiam entre bloons (pierce 15).
+{{"pierce", 2}, {"quica", 15}}
+@bumerangue 1-4 | 3x mais rápido, pierce 60.
+{{"cad", 0.333}, {"pierce", 45}, {"quica", 45}, {"vel", 1.36}}
+@bumerangue 1-5 | Glaives orbitam o macaco: 4 de dano a cada 0,05 s em até 200 bloons.
+{{"novo", A("aura", {{"cad", 0.05}, {"dano", 4}, {"pierce", 200}, {"cer", 4}, {"raio_aura", 120}, {"visual", "orbita_glaive"}})}}
+@bumerangue 2-2 | Arremessa ainda mais rápido.
+{{"vel", 1.3}, {"cad", 0.667}}
+@bumerangue 2-3 | Ataca 4x mais rápido, +1 em M.O.A.B.
+{{"cad", 0.25}, {"moab", 1}}
+@bumerangue 2-4 | Habilidade: 5x mais rápido por 10 s.
+{{"hab", H("Turbo Carga", "turbo", 45, {{"dur", 10}, {"valor", 0.2}})}}
+@bumerangue 2-5 | Turbo permanente, 4 de dano.
+{{"cad", 0.2}, {"dano", 3}}
+@bumerangue 3-1 | +33% de alcance.
+{{"alcance", 57}, {"dist", 40}}
+@bumerangue 3-3 | Kylie em linha reta, pierce 18.
+{{"pierce", 14}, {"dist", 220}, {"visual", "kylie"}}
+@bumerangue 3-4 | Kylie pesado empurra dirigíveis a cada 10 s.
+{{"novo", A("projetil", {{"cad", 10.0}, {"dano", 1}, {"moab", 4}, {"pierce", 200}, {"vel", 520}, {"dist", 400}, {"so_moab", true}, {"empurra", 60}, {"visual", "kylie"}})}}
+@bumerangue 3-5 | Kylie com 12 de dano, pierce 54, 2x mais rápido; kylie pesado a cada 4 s.
+{{"dano", 10}, {"pierce", 36}, {"cad", 0.5}, {"a", 1}, {"cad", 0.4}}
+@bomba 1-1 | Explosão 50% maior, +6 pierce.
+{{"splash", 24}, {"spierce", 6}}
+@bomba 1-2 | +1 de dano e +10 pierce.
+{{"sdano", 1}, {"spierce", 10}}
+@bomba 1-3 | 4 de dano, pierce 80, empurra bloons.
+{{"splash", 36}, {"spierce", 42}, {"sdano", 2}, {"empurra", 80}}
+@bomba 1-4 | Atordoa bloons por 1,4 s.
+{{"atordoa", 1.4}, {"alcance", 12}}
+@bomba 1-5 | 24 de dano, estoura tudo e atordoa M.O.A.B.s por 2 s.
+{{"sdano", 20}, {"sdtype", "normal"}, {"atordoa", 0.6}, {"moab_atordoa", true}}
+@bomba 2-2 | Mísseis rápidos.
+{{"cad", 0.733}, {"vel", 1.5}, {"alcance", 16}, {"visual", "missil"}}
+@bomba 2-3 | +15 de dano em M.O.A.B.
+{{"moab", 15}, {"alcance", 20}}
+@bomba 2-4 | +30 em M.O.A.B. Habilidade: 750 no dirigível mais forte.
+{{"moab", 15}, {"alcance", 20}, {"hab", H("Míssil Assassino", "dano_forte", 30, {{"valor", 750}, {"n", 1}, {"moab_so", true}})}}
+@bomba 2-5 | +99 em M.O.A.B. Habilidade: 4.500 a cada 10 s.
+{{"moab", 69}, {"hab", H("Míssil Eliminador", "dano_forte", 10, {{"valor", 4500}, {"n", 1}, {"moab_so", true}})}}
+@bomba 3-1 | +12 de alcance.
+{{"alcance", 48}, {"dist", 40}}
+@bomba 3-2 | Solta 8 fragmentos.
+{{"alcance", 8}, {"frag", {{"n", 8}, {"dano", 1}, {"pierce", 1}, {"dtype", "afiado"}, {"visual", "fragmento"}}}}
+@bomba 3-4 | +1 de dano em todas as explosões; mini bombas recursivas.
+{{"sdano", 1}, {"frag", {{"n", 8}, {"dano", 1}, {"pierce", 1}, {"splash", 60}, {"sdano", 2}, {"spierce", 8}, {"visual", "bomba"}}}}
+@bomba 3-5 | +3 de dano e ataca mais rápido.
+{{"sdano", 3}, {"cad", 0.6}, {"hab", H("Blitz de Bombas", "dano_global", 60, {{"valor", 1000}})}}

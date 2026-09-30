@@ -1,0 +1,120 @@
+@morteiro base
+A("morteiro", {{"cad", 2.0}, {"dano", 1}, {"splash", 80}, {"sdano", 2}, {"spierce", 25}, {"sdtype", "explosao"}, {"impreciso", 72}, {"global_", true}, {"visual", "bala_canhao"}})
+@morteiro 1-1 | Explosão 40% maior, +20 pierce.
+{{"splash", 32}, {"spierce", 20}}
+@morteiro 1-2 | 3 de dano.
+{{"sdano", 1}}
+@morteiro 1-3 | Explosão maior que atordoa.
+{{"splash", 40}, {"atordoa", 0.5}}
+@morteiro 1-4 | 10 de dano, pierce 85, explosão enorme.
+{{"splash", 80}, {"spierce", 40}, {"sdano", 7}}
+@morteiro 1-5 | 25 de dano, +30 em cerâmica e M.O.A.B., pierce 200.
+{{"splash", 64}, {"spierce", 115}, {"sdano", 15}, {"cer", 30}, {"moab", 30}}
+@morteiro 2-2 | Recarrega ainda mais rápido.
+{{"cad", 0.72}}
+@morteiro 2-3 | Estoura tudo; bônus em chumbo, M.O.A.B., fortificado e cerâmica.
+{{"cad", 0.75}, {"sdtype", "normal"}, {"moab", 1}, {"fort", 1}, {"cer", 3}}
+@morteiro 2-4 | 3x mais rápido. Habilidade: 4x mais rápido por 8 s.
+{{"cad", 0.333}, {"hab", H("Bombardeio", "turbo", 60, {{"dur", 8}, {"valor", 0.25}})}}
+@morteiro 2-5 | Habilidade: atordoa tudo e causa 20 de dano por segundo por 8 s.
+{{"hab", H("Choque e Pavor", "dano_global", 60, {{"valor", 160}, {"atordoa", 8}})}}
+@morteiro 3-1 | Mais preciso e detecta camo.
+{{"impreciso", 0.444}, {"camo", true}}
+@morteiro 3-2 | Deixa fogo.
+{{"queima", J::array({0.8, 3.85})}}
+@morteiro 3-3 | Remove camo, inclusive de D.D.T.
+{{"retira_camo", true}, {"camo", true}}
+@morteiro 3-4 | Remove camo e regeneração; queima mais forte.
+{{"retira_regen", true}, {"queima", J::array({4, 3.85})}}
+@morteiro 3-5 | Fogo intenso.
+{{"queima", J::array({6.67, 4.5})}}
+@dartling base
+A("projetil", {{"cad", 0.2}, {"dano", 1}, {"pierce", 1}, {"vel", 1200}, {"dist", 1400}, {"spread", 23}, {"global_", true}, {"visual", "dardo"}})
+@dartling 1-1 | Espalhamento 60% menor.
+{{"spread", 9}}
+@dartling 1-2 | Choque: 1 de dano extra depois de 1 s.
+{{"queima", J::array({1, 1})}}
+@dartling 1-3 | Laser: 2 de dano, pierce 6, +2 em M.O.A.B.
+{{"dtype", "energia"}, {"dano", 1}, {"pierce", 5}, {"moab", 2}, {"visual", "laser"}}
+@dartling 1-4 | Raio contínuo: pierce 50, +10 em M.O.A.B.
+{{"subst", A("hitscan", {{"cad", 0.2}, {"dano", 2}, {"pierce", 50}, {"moab", 10}, {"dtype", "normal"}, {"global_", true}, {"visual", "raio_plasma"}, {"linha", true}, {"queima", J::array({1, 5})}})}}
+@dartling 1-5 | Raio de 30 de dano, pierce 999.
+{{"dano", 28}, {"pierce", 949}, {"queima", J::array({20, 30})}}
+@dartling 2-1 | Detecta camo.
+{{"camo", true}}
+@dartling 2-2 | Gira 50% mais rápido.
+{{"cad", 0.67}}
+@dartling 2-3 | Mísseis que explodem em qualquer bloon.
+{{"splash", 32}, {"sdano", 2}, {"spierce", 6}, {"sdtype", "normal"}, {"visual", "missil"}}
+@dartling 2-4 | +2 pierce. Habilidade: chuva de foguetes.
+{{"spierce", 2}, {"pierce", 2}, {"hab", H("Tempestade de Foguetes", "turbo", 40, {{"dur", 8}, {"valor", 0.2}})}}
+@dartling 2-5 | Mega mísseis: +450 em M.O.A.B.
+{{"cad", 3.0}, {"sdano", 1}, {"moab", 450}}
+@dartling 3-1 | Gira mais rápido.
+J::object()
+@dartling 3-2 | +2 pierce e projéteis mais rápidos.
+{{"pierce", 2}, {"vel", 1.3}}
+@dartling 3-3 | Chumbinho: 6 projéteis de 3 de dano.
+{{"n", 5}, {"dano", 2}, {"pierce", 3}, {"spread", 30}, {"dist", -1150}, {"cad", 6.0}, {"empurra", 20}}
+@dartling 3-4 | 4 canos: 4x mais rápido.
+{{"cad", 0.25}}
+@dartling 3-5 | 6 canos: 12 projéteis de 6 de dano.
+{{"cad", 0.667}, {"pierce", 2}, {"dano", 3}, {"n", 6}}
+@mago base
+A("projetil", {{"cad", 1.1}, {"dano", 1}, {"pierce", 3}, {"dtype", "energia"}, {"vel", 700}, {"dist", 240}, {"visual", "magia"}})
+@mago 1-1 | Magia teleguiada.
+{{"busca", true}, {"dist", 240}}
+@mago 1-2 | 2 de dano.
+{{"dano", 1}, {"raio_proj", 2}}
+@mago 1-3 | +50% de alcance, 2x mais rápido, +4 pierce, +1 de dano.
+{{"alcance", 80}, {"cad", 0.5}, {"pierce", 4}, {"dano", 1}}
+@mago 1-4 | 2x mais rápido, 6 de dano, +10 em M.O.A.B., estoura chumbo.
+{{"cad", 0.5}, {"dano", 3}, {"moab", 10}, {"dtype", "normal"}}
+@mago 1-5 | Raio de 8 de dano, 2x mais rápido; ganha sopro de fogo e cintilar.
+J::array({{{"dano", 2}, {"moab", 9}, {"pierce", 4}, {"cad", 0.5}}, {{"novo", A("aura", {{"cad", 2.0}, {"dano", 0}, {"pierce", 500}, {"retira_camo", true}, {"raio_aura", 300}, {"dtype", "normal"}, {"visual", "nenhum"}})}}, {{"novo", A("projetil", {{"cad", 0.135}, {"dano", 2}, {"pierce", 3}, {"vel", 500}, {"dist", 170}, {"dtype", "energia"}, {"queima", J::array({0.67, 3.1})}, {"visual", "fogo"}})}}})
+@mago 2-2 | Muralha de fogo na trilha.
+{{"novo", A("pilha", {{"cad", 6.5}, {"dano", 1}, {"pilha_pierce", 30}, {"pilha_vida", 4.5}, {"dtype", "energia"}, {"visual", "chamas"}})}}
+@mago 2-3 | Lança-chamas: 2 de dano a cada 0,135 s.
+{{"novo", A("projetil", {{"cad", 0.135}, {"dano", 2}, {"pierce", 3}, {"vel", 500}, {"dist", 170}, {"dtype", "energia"}, {"queima", J::array({0.67, 3.1})}, {"visual", "fogo"}})}}
+@mago 2-4 | Habilidade: fênix por 20 s.
+{{"hab", H("Fênix", "invocar", 45, {{"dur", 20}, {"base", "fenix"}})}}
+@mago 2-5 | Fênix permanente.
+{{"novo", A("projetil", {{"cad", 0.1}, {"dano", 5}, {"pierce", 8}, {"vel", 700}, {"dist", 600}, {"global_", true}, {"dtype", "energia"}, {"visual", "fogo"}})}}
+@mago 3-1 | +5 pierce e projéteis 2x mais rápidos.
+{{"pierce", 5}, {"vel", 2.0}}
+@mago 3-2 | +10 de alcance e detecta camo.
+{{"alcance", 40}, {"camo", true}}
+@mago 3-3 | Remove camo em volta.
+{{"alcance", 40}, {"novo", A("aura", {{"cad", 2.0}, {"dano", 0}, {"pierce", 500}, {"retira_camo", true}, {"raio_aura", 300}, {"dtype", "normal"}, {"visual", "nenhum"}})}}
+@mago 3-5 | 4x mais rápido e mais alcance; zumbis mais fortes.
+J::array({{{"cad", 0.25}, {"alcance", 80}}, {{"a", "zumbi"}, {"dano", 3}}})
+@super 1-1 | Laser: +1 pierce.
+{{"dtype", "energia"}, {"pierce", 1}, {"raio_proj", 3}, {"visual", "laser"}}
+@super 1-2 | Plasma: 50% mais rápido e estoura chumbo.
+{{"dtype", "normal"}, {"cad", 0.667}, {"raio_proj", 1}, {"visual", "plasma"}}
+@super 1-3 | 3 raios de sol por tiro, +4 pierce.
+{{"n", 2}, {"spread", 30}, {"pierce", 4}, {"vel", 2.0}, {"visual", "sol"}}
+@super 1-4 | Raio de sol único: 5 de dano, pierce 20.
+{{"n", -2}, {"spread", -30}, {"dano", 4}, {"pierce", 14}, {"cad", 1.67}, {"alcance", 60}}
+@super 1-5 | Raio de 15 de dano.
+{{"dano", 10}}
+@super 2-1 | +10 de alcance e +1 pierce.
+{{"alcance", 40}, {"pierce", 1}}
+@super 2-2 | +12 de alcance, +2 pierce.
+{{"alcance", 48}, {"pierce", 2}, {"vel", 1.4}}
+@super 2-3 | Atira com os 2 braços.
+{{"n", 1}, {"spread", 12}, {"pierce", 1}}
+@super 2-4 | Habilidade: aniquilação (2.600 de dano).
+{{"pierce", 2}, {"hab", H("Aniquilação", "dano_global", 45, {{"valor", 2600}})}}
+@super 2-5 | 5 de dano, pierce 12. Habilidade de 10.400.
+{{"dano", 4}, {"pierce", 5}, {"alcance", 40}, {"hab", H("Erradicação", "dano_global", 30, {{"valor", 10400}})}}
+@super 3-1 | Empurra os bloons.
+{{"empurra", 20}}
+@super 3-2 | Detecta camo.
+{{"camo", true}, {"alcance", 12}}
+@super 3-3 | Lâminas: pierce 4, +2 em M.O.A.B.
+{{"moab", 2}, {"pierce", 3}, {"raio_proj", 2}, {"visual", "escuro"}}
+@super 3-4 | 2x mais rápido, 2 de dano, estoura tudo.
+{{"alcance", 16}, {"cad", 0.5}, {"dano", 1}, {"moab", 1}, {"dtype", "normal"}}
+@super 3-5 | Buraco negro que evita vazamentos por 8 s.
+J::object()

@@ -1,0 +1,114 @@
+@fazenda 1-1 | 6 cachos por rodada ($120).
+{{"valor", 40}}
+@fazenda 1-2 | 8 cachos por rodada ($160).
+{{"valor", 40}}
+@fazenda 1-3 | 16 cachos por rodada ($320).
+{{"valor", 160}}
+@fazenda 1-4 | 5 caixas de $300 ($1.500 por rodada).
+{{"valor", 1180}}
+@fazenda 1-5 | 5 caixas de $1.200 ($7.000 por rodada).
+{{"valor", 5500}}
+@fazenda 2-1 | Bananas duram 30 s.
+J::object()
+@fazenda 2-2 | Bananas valem 25% mais.
+{{"valor_x", 1.25}}
+@fazenda 2-3 | Banco: guarda o dinheiro e rende 15% de juros.
+{{"valor_x", 1.15}}
+@fazenda 2-4 | Habilidade: empréstimo de $9.000 (paga depois com metade da renda).
+{{"hab", H("Empréstimo", "emprestimo", 85, {{"valor", 9000}})}}
+@fazenda 2-5 | Habilidade: $9.000 sem dívida.
+{{"hab", H("Macaconomia", "dinheiro", 60, {{"valor", 9000}})}}
+@fazenda 3-1 | Coleta mais fácil.
+J::object()
+@fazenda 3-2 | Vende por 80%.
+{{"venda", 0.8}}
+@fazenda 3-3 | Dinheiro automático: $320 por rodada.
+{{"valor", 240}}
+@fazenda 3-4 | $1.120 por rodada.
+{{"valor", 800}}
+@fazenda 3-5 | +$4.000 no fim de cada rodada.
+{{"valor", 4000}}
+@espinhos base
+A("pilha", {{"cad", 1.75}, {"dano", 1}, {"pilha_pierce", 5}, {"pilha_vida", 50}, {"visual", "espinhos"}})
+@espinhos 1-1 | Pilhas de 10 espinhos.
+{{"pilha_pierce", 5}}
+@espinhos 1-3 | Bolas: 2 de dano, +3 em cerâmica, pierce 11.
+{{"dano", 1}, {"cer", 3}, {"fort", 1}, {"pilha_pierce", 1}, {"visual", "bola_espinho"}}
+@espinhos 1-4 | Minas que explodem (10 de dano) ao acabar.
+{{"pilha_pierce", 7}, {"cer", 3}, {"fort", 2}, {"splash", 120}, {"sdano", 10}, {"spierce", 30}}
+@espinhos 1-5 | Super minas de 50 de dano.
+{{"cad", 2.0}, {"dano", 48}, {"cer", 24}, {"fort", 12}, {"sdano", 40}}
+@espinhos 2-1 | Produz 25% mais rápido.
+{{"cad", 0.8}}
+@espinhos 2-2 | Produz 33% mais rápido.
+{{"cad", 0.75}}
+@espinhos 2-3 | +7 de dano em M.O.A.B.
+{{"moab", 7}}
+@espinhos 2-4 | Habilidade: espinhos em toda a trilha.
+{{"hab", H("Tempestade de Espinhos", "spikes_global", 40, {{"valor", 60}, {"dano", 1}})}}
+@espinhos 2-5 | Tempestade de espinhos a cada 15 s.
+{{"hab", H("Tapete de Espinhos", "spikes_global", 15, {{"valor", 60}, {"dano", 1}})}}
+@espinhos 3-1 | +8 de alcance; pilhas duram 100 s.
+{{"alcance", 32}, {"pilha_vida", 2.0}}
+@espinhos 3-2 | 4x mais rápido no começo da rodada.
+J::object()
+@espinhos 3-3 | Pilhas duram 140 s.
+{{"pilha_vida", 1.4}}
+@espinhos 3-4 | Espinhos com 3 de dano.
+{{"dano", 2}}
+@espinhos 3-5 | Espinhos de 10 de dano, pierce 50, duram 300 s.
+{{"cad", 3.46}, {"dano", 7}, {"pilha_pierce", 45}, {"pilha_vida", 2.14}}
+@vila 1-1 | +8 de alcance.
+{{"alcance", 32}}
+@vila 1-2 | Torres próximas atacam 15% mais rápido.
+{{"buffs", {{"cad", 0.85}}}}
+@vila 1-3 | Torres próximas: +1 pierce e +10% de alcance.
+{{"buffs", {{"pierce", 1}, {"alcance_pct", 0.1}}}}
+@vila 1-4 | +7 de alcance.
+{{"alcance", 28}}
+@vila 1-5 | +2 pierce nas torres próximas; balista gigante.
+{{"buffs", {{"pierce", 2}}}, {"novo", A("projetil", {{"cad", 4.0}, {"dano", 10}, {"cer", 270}, {"pierce", 100}, {"vel", 1200}, {"dist", 2500}, {"busca", true}, {"global_", true}, {"dtype", "normal"}, {"alvo", "forte"}, {"visual", "balista"}, {"raio_proj", 12}})}}
+@vila 2-2 | Torres próximas detectam camo.
+{{"buffs", {{"camo", true}}}}
+@vila 2-3 | Torres próximas estouram tudo.
+{{"buffs", {{"dtype_normal", true}}}}
+@vila 2-4 | Habilidade: todas as torres 50% mais rápidas por 15 s.
+{{"hab", H("Chamado às Armas", "turbo_area", 45, {{"dur", 15}, {"valor", 0.667}, {"global_", true}})}}
+@vila 2-5 | Habilidade: todas as torres 2x mais rápidas por 20 s.
+{{"hab", H("Defesa da Pátria", "turbo_area", 45, {{"dur", 20}, {"valor", 0.5}, {"global_", true}})}}
+@vila 3-1 | 10% de desconto nas torres próximas.
+{{"desconto", 0.1}}
+@vila 3-2 | 15% de desconto.
+{{"desconto", 0.15}}
+@vila 3-3 | Torres próximas ganham 50% mais por estouro.
+{{"buffs", {{"ouro", 0.5}}}}
+@vila 3-4 | +10 de alcance.
+{{"alcance", 40}}
+@vila 3-5 | Sacrifica fazendas para gerar dinheiro.
+J::object()
+@engenheiro 1-1 | Torretas a cada 10 s.
+{{"novo", A("invocar", {{"cad", 10.0}, {"dur", 25}, {"base", "sentinela"}})}}
+@engenheiro 1-2 | Torretas a cada 5 s.
+{{"a", "invocar"}, {"cad", 0.5}}
+@engenheiro 1-3 | Engenheiro e torretas 2x mais rápidos.
+J::array({{{"cad", 0.5}}, {{"a", "invocar"}, {"nivel_inv", 1}}})
+@engenheiro 1-4 | Torretas especializadas.
+{{"a", "invocar"}, {"nivel_inv", 1}}
+@engenheiro 1-5 | Torretas campeãs.
+{{"a", "invocar"}, {"nivel_inv", 2}}
+@engenheiro 2-1 | +50% de alcance.
+{{"alcance", 80}}
+@engenheiro 2-2 | +1 de dano em M.O.A.B. e fortificado.
+{{"moab", 1}, {"fort", 1}}
+@engenheiro 2-4 | Habilidade: acelera torres próximas.
+{{"hab", H("Overclock", "turbo_area", 45, {{"dur", 30}, {"valor", 0.6}})}}
+@engenheiro 3-1 | +5 pierce.
+{{"pierce", 5}}
+@engenheiro 3-2 | Prega bloons e atordoa por 1 s.
+{{"atordoa", 1.0}}
+@engenheiro 3-3 | Atira 2x mais rápido.
+{{"cad", 0.5}}
+@engenheiro 3-4 | Armadilha que prende até 500 de RBE e dá o dobro de dinheiro.
+{{"novo", A("pilha", {{"cad", 8.0}, {"dano", 0}, {"pilha_pierce", 500}, {"pilha_vida", 9999}, {"armadilha", true}, {"valor", 2}, {"visual", "armadilha"}})}}
+@engenheiro 3-5 | Armadilha de 10.000 de RBE que prende dirigíveis.
+{{"a", "armadilha"}, {"pilha_pierce", 9500}, {"cad", 0.575}, {"prende_moab", true}, {"valor", 1}}
