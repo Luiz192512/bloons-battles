@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "cliente/conexao.hpp"
+#include "ipc/placar.hpp"
 #include "jogo/sim.hpp"
 #include "servidor/servidor.hpp"
 
@@ -64,7 +65,7 @@ public:
 
     ControladorBatalha(std::shared_ptr<Conexao> conexao, int numero, long long seed, const std::string& mapa,
                        const std::map<int, std::string>& herois, std::shared_ptr<Servidor> servidor,
-                       std::vector<proto::Mensagem> pendentes);
+                       std::vector<proto::Mensagem> pendentes, int porta = proto::PORTA_PADRAO);
     bool online() const override { return true; }
     // Validacao local antecipada, so para dar retorno imediato ao jogador.
     char checar(const std::string& cmd);
@@ -82,6 +83,10 @@ private:
     std::shared_ptr<Conexao> conexao_;
     std::shared_ptr<Servidor> servidor_;
     std::vector<proto::Mensagem> pendentes_;  // mensagens que chegaram junto com o inicio
+    // Linha deste jogador no placar em memoria compartilhada (so existe se o servidor da sala
+    // roda nesta mesma maquina).
+    void publicar_placar();
+    std::unique_ptr<ipc::PlacarCompartilhado> placar_;
     bool dessinc_ = false;
     int fim_remoto = -1;
     long tick_ = 0;

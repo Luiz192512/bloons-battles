@@ -112,6 +112,37 @@ Os testes provam isso: 8 threads disputam a sala 50 vezes e nunca repetem númer
 enfileiram 6.000 comandos enquanto a consumidora fecha ticks, e nenhum se perde, duplica ou troca
 de ordem.
 
+### Memória compartilhada entre processos (placar da sala)
+
+Além das threads, há uma região de **memória compartilhada do sistema operacional**, com nome,
+que vários **processos** da mesma máquina mapeiam ao mesmo tempo
+([memoria.cpp](../src/ipc/memoria.cpp), [placar.cpp](../src/ipc/placar.cpp)):
+
+| Sistema | Memória | Exclusão mútua entre processos |
+|---|---|---|
+| Windows | `CreateFileMapping` + `MapViewOfFile` (`Local\bloons_sala_<porta>`) | mutex com nome (`CreateMutex`) |
+| Linux | `shm_open` + `mmap` (`/bloons_sala_<porta>`) | semáforo com nome (`sem_open`, valor inicial 1) |
+
+A região guarda uma struct `Placar` de tamanho fixo (só tipos de largura fixa, para os bytes
+significarem o mesmo em todos os processos):
+
+| Quem | Escreve / lê | Campos |
+|---|---|---|
+| Processo que hospeda (servidor) | escreve | estado da sala, mapa, heróis, tick, total de comandos, vencedor |
+| Cada cliente nesta máquina | escreve a própria linha a cada tick | vidas, dinheiro, eco, rodada, torres, bloons, estouros, hash, pid |
+| `bloons_monitor` (terceiro processo) | só lê | mostra tudo no console a cada 0,5 s |
+
+Cada acesso acontece dentro do mutex com nome (`Trava`, RAII). A seção crítica só copia bytes:
+os valores são calculados antes de travar. O servidor nunca trava o placar enquanto segura um
+mutex da `Sala` (primeiro copia da `Sala`, solta, depois publica), e publica **antes** de avisar
+os clientes, para que quem recebe um tick já o encontre no placar. Isso elimina deadlock entre
+processos.
+
+Testes: dois mapeamentos da mesma região enxergam os mesmos bytes; 4 threads, cada uma com o seu
+próprio mapeamento, fazem 5.000 incrementos cada "ler, somar, gravar" sob o mutex com nome sem perder
+nenhum; e um teste abre o `bloons_monitor` como **outro processo** e confere que ele leu o placar
+publicado pelo servidor.
+
 ## 5. Roteiro do vídeo (1 min)
 
 - **0 a 10 s:** menu; o jogador 1 hospeda, escolhe mapa e herói; o jogador 2 entra pelo IP.
@@ -145,5 +176,11 @@ de ordem.
 > e `lock_hash` para a comparação de hashes. Há ainda um lock para o dicionário de sockets e um
 > lock de envio por conexão, para mensagens não se intercalarem. Nunca seguramos dois locks de
 > estado ao mesmo tempo, o que evita deadlock. No cliente, a fila de mensagens entre a thread de
-> rede e a da tela também é protegida por mutex. Testes automatizados com threads concorrentes
-> comprovam que não há perda, duplicação ou números repetidos.
+> rede e a da tela também é protegida por mutex. Entre **processos**, o jogo usa memória
+> compartilhada do sistema operacional com nome (`CreateFileMapping`/`MapViewOfFile` no Windows,
+> `shm_open`/`mmap` no Linux) com um placar da sala: o processo que hospeda escreve o estado da
+> partida, cada jogador na mesma máquina escreve a própria linha (vidas, dinheiro, rodada, hash) a
+> cada tick, e um terceiro processo, o `bloons_monitor`, lê e mostra tudo. O acesso é protegido por
+> um mutex com nome (`CreateMutex` no Windows, semáforo `sem_open` no Linux), com seção crítica que
+> só copia bytes e sem nunca segurar esse mutex junto com os da sala. Testes automatizados com
+> threads e processos concorrentes comprovam que não há perda, duplicação ou números repetidos.

@@ -8,6 +8,7 @@
 #include <cmath>
 #include <condition_variable>
 #include <cstdio>
+#include <cstring>
 #include <functional>
 #include <mutex>
 #include <set>
@@ -16,6 +17,8 @@
 #include <vector>
 
 #include "comum/protocolo.hpp"
+#include "ipc/memoria.hpp"
+#include "ipc/placar.hpp"
 #include "jogo/defs.hpp"
 #include "jogo/sim.hpp"
 #include "jogo/stats.hpp"
@@ -510,9 +513,122 @@ TESTE(servidor_parar_com_clientes_conectados_nao_trava) {
     servidor.parar();             // precisa acordar as threads presas no recv/accept
 }
 
+// ================================================================ memoria compartilhada entre processos
+namespace {
+
+std::string pasta_exe = ".";  // pasta do bloons_testes (o monitor fica ao lado)
+
+std::string nome_unico(const std::string& base) { return base + "_" + std::to_string(ipc::pid_atual()); }
+
+// Roda um programa como outro processo e devolve o que ele escreveu no console.
+std::string rodar_processo(std::string comando) {
+#ifdef _WIN32
+    for (char& c : comando)
+        if (c == '/') c = '\\';
+    FILE* f = _popen(comando.c_str(), "r");
+#else
+    FILE* f = popen(comando.c_str(), "r");
+#endif
+    if (!f) throw Falha{"nao foi possivel rodar: " + comando};
+    std::string saida;
+    char buf[512];
+    while (std::fgets(buf, sizeof buf, f)) saida += buf;
+#ifdef _WIN32
+    _pclose(f);
+#else
+    pclose(f);
+#endif
+    return saida;
+}
+
+}  // namespace
+
+TESTE(ipc_memoria_com_nome_liga_dois_mapeamentos) {
+    const std::string nome = nome_unico("bloons_teste_mem");
+    auto dono = ipc::MemoriaCompartilhada::criar(nome, 4096);
+    auto outro = ipc::MemoriaCompartilhada::abrir(nome, 4096);
+    CHECA(outro != nullptr);
+    CHECA(dono->dados() != outro->dados());  // dois mapeamentos diferentes...
+    std::strcpy(static_cast<char*>(dono->dados()), "bloons");
+    CHECA(std::string(static_cast<char*>(outro->dados())) == "bloons");  // ...dos mesmos bytes
+    CHECA(ipc::MemoriaCompartilhada::abrir(nome_unico("bloons_nao_existe"), 64) == nullptr);
+}
+
+TESTE(ipc_mutex_com_nome_nao_perde_incrementos) {
+    // cada thread abre a regiao por conta propria, como faria um processo separado
+    const std::string nome = nome_unico("bloons_teste_mutex");
+    auto dono = ipc::MemoriaCompartilhada::criar(nome, sizeof(long long));
+    const int threads = 4, por_thread = 5000;
+    std::vector<std::thread> ts;
+    for (int k = 0; k < threads; ++k) {
+        ts.emplace_back([&] {
+            auto m = ipc::MemoriaCompartilhada::abrir(nome, sizeof(long long));
+            volatile long long* contador = static_cast<long long*>(m->dados());
+            for (int i = 0; i < por_thread; ++i) {
+                ipc::MemoriaCompartilhada::Trava trava(*m);
+                long long v = *contador;  // ler, somar e gravar: sem o mutex, incrementos se perderiam
+                if (i % 1000 == 0) std::this_thread::yield();
+                *contador = v + 1;
+            }
+        });
+    }
+    for (auto& t : ts) t.join();
+    CHECA_IGUAL(*static_cast<long long*>(dono->dados()), static_cast<long long>(threads) * por_thread);
+}
+
+TESTE(ipc_servidor_publica_placar_e_outro_processo_le) {
+    Servidor servidor("127.0.0.1", 0);
+    servidor.iniciar();
+    Cliente a(servidor.porta());
+    a.enviar(P::entrar("quincy", "lago"));
+    CHECA_IGUAL(a.proxima(), std::string("0J1"));
+    Cliente b(servidor.porta());
+    b.enviar(P::entrar("adora", "prado"));
+    b.proxima(P::INICIO);
+    a.enviar(P::torre(1, "dardo", 100, 100));
+    a.proxima();  // tick com o comando
+
+    auto placar = ipc::PlacarCompartilhado::abrir(servidor.porta());
+    CHECA(placar != nullptr);
+    // o relogio transmite o tick e so depois publica no placar: espera ele alcancar
+    ipc::Placar pl = placar->ler();
+    for (int i = 0; i < 100 && pl.comandos < 1; ++i) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        pl = placar->ler();
+    }
+    CHECA_IGUAL(pl.estado, static_cast<std::int32_t>(ipc::EM_JOGO));
+    CHECA_IGUAL(std::string(pl.mapa), std::string("lago"));
+    CHECA_IGUAL(std::string(pl.jogador[1].heroi), std::string("quincy"));
+    CHECA_IGUAL(std::string(pl.jogador[2].heroi), std::string("adora"));
+    CHECA(pl.tick > 0 && pl.comandos >= 1);
+    CHECA_IGUAL(pl.pid_servidor, static_cast<std::int32_t>(ipc::pid_atual()));
+
+    // um processo de verdade (bloons_monitor) le a mesma memoria
+#ifdef _WIN32
+    const std::string exe = pasta_exe + "/bloons_monitor.exe";
+#else
+    const std::string exe = pasta_exe + "/bloons_monitor";
+#endif
+    const std::string saida = rodar_processo("\"" + exe + "\" " + std::to_string(servidor.porta()) + " --uma-vez");
+    if (saida.find("EM_JOGO") == std::string::npos || saida.find("adora") == std::string::npos)
+        throw Falha{"monitor nao leu o placar: " + saida};
+
+    a.enviar(P::desistir(1));
+    b.proxima(P::FIM_JOGO);
+    pl = placar->ler();
+    CHECA_IGUAL(pl.estado, static_cast<std::int32_t>(ipc::FIM));
+    CHECA_IGUAL(pl.vencedor, 2);
+    a.fechar();
+    b.fechar();
+    servidor.parar();
+}
+
 // ================================================================ main
 int main(int argc, char** argv) {
     const std::string filtro = argc > 1 ? argv[1] : "";
+    const std::string eu = argv[0];
+    const size_t barra = eu.find_last_of("/\\");
+    if (barra != std::string::npos) pasta_exe = eu.substr(0, barra);
     int ok = 0, falhas = 0;
     for (auto& c : casos()) {
         if (!filtro.empty() && std::string(c.nome).find(filtro) == std::string::npos) continue;

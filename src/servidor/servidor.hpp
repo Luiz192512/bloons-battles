@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "comum/protocolo.hpp"
+#include "ipc/placar.hpp"
 #include "rede/socket.hpp"
 #include "servidor/sala.hpp"
 
@@ -58,7 +59,12 @@ private:
     void transmitir(const std::string& linha);
     void registrar(const std::string& texto);
 
+    // Placar em memoria compartilhada (outros processos da maquina leem). Nunca e travado junto
+    // com os mutexes da Sala: primeiro copia da Sala, depois trava o placar.
+    void publicar(const std::function<void(ipc::Placar&)>& f);
+
     rede::Socket sock_;
+    std::unique_ptr<ipc::PlacarCompartilhado> placar_;
     int porta_;
     std::atomic<bool> rodando_{false};
 

@@ -117,14 +117,22 @@ Servidor avulso, sem interface (opcional):
 ./build/bloons_servidor 5050
 ```
 
+Monitor da sala (outro processo, no console): lê o placar que o servidor e os jogadores
+publicam em memória compartilhada. Precisa rodar no mesmo PC de quem hospeda:
+
+```bash
+./build/bloons_monitor 5050
+```
+
 ## Testes
 
 ```bash
 ctest --test-dir build --output-on-failure
 ```
 
-São 23 testes: protocolo, dados das torres, regras de upgrade, simulação e determinismo,
-exclusão mútua com threads concorrentes e o servidor com clientes TCP reais.
+São 27 testes: protocolo, dados das torres, regras de upgrade, simulação e determinismo,
+exclusão mútua com threads concorrentes, o servidor com clientes TCP reais e a memória
+compartilhada entre processos (inclusive abrindo o `bloons_monitor` como processo separado).
 
 ## Entrega
 
@@ -149,6 +157,8 @@ Gera em `entrega/` o zip só com o código e o zip com os executáveis do Window
 src/
   comum/     protocolo.hpp/.cpp (notação das mensagens)
   rede/      socket.hpp/.cpp (TCP igual no Windows e no Linux)
+  ipc/       memoria.cpp (memória compartilhada com nome + mutex com nome, entre processos),
+             placar.cpp (placar da sala), main_monitor.cpp (bloons_monitor)
   servidor/  servidor.cpp (threads aceitar, cliente e relógio), sala.cpp (memória compartilhada + mutex),
              main_servidor.cpp
   jogo/      sim.cpp (simulação determinística), stats.cpp (upgrades), dados.cpp (torres, heróis,
