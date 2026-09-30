@@ -741,7 +741,7 @@ void CenaJogo::linha_upgrade(const TorreP& tp, int pth, float x, float y, float 
     nome_card(up.nome, pode ? ui::BRANCO : rgb(228, 232, 238), rc.y + 34);
     ui::pilula_preco(*custo, cc.x, rc.y + rc.height - 36, pode, 13);
     if (!pode)
-        ui::texto("faltam $" + ui::formatar(*custo - p.dinheiro), cc.x, rc.y + rc.height - 16, 11, rgb(255, 217, 212), 0,
+        ui::texto("faltam $" + ui::formatar(std::ceil(*custo - p.dinheiro)), cc.x, rc.y + rc.height - 16, 11, rgb(255, 217, 212), 0,
                   Ancora::CENTER, ui::Peso::TEXTO);
     botoes_up_.push_back({card, [this, pth] { upar(pth); }});
     if (sobre) {
