@@ -7,6 +7,7 @@
 #include "cliente/arte.hpp"
 #include "cliente/som.hpp"
 #include "cliente/ui.hpp"
+#include "rlgl.h"
 
 namespace bl {
 
@@ -27,8 +28,11 @@ Color cor_efeito(const std::string& vis, Color padrao) {
     return it == m.end() ? padrao : it->second;
 }
 
-void sombra(float x, float y, float tam) {
-    DrawEllipse(static_cast<int>(x + tam / 2), static_cast<int>(y + tam / 4), tam / 2, tam / 4, rgb(0, 0, 0, 70));
+// Tamanho da caixa do sprite de uma torre no mapa
+float tamanho_torre(const Torre& t) {
+    float tam = t.dfn->heroi ? 70.0f : static_cast<float>(t.dfn->raio) * 3.0f;
+    if (t.temporaria) tam *= 0.8f;
+    return tam;
 }
 
 }  // namespace
@@ -44,9 +48,9 @@ void RenderPista::consumir_eventos() {
     for (const Evento& e : ev) {
         const std::string& tipo = e.tipo;
         if (tipo == "pop") {
-            if (++pops <= 40) efeitos_.push_back({"pop", e, 0, 0.12});
+            if (++pops <= 40) efeitos_.push_back({"pop", e, 0, 0.3});
         } else if (tipo == "explosao") {
-            efeitos_.push_back({"explosao", e, 0, 0.28});
+            efeitos_.push_back({"explosao", e, 0, 0.45});
             if (sons_) som::tocar("explosao", 90);
         } else if (tipo == "raio") {
             efeitos_.push_back({"raio", e, 0, 0.09});
@@ -62,6 +66,7 @@ void RenderPista::consumir_eventos() {
             t.s = "NÍVEL " + std::to_string(static_cast<int>(e.v)) + "!";
             t.cor = {255, 220, 60};
             efeitos_.push_back({"texto", t, 0, 1.6});
+            efeitos_.push_back({"nivel", e, 0, 0.8});
             if (sons_) som::tocar("upgrade");
         } else if (tipo == "habilidade") {
             Evento t = e;
@@ -90,6 +95,7 @@ void RenderPista::consumir_eventos() {
 }
 
 void RenderPista::atualizar(double dt) {
+    animador_.observar(pista_, ui::tempo());
     for (auto& f : efeitos_) f.t += dt;
     efeitos_.erase(std::remove_if(efeitos_.begin(), efeitos_.end(), [](const Efeito& f) { return f.t >= f.dur; }),
                    efeitos_.end());
@@ -113,25 +119,53 @@ void RenderPista::desenhar(int selecionada) {
     });
     for (const Torre* t : ordem) desenhar_torre(*t, t->id == selecionada);
     for (auto& p : pista_.projeteis) arte::projetil(*p);
+    desenhar_habilidades_em_uso();
     desenhar_efeitos();
 }
 
 void RenderPista::desenhar_torre(const Torre& t, bool sel) {
-    int tam = t.dfn->heroi ? 58 : static_cast<int>(t.dfn->raio * 2.7);
-    if (t.temporaria) tam = static_cast<int>(tam * 0.8);
-    int tier;
-    if (t.dfn->heroi) tier = (t.nivel >= 10 ? 3 : 0) + (t.nivel >= 20 ? 2 : 0);
-    else tier = *std::max_element(t.caminhos.begin(), t.caminhos.end());
+    const float tam = tamanho_torre(t);
     const float x = static_cast<float>(t.x), y = static_cast<float>(t.y);
-    if (t.dfn->mov == Mov::FIXO) sombra(x - tam / 2.0f, y + tam * 0.1f, static_cast<float>(tam));
-    else sombra(x - tam / 2.0f + 14, y + 22, static_cast<float>(tam));
-    // o desenho original gira em passos de 10 graus
-    float ang10 = std::round(static_cast<float>(t.ang) / 10.0f) * 10.0f;
-    arte::torre(t.chave, x, y, tam, tier, ang10 + 90);
-    if (sel) DrawRing({x, y}, tam / 2.0f + 2, tam / 2.0f + 4, 0, 360, 48, WHITE);
-    if (t.dfn->heroi)
-        ui::texto(std::to_string(t.nivel), x + tam / 3.0f, y + tam / 3.0f, 14, rgb(255, 230, 90), 2, ui::Ancora::CENTER);
-    if (t.turbo < 1.0) DrawRing({x, y}, tam / 2.0f, tam / 2.0f + 2, 0, 360, 48, rgb(255, 200, 60));
+    const anim::Quadro q = animador_.quadro(t.id, ui::tempo());
+    if (q.habilidade && q.brilho > 0.01f) {
+        // brilho da habilidade por baixo da torre: disco e raios girando
+        const float r = tam * 0.62f * (0.8f + 0.3f * q.brilho);
+        DrawCircleV({x, y}, r, ui::com_alfa(q.cor, static_cast<int>(90 * q.brilho)));
+        const float giro = static_cast<float>(ui::tempo()) * 2.2f;
+        for (int k = 0; k < 10; ++k) {
+            const float a = giro + k * PI_F / 5, l = r * 1.35f;
+            const Vector2 p0{x + std::cos(a - 0.09f) * r * 0.5f, y + std::sin(a - 0.09f) * r * 0.5f};
+            const Vector2 p1{x + std::cos(a + 0.09f) * r * 0.5f, y + std::sin(a + 0.09f) * r * 0.5f};
+            DrawTriangle(p0, {x + std::cos(a) * l, y + std::sin(a) * l}, p1, ui::com_alfa(ui::BRANCO, static_cast<int>(120 * q.brilho)));
+        }
+    }
+    if (sel) {
+        // selecionada: elipse amarela na base (como no mockup)
+        const float rx = tam * 0.5f + 2;
+        rlPushMatrix();
+        rlTranslatef(x, y + tam * 0.12f, 0);
+        rlScalef(1, 0.72f, 1);
+        DrawRing({0, 0}, rx - 5, rx + 2, 0, 360, 48, ui::com_alfa(ui::TINTA, 150));
+        DrawRing({0, 0}, rx - 4, rx, 0, 360, 48, ui::AMARELO);
+        rlPopMatrix();
+    }
+    arte::torre(t.chave, arte::visual(t), x, y, tam, static_cast<float>(t.ang) + 90, &q);
+    if (t.dfn->heroi) ui::tecla_centro(std::to_string(t.nivel), x + tam * 0.3f, y + tam * 0.3f);
+    if (t.turbo < 1.0) DrawRing({x, y}, tam * 0.46f, tam * 0.46f + 3, 0, 360, 48, ui::com_alfa(ui::AMARELO, 200));
+}
+
+void RenderPista::desenhar_habilidades_em_uso() {
+    const double agora = ui::tempo();
+    for (auto& [id, tp] : pista_.torres) {
+        const anim::Quadro q = animador_.quadro(id, agora);
+        if (!q.habilidade || q.onda_alfa <= 0.01f) continue;
+        const float x = static_cast<float>(tp->x), y = static_cast<float>(tp->y);
+        const float r = 20 + q.onda * 190;
+        DrawCircleV({x, y}, r, ui::com_alfa(q.cor, static_cast<int>(40 * q.onda_alfa)));
+        DrawRing({x, y}, r - 9, r + 2, 0, 360, 72, ui::com_alfa(ui::TINTA, static_cast<int>(150 * q.onda_alfa)));
+        DrawRing({x, y}, r - 7, r, 0, 360, 72, ui::com_alfa(q.cor, static_cast<int>(230 * q.onda_alfa)));
+        DrawRing({x, y}, r - 7, r - 5, 0, 360, 72, ui::com_alfa(ui::BRANCO, static_cast<int>(160 * q.onda_alfa)));
+    }
 }
 
 void RenderPista::desenhar_bloons() {
@@ -148,7 +182,7 @@ void RenderPista::desenhar_bloons() {
         const float x = std::floor(static_cast<float>(b->x)), y = std::floor(static_cast<float>(b->y));
         if (b->tipo->moab) {
             double frac = b->vida / std::max(1.0, b->vida_max);
-            int dano = frac > 0.75 ? 0 : frac > 0.5 ? 1 : frac > 0.25 ? 2 : 3;
+            int dano = frac > 0.8 ? 0 : frac > 0.6 ? 1 : frac > 0.4 ? 2 : frac > 0.2 ? 3 : 4;
             float ang8 = std::round(static_cast<float>(b->ang) / 8.0f) * 8.0f;
             arte::dirigivel(*b->tipo, b->fort, dano, x, y, ang8);
         } else {
@@ -160,21 +194,10 @@ void RenderPista::desenhar_bloons() {
             arte::bloon(*b->tipo, b->camo, b->regen, b->fort, dano, x, y);
         }
         const float r = std::floor(static_cast<float>(b->tipo->raio));
-        if (b->cong_t > 0) {
-            DrawCircleV({x, y}, r * 1.2f, rgb(190, 235, 255, 150));
-            DrawRing({x, y}, r * 1.2f - 2, r * 1.2f, 0, 360, 36, rgb(240, 250, 255, 220));
-        }
-        if (b->cola_t > 0) DrawCircleV({x + r / 3, y - r / 3}, std::max(3.0f, r / 2), rgb(150, 210, 60));
-        if (b->queima_t > 0) {
-            DrawCircleV({x - r / 2, y + r / 3}, std::max(2.0f, r / 3), rgb(255, 140, 30));
-            DrawCircleV({x - r / 2, y + r / 3 - 2}, std::max(1.0f, r / 5), rgb(255, 220, 80));
-        }
-        if (b->atord_t > 0) {
-            for (int k = 0; k < 3; ++k) {
-                float a = static_cast<float>(agora * 1000 / 150.0) + k * 2.1f;
-                DrawCircleV({x + std::cos(a) * r, y - r - 4 + std::sin(a) * 3}, 3, rgb(255, 240, 90));
-            }
-        }
+        if (b->cong_t > 0) arte::estado_bloon(0, x, y, r, agora);
+        if (b->cola_t > 0) arte::estado_bloon(1, x, y, r, agora);
+        if (b->queima_t > 0) arte::estado_bloon(2, x, y, r, agora);
+        if (b->atord_t > 0) arte::estado_bloon(3, x, y, r, agora);
     }
 }
 
@@ -184,19 +207,13 @@ void RenderPista::desenhar_efeitos() {
         const Evento& d = f.dados;
         const float x = static_cast<float>(d.x), y = static_cast<float>(d.y);
         if (f.tipo == "pop") {
-            const float r = 10 + 6 * k;
-            std::vector<Vector2> pts;
-            for (int i = 0; i < 12; ++i) {
-                float a = i * PI_F / 6, rr = i % 2 == 0 ? r : r * 0.55f;
-                pts.push_back({x + std::cos(a) * rr, y + std::sin(a) * rr});
-            }
-            for (size_t i = 0; i < pts.size(); ++i) DrawTriangle({x, y}, pts[i], pts[(i + 1) % pts.size()], WHITE);
-            for (size_t i = 0; i < pts.size(); ++i) DrawLineEx(pts[i], pts[(i + 1) % pts.size()], 2, rgb(30, 30, 30));
+            // estouro do design: estrela branca que cresce e some, com confete (fase 0..1 do efeito)
+            arte::efeito("estouro", x, y, 46, k * 0.7);
         } else if (f.tipo == "explosao") {
             const float raio = static_cast<float>(d.v);
-            const int a = static_cast<int>(220 * (1 - k));
-            DrawCircleV({x, y}, raio * (0.6f + 0.5f * k), rgb(255, 150, 40, a));
-            DrawCircleV({x, y}, raio * 0.45f * (1 - k * 0.5f), rgb(255, 230, 120, a));
+            arte::efeito("explosao", x, y, std::max(48.0f, raio * 2.6f), k * 0.9);
+        } else if (f.tipo == "nivel") {
+            arte::efeito("nivel", x, y - 20, 70, k * 0.8);
         } else if (f.tipo == "raio") {
             const float x2 = static_cast<float>(d.x2), y2 = static_cast<float>(d.y2);
             const std::string vis = d.s.empty() ? "bala" : d.s;
@@ -225,7 +242,9 @@ void RenderPista::desenhar_efeitos() {
             ui::texto(d.s, x, y - 30 * k - 20, 18, arte::cor(d.cor), 2, ui::Ancora::CENTER);
         } else if (f.tipo == "anel") {
             const float r = 10 + 30 * k;
-            DrawRing({x, y}, r - 3, r, 0, 360, 48, WHITE);
+            const int a = static_cast<int>(255 * (1 - k));
+            DrawRing({x, y}, r - 5, r + 1, 0, 360, 48, ui::com_alfa(ui::TINTA, a / 2));
+            DrawRing({x, y}, r - 4, r, 0, 360, 48, ui::com_alfa(ui::BRANCO, a));
         } else if (f.tipo == "regen") {
             const float r = 8 + 10 * k;
             DrawRing({x, y}, r - 2, r, 0, 360, 32, rgb(255, 120, 180));
@@ -246,16 +265,15 @@ void RenderPista::desenhar_mini(Rectangle r) {
     arte::fundo_mapa(chave_mapa_, r);
     for (auto& s : pista_.pilhas) arte::pilha(*s, r.x, r.y, esc);
     for (auto& [id, t] : pista_.torres) {
-        int tam = std::max(10, static_cast<int>(t->dfn->raio * 2.7 * esc * 1.3));
-        int tier = t->dfn->heroi ? 0 : *std::max_element(t->caminhos.begin(), t->caminhos.end());
-        arte::torre(t->chave, r.x + std::floor(static_cast<float>(t->x) * esc),
-                    r.y + std::floor(static_cast<float>(t->y) * esc), tam, tier);
+        const float tam = std::max(14.0f, std::round(tamanho_torre(*t) * esc * 1.3f));
+        arte::torre(t->chave, arte::visual(*t), r.x + std::floor(static_cast<float>(t->x) * esc),
+                    r.y + std::floor(static_cast<float>(t->y) * esc), tam, static_cast<float>(t->ang) + 90);
     }
     for (auto& b : pista_.bloons) {
         if (!b->vivo) continue;
         float rr = std::max(2.0f, std::floor(static_cast<float>(b->tipo->raio) * esc * 1.2f));
         Vector2 c{r.x + std::floor(static_cast<float>(b->x) * esc), r.y + std::floor(static_cast<float>(b->y) * esc)};
-        DrawCircleV(c, rr + 1, BLACK);
+        DrawCircleV(c, rr + 1, ui::TINTA);
         DrawCircleV(c, rr, arte::cor(b->tipo->cor));
     }
     const size_t n = std::min<size_t>(pista_.projeteis.size(), 200);
