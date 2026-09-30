@@ -20,6 +20,7 @@
 #include "ipc/memoria.hpp"
 #include "ipc/placar.hpp"
 #include "jogo/defs.hpp"
+#include "jogo/rodadas.hpp"
 #include "jogo/sim.hpp"
 #include "jogo/stats.hpp"
 #include "rede/socket.hpp"
@@ -232,6 +233,56 @@ TESTE(sim_imunidades) {
     BloonP preto = pi.criar_bloon("preto", 100);
     pi.aplicar_dano(*preto, 1, novo_ataque({{"dtype", "explosao"}}), nullptr);
     CHECA(preto->vivo);  // preto e imune a explosao
+}
+
+TESTE(btd6_rodadas_oficiais_e_renda_por_rodada) {
+    auto r40 = grupos_da_rodada(40);
+    CHECA(r40.size() == 1 && r40[0].tipo == "moab" && r40[0].qtd == 1);
+    bool bad = false;
+    for (auto& g : grupos_da_rodada(100)) bad = bad || g.tipo == "bad";
+    CHECA(bad);
+    CHECA_IGUAL(mult_renda_da_rodada(50), 1.0);
+    CHECA_IGUAL(mult_renda_da_rodada(51), 0.5);
+    CHECA_IGUAL(mult_renda_da_rodada(141), 0.02);
+    CHECA_IGUAL(mult_vida_moab(80), 1.0);
+    CHECA(std::abs(mult_vida_moab(100) - 1.4) < 1e-9);
+    Partida p = solo();
+    Pista& pi = p.pista(1);
+    pi.mult_renda = 0.5;
+    double antes = pi.dinheiro;
+    pi.aplicar_dano(*pi.criar_bloon("vermelho", 100), 1, novo_ataque({{"dano", 1}}), nullptr);
+    CHECA_IGUAL(pi.dinheiro, antes + 0.5);
+}
+
+TESTE(btd6_upgrade_mira_ataque_por_visual) {
+    // Merchantman com uvas no caminho 2: a renda e melhorada, nao as uvas
+    Stats st = calcular("bucaneiro", {0, 2, 5});
+    double renda = 0;
+    for (const Ataque& at : st.ataques)
+        if (at.tipo == TipoAtaque::RENDA) renda += at.valor;
+    CHECA_IGUAL(renda, 800.0);
+    // Mestre Bombardeiro melhora a bomba grudenta
+    Stats ninja = calcular("ninja", {0, 0, 5});
+    bool grudenta = false;
+    for (const Ataque& at : ninja.ataques) grudenta = grudenta || (at.so_moab && at.dano == 3000);
+    CHECA(grudenta);
+}
+
+TESTE(btd6_armadilha_e_emprestimo) {
+    Partida p = solo();
+    Pista& pi = p.pista(1);
+    auto at = std::make_shared<const Ataque>(novo_ataque({{"tipo", "pilha"}, {"armadilha", true}, {"valor", 2}}));
+    BloonP rosa = pi.criar_bloon("rosa", 300);
+    BloonP cer = pi.criar_bloon("ceramica", 300);
+    pi.pilhas.push_back(std::unique_ptr<Pilha>(new Pilha{rosa->x, rosa->y, 30, at, nullptr, 50, {}, true, "armadilha"}));
+    double antes = pi.dinheiro;
+    p.passo();
+    CHECA(!rosa->vivo);  // RBE 5 cabe na armadilha
+    CHECA(cer->vivo);    // RBE 104 nao cabe
+    CHECA_IGUAL(pi.dinheiro, antes + 10);
+    pi.divida = 100;
+    pi.receber(50);
+    CHECA_IGUAL(pi.divida, 75.0);
 }
 
 TESTE(sim_vazamento_tira_vidas_pelo_rbe) {

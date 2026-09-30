@@ -180,6 +180,7 @@ public:
     int rbe_restante(const Bloon& b) const;
     void xp(double v);
     void pagar_renda();
+    void receber(double v);  // entrada de dinheiro; metade vai para a divida do emprestimo
     void evento(Evento e);
 
     void passo();
@@ -190,6 +191,10 @@ public:
     int vidas;
     double dinheiro;
     double eco = ECO_INICIAL;
+    double divida = 0.0;      // IMF Loan
+    double mult_renda = 1.0;  // dinheiro por estouro conforme a rodada (BTD6)
+    double mult_vida = 1.0;   // vida dos dirigiveis no freeplay
+    double mult_vel = 1.0;    // velocidade dos bloons no freeplay
     double mult_custo;
     std::vector<BloonP> bloons;
     std::vector<std::unique_ptr<Projetil>> projeteis;

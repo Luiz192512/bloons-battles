@@ -7,8 +7,8 @@ namespace bl {
 std::vector<Grupo> grupos_da_rodada(int r) {
     auto it = RODADAS.find(r);
     if (it != RODADAS.end()) return it->second;
-    // rodadas livres/intermediarias acima de 80: mistura crescente
-    int k = r - 80;
+    // freeplay depois da R140: mistura crescente (aproximacao; o BTD6 sorteia os grupos)
+    int k = r - 140;
     return {
         {"ceramica", 80 + 6 * k, 0.08, 0.0, false, true, k > 3},
         {"moab", 6 + k, 0.5, 4.0, false, false, true},
@@ -25,6 +25,32 @@ std::vector<std::pair<double, Grupo>> agenda_da_rodada(int r) {
     std::stable_sort(eventos.begin(), eventos.end(),
                      [](const auto& a, const auto& b) { return a.first < b.first; });
     return eventos;
+}
+
+// Dinheiro por estouro (JSON:Bloons TD 6/Rounds/DefaultIncomeSet na Blooncyclopedia)
+double mult_renda_da_rodada(int r) {
+    if (r <= 50) return 1.0;
+    if (r <= 60) return 0.5;
+    if (r <= 85) return 0.2;
+    if (r <= 100) return 0.1;
+    if (r <= 120) return 0.05;
+    if (r <= 140) return 0.04;
+    return 0.02;
+}
+
+// Rampa de vida e velocidade do freeplay do BTD6 (Bloons Wiki, "Late Game and Freeplay (BTD6)")
+double mult_vida_moab(int r) {
+    if (r <= 80) return 1.0;
+    if (r <= 100) return 1.0 + 0.02 * (r - 80);
+    if (r <= 124) return 1.4 + 0.05 * (r - 100);
+    if (r <= 150) return 2.6 + 0.15 * (r - 124);
+    return 6.5 + 0.35 * (r - 150);
+}
+
+double mult_velocidade(int r) {
+    if (r <= 80) return 1.0;
+    if (r <= 100) return 1.0 + 0.02 * (r - 80);
+    return 1.6 + 0.02 * (r - 101);
 }
 
 double duracao_rodada(int r) {

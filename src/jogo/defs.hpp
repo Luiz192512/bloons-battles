@@ -87,6 +87,7 @@ struct DefTorre {
     J hab3;
     J hab10;
     std::string titulo;
+    double xp_escala = 1.0;  // XP necessario multiplicado por heroi (BTD6)
 };
 
 struct Obstaculo {

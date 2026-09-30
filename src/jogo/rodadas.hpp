@@ -15,4 +15,9 @@ std::vector<std::pair<double, Grupo>> agenda_da_rodada(int r);
 
 double duracao_rodada(int r);
 
+// Regras do BTD6 que mudam com a rodada (modo solo)
+double mult_renda_da_rodada(int r);  // dinheiro por estouro
+double mult_vida_moab(int r);        // vida dos dirigiveis a partir da R81
+double mult_velocidade(int r);       // velocidade de todos os bloons a partir da R81
+
 }  // namespace bl

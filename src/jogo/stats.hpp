@@ -41,6 +41,7 @@ struct Ataque {
     double queima_dps = 0, queima_t = 0;
     double atordoa = 0.0, empurra = 0.0, fragiliza = 0;
     bool retira_camo = false, retira_regen = false;
+    bool armadilha = false, prende_moab = false;  // Bloon Trap: pierce = capacidade em RBE, valor = $ por RBE
     double quica = 0;
     std::shared_ptr<const Ataque> frag;  // ataque dos fragmentos
     int frag_n = 0;
@@ -67,6 +68,7 @@ struct Stats {
     double alcance = 0;
     bool camo = false;
     double ouro = 0.0;
+    double ouro_chumbo = 0.0;  // $ extra por chumbo estourado (Lead to Gold)
     double desconto = 0.0;
     double venda = 0.7;
     bool persegue = false;

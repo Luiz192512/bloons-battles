@@ -29,10 +29,11 @@ std::vector<HabInfo> todas_habs() {
     for (const DefTorre& t : torres())
         for (int c = 0; c < 3; ++c)
             for (int k = 0; k < 5; ++k) {
-                const J& ef = t.caminhos[c][k].ef;
-                if (ef.contains("hab"))
-                    v.push_back({t.chave, ef["hab"].value("tipo", std::string("invocar")), ef["hab"].value("nome", std::string()),
-                                 false, c, k + 1, 1});
+                const J& efs = t.caminhos[c][k].ef;
+                for (const J& ef : efs.is_array() ? efs : J::array({efs}))
+                    if (ef.contains("hab"))
+                        v.push_back({t.chave, ef["hab"].value("tipo", std::string("invocar")),
+                                     ef["hab"].value("nome", std::string()), false, c, k + 1, 1});
             }
     for (const DefTorre& h : herois())
         for (auto [nivel, hab] : {std::pair<int, const J*>{3, &h.hab3}, std::pair<int, const J*>{10, &h.hab10}})

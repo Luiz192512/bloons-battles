@@ -15,7 +15,7 @@ const std::set<std::string> SOMA = {"dano", "pierce", "n", "splash", "sdano", "s
                                     "fort", "dist", "raio_proj", "valor", "pilha_pierce", "saltos", "empurra",
                                     "fragiliza", "nivel_inv", "raio_aura"};
 const std::set<std::string> MULT = {"cad", "vel", "pilha_vida", "impreciso"};
-const std::set<std::string> NIVEL_TORRE = {"alcance", "alcance_x", "camo", "ouro", "desconto", "venda", "hab",
+const std::set<std::string> NIVEL_TORRE = {"alcance", "alcance_x", "camo", "ouro", "ouro_chumbo", "desconto", "venda", "hab",
                                            "persegue"};
 
 const std::map<std::string, double Ataque::*> NUMEROS = {
@@ -36,6 +36,7 @@ const std::map<std::string, bool Ataque::*> LOGICOS = {
     {"moab_lento", &Ataque::moab_lento}, {"moab_congela", &Ataque::moab_congela},
     {"moab_cola", &Ataque::moab_cola}, {"moab_atordoa", &Ataque::moab_atordoa},
     {"na_trilha", &Ataque::na_trilha}, {"linha", &Ataque::linha},
+    {"armadilha", &Ataque::armadilha}, {"prende_moab", &Ataque::prende_moab},
 };
 
 TipoAtaque tipo_de(const std::string& s) {
@@ -46,6 +47,17 @@ TipoAtaque tipo_de(const std::string& s) {
         {"buff", TipoAtaque::BUFF},         {"invocar", TipoAtaque::INVOCAR},
     };
     return M.at(s);
+}
+
+// Um filtro "a" em texto escolhe os ataques pelo tipo ("projetil") ou pelo visual ("uva")
+bool casa(const Ataque& at, const std::string& filtro) {
+    static const std::map<TipoAtaque, std::string> NOMES = {
+        {TipoAtaque::PROJETIL, "projetil"}, {TipoAtaque::RADIAL, "radial"}, {TipoAtaque::AURA, "aura"},
+        {TipoAtaque::HITSCAN, "hitscan"},   {TipoAtaque::CADEIA, "cadeia"}, {TipoAtaque::MORTEIRO, "morteiro"},
+        {TipoAtaque::PILHA, "pilha"},       {TipoAtaque::QUEDA, "queda"},   {TipoAtaque::RENDA, "renda"},
+        {TipoAtaque::BUFF, "buff"},         {TipoAtaque::INVOCAR, "invocar"},
+    };
+    return filtro == "todos" || at.visual == filtro || NOMES.at(at.tipo) == filtro;
 }
 
 double num(const J& v) { return v.is_boolean() ? (v.get<bool>() ? 1.0 : 0.0) : v.get<double>(); }
@@ -141,12 +153,17 @@ Ataque novo_ataque(const J& d) {
 }
 
 void aplicar(Stats& st, const J& ef) {
-    // indices dos ataques afetados; "todos" inclui os criados durante este mesmo efeito
-    bool todos = false;
+    // uma lista de efeitos e aplicada em ordem (permite mirar ataques diferentes no mesmo upgrade)
+    if (ef.is_array()) {
+        for (const J& e : ef) aplicar(st, e);
+        return;
+    }
+    // indices dos ataques afetados; um filtro em texto inclui os criados durante este mesmo efeito
+    std::string filtro;
     std::vector<size_t> alvos;
     auto a = ef.find("a");
     if (a != ef.end() && a->is_string()) {
-        todos = true;
+        filtro = a->get<std::string>();
     } else {
         size_t idx = a == ef.end() ? 0 : a->get<size_t>();
         if (idx < st.ataques.size()) alvos.push_back(idx);
@@ -158,6 +175,7 @@ void aplicar(Stats& st, const J& ef) {
             if (k == "alcance") st.alcance += num(v);
             else if (k == "alcance_x") st.alcance *= num(v);
             else if (k == "ouro") st.ouro += num(v);
+            else if (k == "ouro_chumbo") st.ouro_chumbo += num(v);
             else if (k == "desconto") st.desconto = std::max(st.desconto, num(v));
             else if (k == "hab") st.habs.push_back(v);
             else if (k == "camo") st.camo = v.get<bool>();
@@ -173,9 +191,10 @@ void aplicar(Stats& st, const J& ef) {
             st.ataques[0] = novo_ataque(v);
             continue;
         }
-        if (todos) {
+        if (!filtro.empty()) {
             alvos.clear();
-            for (size_t i = 0; i < st.ataques.size(); ++i) alvos.push_back(i);
+            for (size_t i = 0; i < st.ataques.size(); ++i)
+                if (casa(st.ataques[i], filtro)) alvos.push_back(i);
         }
         for (size_t i : alvos) {
             Ataque& at = st.ataques[i];

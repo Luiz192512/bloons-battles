@@ -153,7 +153,7 @@ BloonP Pista::criar_bloon(const std::string& nome, double d, int cam, bool camo,
     b->d = d;
     b->cam = cam;
     b->fort = fort && tipo.vida_fortificado;
-    b->vida = b->fort ? tipo.vida_fortificado : tipo.vida;
+    b->vida = (b->fort ? tipo.vida_fortificado : tipo.vida) * (tipo.moab ? mult_vida : 1.0);
     b->vida_max = b->vida;
     b->camo = camo || tipo.camo_nativo;
     b->regen = regen;
@@ -185,13 +185,14 @@ bool Pista::aplicar_dano(Bloon& b, double dano, const Ataque& at, Torre* torre, 
     if (!dtype) dtype = at.dtype;
     if (torre && torre->buff.dtype_normal) dtype = DT_NORMAL;
     const TipoBloon& tp = *b.tipo;
+    // remover camo e regen nao depende do tipo de dano (Signal Flare, Shimmer e a espuma pegam o DDT)
+    if (at.retira_camo) b.camo = false;
+    if (at.retira_regen) b.regen = false;
     if (dtype != DT_NORMAL && (tp.imune & dtype)) {
         evento({"bloqueio", b.x, b.y});
         return true;
     }
     if (b.cong_t > 0 && dtype == DT_AFIADO) return true;
-    if (at.retira_camo) b.camo = false;
-    if (at.retira_regen) b.regen = false;
     if (at.fragiliza) b.frag = std::max(b.frag, at.fragiliza);
     // efeitos
     if (at.congela && (tp.congela || (tp.moab && at.moab_congela)))
@@ -230,9 +231,9 @@ void Pista::estourar(Bloon& b, double excesso, DType dtype, Torre* torre, Projet
     if (torre) {
         torre->pops += 1;
         ouro = torre->st.ouro + torre->buff.ouro;
-        if (b.tipo->nome == "chumbo" && torre->st.ouro) ouro += 2;
+        if (b.tipo->nome == "chumbo") ouro += torre->st.ouro_chumbo;
     }
-    dinheiro += 1 + ouro;
+    receber((1 + ouro) * mult_renda);
     pops_total += 1;
     xp(1.0);
     evento({"pop", b.x, b.y, 0, 0, 0, b.tipo->nome});
@@ -265,7 +266,7 @@ void Pista::xp(double v) {
     for (auto& [id, t] : torres) {
         if (t->dfn->heroi && t->nivel < 20) {
             t->xp += v;
-            while (t->nivel < 20 && t->xp >= XP_NIVEL[t->nivel + 1]) {
+            while (t->nivel < 20 && t->xp >= XP_NIVEL[t->nivel + 1] * t->dfn->xp_escala) {
                 t->nivel += 1;
                 t->recalcular();
                 evento({"nivel", t->x, t->y, static_cast<double>(t->nivel)});
@@ -422,6 +423,10 @@ void Pista::executar_habilidade(const TorreP& tp, const J& h) {
         evento({"flash", 0, 0, 0, 0, 0, "", {180, 230, 255}});
     } else if (tipo == "dinheiro") {
         dinheiro += h["valor"].get<double>();
+        evento({"dinheiro", t.x, t.y, h["valor"].get<double>()});
+    } else if (tipo == "emprestimo") {
+        dinheiro += h["valor"].get<double>();
+        divida += h["valor"].get<double>();
         evento({"dinheiro", t.x, t.y, h["valor"].get<double>()});
     } else if (tipo == "roubo") {
         dinheiro += h["valor"].get<double>();
@@ -683,7 +688,8 @@ void Pista::passo_torre(const TorreP& tp) {
             if (ok) {
                 const int n = static_cast<int>(at.n);
                 const double base = t.dfn->mov == Mov::ORBITA ? t.ang : 0.0;
-                for (int k = 0; k < n; ++k) disparar(tp, atp, base + k * 360.0 / n);
+                Bloon* guia = at.busca ? alvo(t, at, 9999) : nullptr;  // teleguiados partem atras do alvo
+                for (int k = 0; k < n; ++k) disparar(tp, atp, base + k * 360.0 / n, guia);
                 t.recargas[i] = cad;
                 evento({"tiro", t.x, t.y, 0, 0, 0, t.chave});
             }
@@ -1013,6 +1019,24 @@ void Pista::passo_pilhas() {
                 explosao(s.x, s.y, at.splash, at.sdano, at.spierce, at, s.torre.get(), DT_NORMAL);
             continue;
         }
+        if (s.at->armadilha) {
+            // a armadilha engole bloons inteiros ate encher a capacidade em RBE
+            const bool camo = s.torre && s.torre->detecta_camo();
+            for (Bloon* b : vizinhos(s.x, s.y, 30)) {
+                if (!b->vivo || (b->camo && !camo)) continue;
+                if (b->tipo->moab && (!s.at->prende_moab || b->tipo->nome == "bad")) continue;
+                if (quad(b->x - s.x) + quad(b->y - s.y) > quad(14 + b->tipo->raio)) continue;
+                const int r = rbe_restante(*b);
+                if (r > s.pierce) continue;
+                b->vivo = false;
+                s.pierce -= r;
+                pops_total += 1;
+                receber(r * s.at->valor * mult_renda);
+                evento({"pop", b->x, b->y, 0, 0, 0, b->tipo->nome});
+            }
+            vivas.push_back(std::move(sp));
+            continue;
+        }
         for (Bloon* b : vizinhos(s.x, s.y, 30)) {
             if (s.pierce <= 0) break;
             if (!b->vivo || s.atingidos.count(b->id)) continue;
@@ -1029,7 +1053,7 @@ void Pista::passo_pilhas() {
 
 // ---------------------------------------------------------------- movimento dos bloons
 void Pista::mover_bloons() {
-    const double base = VELOCIDADE_BASE * DT;
+    const double base = VELOCIDADE_BASE * DT * mult_vel;
     const double glob = lentidao_global_t > 0 ? lentidao_global_f : 1.0;
     // bloons filhos criados por dano continuo entram no fim da lista e andam neste passo
     for (size_t i = 0; i < bloons.size(); ++i) {
@@ -1101,11 +1125,20 @@ void Pista::regenerar(Bloon& b) {
 }
 
 // ---------------------------------------------------------------- rodada
+void Pista::receber(double v) {
+    if (divida > 0) {
+        const double pago = std::min(divida, v * 0.5);
+        divida -= pago;
+        v -= pago;
+    }
+    dinheiro += v;
+}
+
 void Pista::pagar_renda() {
     for (auto& [id, t] : torres) {
         for (const Ataque& at : t->st.ataques) {
             if (at.tipo == TipoAtaque::RENDA && at.valor) {
-                dinheiro += at.valor;
+                receber(at.valor);
                 evento({"dinheiro", t->x, t->y, std::floor(at.valor)});
             }
         }
@@ -1207,6 +1240,9 @@ char Partida::iniciar_rodada() {
     rodada += 1;
     em_rodada = true;
     Pista& p = *pistas[1];
+    p.mult_renda = mult_renda_da_rodada(rodada);
+    p.mult_vida = mult_vida_moab(rodada);
+    p.mult_vel = mult_velocidade(rodada);
     for (auto& [t, g] : agenda_da_rodada(rodada)) p.agendar(g.tipo, t, g.camo, g.regen, g.fort);
     return OK;
 }
@@ -1229,7 +1265,7 @@ void Partida::passo_solo() {
     }
     if (em_rodada && p.fila.empty() && p.bloons.empty()) {
         em_rodada = false;
-        p.dinheiro += 100 + rodada;
+        p.receber(100 + rodada);
         p.pagar_renda();
         p.xp(20 + rodada * 2);
         p.evento({"fim_rodada", 0, 0, static_cast<double>(rodada)});
@@ -1246,7 +1282,7 @@ void Partida::passo_batalha() {
     if (tempo >= prox_eco_t) {
         prox_eco_t += ECO_INTERVALO;
         for (auto& [j, p] : pistas) {
-            p->dinheiro += p->eco;
+            p->receber(p->eco);
             p->evento({"eco", 0, 0, std::floor(p->eco)});
         }
     }
