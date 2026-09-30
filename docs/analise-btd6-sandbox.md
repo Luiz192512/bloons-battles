@@ -29,7 +29,7 @@ As 10 lacunas de maior impacto:
 10. **Necromancer sem cemitério e sem contador** (B11).
 
 O clone não foi jogado nesta sessão (permissão negada). A coluna do clone vem do código e das
-capturas antigas; os itens marcados "conferir" pedem uma olhada no jogo rodando.
+capturas antigas. Depois, a leitura do código resolveu os 8 itens que estavam como "conferir".
 
 ## 1. Sessão
 
@@ -44,7 +44,6 @@ capturas antigas; os itens marcados "conferir" pedem uma olhada no jogo rodando.
   o clone **não foi jogado nesta sessão**. As colunas "clone" vêm da leitura de
   `src/jogo/dados.cpp`, `src/jogo/sim.cpp` e `src/cliente/cena_jogo.cpp` e das capturas que já
   estavam no repositório (`docs/design/capturas/*.png` e `btd6/demo_*`, `painel_*`, `vitrine_*`).
-  Onde o código não basta para afirmar o visual, a diferença diz "conferir".
 - **Capturas:** `docs/design/capturas/btd6/real_*.jpg`. As outras imagens dessa pasta
   (`demo_*`, `vitrine_*`, `painel_*`) são do clone, de sessões anteriores.
 
@@ -103,7 +102,7 @@ código usa (`dados.cpp`), e não uma observação na tela.
 | 1-0-0 / 2-0-0 | Sharp Shots, Razor Sharp Shots | Tiros Afiados / Tiros Super Afiados | Sem mudança visual no mapa. O retrato muda (dardo mais afiado) | Dardos estouram +2 bloons | Sem diferença relevante no código | - |
 | 3-0-0 | Spike-o-pult | Espinhopulta | O modelo vira um macaco numa catapulta. Lança uma bola de espinhos grande e mais lenta. Alcance maior | Bolas de espinhos: 2 de dano, pierce 18, quicam em obstáculos (sprite 'bola_espinho') | Sem diferença relevante no código | - |
 | 4-0-0 | Juggernaut | Juggernaut | Bola de espinhos maior (não observada em voo) | Bola gigante: pierce 60, estoura chumbo, +3 em cerâmica e +2 em fortificado (sprite 'juggernaut') | Sem diferença relevante no código | - |
-| 5-0-0 | Ultra-Juggernaut | Ultra-Juggernaut | Catapulta preta com detalhes laranja. Bola preta grande com anel laranja brilhante que, ao acertar, se divide em 6 bolas menores (pretas com anel amarelo e rastro laranja) que se espalham em estrela e ricocheteiam pela pista. Ritmo lento | 5 de dano, pierce 210; se divide em 6 juggernauts (sprite 'juggernaut') | Mesma divisão em 6 bolas. Conferir na tela o ricochete delas pela pista | P2 |
+| 5-0-0 | Ultra-Juggernaut | Ultra-Juggernaut | Catapulta preta com detalhes laranja. Bola preta grande com anel laranja brilhante que, ao acertar, se divide em 6 bolas menores (pretas com anel amarelo e rastro laranja) que se espalham em estrela e ricocheteiam pela pista. Ritmo lento | 5 de dano, pierce 210; se divide em 6 juggernauts (sprite 'juggernaut') | Mesma divisão em 6 bolas quando a bola principal acaba (`Pista::fim_projetil`). O clone não faz as bolas quicarem nos obstáculos, apesar da descrição do Spike-o-pult dizer isso | P2 |
 | 0-1-0 / 0-2-0 | Quick Shots, Very Quick Shots | Tiros Rápidos / Tiros Muito Rápidos | Bandana verde no retrato. No mapa, só atira mais rápido | Atira ainda mais rápido | Sem diferença relevante no código | - |
 | 0-3-0 | Triple Shot | Tiro Triplo | Bandana vermelha. 3 dardos num leque estreito (de 20 a 30 graus), com pena vermelha | Atira 3 dardos por vez, mais rápido | Sem diferença relevante no código | - |
 | 0-4-0 | Super Monkey Fan Club | Fã-Clube Super Macaco | Mesmo tiro. Ganha a habilidade: o Dart (e até 10 Darts próximos) vira Super Monkey por 15 s, com roupa azul, capa vermelha, máscara e um brilho verde no chão | Atira 2x mais rápido. Habilidade: até 10 dardos viram Super Macacos por 15 s (habilidade turbo_area) | O clone só acelera os Darts (turbo em área) e não troca o visual para Super Monkey (pendência) | P1 |
@@ -128,7 +127,7 @@ Cruzamentos testados: nenhum.
 | 0-3-0 | Bionic Boomerang | Bumerangue Biônico | Braço robótico cinza com luz verde. Bumerangue marrom rápido em arco, com rastro branco curto | Ataca 4x mais rápido, +1 em M.O.A.B | Sem diferença relevante no código | - |
 | 0-4-0 | Turbo Charge | Turbo Carga | Habilidade que acelera por alguns segundos (não observada) | Habilidade: 5x mais rápido por 10 s (habilidade turbo) | Sem diferença relevante no código | - |
 | 0-5-0 | Perma Charge | Carga Permanente | Braço robótico enorme com bobinas verdes brilhantes. Os bumerangues saem verdes, com várias imagens fantasma (borrão de velocidade) | Turbo permanente, 4 de dano | O clone só aumenta a cadência; falta o rastro verde de velocidade | P2 |
-| 0-0-3 | Kylie Boomerang | Bumerangue Kylie | Chapéu de explorador. Cerâmicas atingidas ficam com marcas alaranjadas de calor (do Red Hot Rangs, 0-0-2) | Kylie em linha reta, pierce 18 (sprite 'kylie') | Conferir a marca de calor do Red Hot Rangs nos bloons atingidos | P2 |
+| 0-0-3 | Kylie Boomerang | Bumerangue Kylie | Chapéu de explorador. Cerâmicas atingidas ficam com marcas alaranjadas de calor (do Red Hot Rangs, 0-0-2) | Kylie em linha reta, pierce 18 (sprite 'kylie') | Confirmado pelo código: o Bumerangues Incandescentes (0-0-2) só muda dano e tipo de dano, sem visual de calor no bumerangue nem nos bloons | P2 |
 | 0-0-5 | MOAB Domination | Dominação M.O.A.B. | Casaco listrado de tigre e bumerangue em chamas (laranja e vermelho). O acerto em MOAB solta lascas brancas e azuis | Kylie com 12 de dano, pierce 54 e 2x mais rápido | O Kylie do clone não pega fogo (não há visual de chama) | P2 |
 
 Habilidades: Turbo Charge (0-4-0), não ativada.
@@ -143,7 +142,7 @@ Habilidades: Turbo Charge (0-4-0), não ativada.
 | 0-3-0 | MOAB Mauler | Destruidor de M.O.A.B. | Vira um lançador de mísseis amarelo com cara de tubarão, sobre base listrada de preto e amarelo. Explosão pequena e amarela | +15 de dano em M.O.A.B | Sem diferença relevante no código | - |
 | 0-5-0 | MOAB Eliminator | Eliminador de M.O.A.B. | Lançador preto e verde com cara de tubarão verde e boca roxa brilhante. Míssil com traço laranja | +99 em M.O.A.B. Habilidade: 4.500 a cada 10 s (habilidade dano_forte) | Sem diferença relevante no código | - |
 | 0-0-3 | Cluster Bombs | Bombas de Cacho | Canhão verde com boca amarela (as bombinhas não foram pegas na captura) | Soltam mini bombas (sprite 'bomba') | Sem diferença relevante no código | - |
-| 0-0-5 | Bomb Blitz | Blitz de Bombas | Canhão azul-marinho com faixas douradas e base verde. Cada tiro espalha dezenas de bombinhas pretas com faixa amarela num leque largo sobre a pista, com fumaça | +3 de dano e ataca mais rápido (habilidade dano_global) | No clone a Blitz é só dano e cadência. O leque de dezenas de bombinhas vem das mini bombas do Cacho: conferir a quantidade na tela | P2 |
+| 0-0-5 | Bomb Blitz | Blitz de Bombas | Canhão azul-marinho com faixas douradas e base verde. Cada tiro espalha dezenas de bombinhas pretas com faixa amarela num leque largo sobre a pista, com fumaça | +3 de dano e ataca mais rápido (habilidade dano_global) | Confirmado pelo código: o clone solta 8 mini bombas por tiro, e as mini bombas não se dividem de novo (`frag_filho` barra a recursão), apesar do nome "Cacho Recursivo". O BTD6 mostra dezenas | P2 |
 
 Habilidades: MOAB Eliminator (0-5-0) ativada sem dirigível no alcance, sem efeito visível.
 
@@ -153,7 +152,7 @@ Habilidades: MOAB Eliminator (0-5-0) ativada sem dirigível no alcance, sem efei
 |---|---|---|---|---|---|---|
 | 0-0-0 | Tack Shooter | Atirador de Tachinhas | Torre sem macaco, redonda, que não gira. Tachinhas em raios | radial (vários em círculo), 8 por vez, sprite 'tachinha' | Sem diferença relevante no código | - |
 | 3-0-0 | Hot Shots | Tiros Quentes | Corpo amarelo e laranja com emblema de chama. 8 tachinhas de ponta vermelha saem ao mesmo tempo em 8 direções fixas, retas, até a borda do alcance | Tachinhas quentes: 3 de dano, estouram chumbo (sprite 'fogo') | Sem diferença relevante no código | - |
-| 5-0-0 | Inferno Ring | Anel Infernal | Torre vermelha e laranja com chama viva no topo e blindagem cinza. Anéis de fogo translúcidos (borda laranja e amarela) se expandem do centro até o alcance, sem parar | Anel mais forte e meteoros de 700 de dano (ataque projétil; sprite 'meteoro') | O clone tem anel de fogo e meteoros. Conferir se o anel se expande até o alcance, como no BTD6 | P2 |
+| 5-0-0 | Inferno Ring | Anel Infernal | Torre vermelha e laranja com chama viva no topo e blindagem cinza. Anéis de fogo translúcidos (borda laranja e amarela) se expandem do centro até o alcance, sem parar | Anel mais forte e meteoros de 700 de dano (ataque projétil; sprite 'meteoro') | Equivalente: o efeito de aura do clone desenha um anel que cresce de 30% a 100% do raio e some (`render.cpp`, efeito "aura") | - |
 | 0-3-0 | Blade Shooter | Atirador de Lâminas | Torre azul com estrela de lâminas preta. Lâminas em raios | Lâminas: pierce 8 e alcance 46 (sprite 'lamina') | Sem diferença relevante no código | - |
 | 0-5-0 | Super Maelstrom | Super Turbilhão | Topo com espiral azul e anel de dentes de serra. A habilidade lança dezenas de serras prateadas de centro verde numa espiral que cobre boa parte do mapa | 5 de dano, +5 em cerâmica, estoura tudo. Habilidade de 9 s (habilidade turbo) | A habilidade do clone é um turbo de 9 s; o BTD6 mostra a espiral de serras cobrindo o mapa | P1 |
 | 0-0-3 | Tack Sprayer | Pulverizador de Tachinhas | Torre vermelha com X preto. Anel denso de tachinhas pretas pequenas | 16 tachinhas, +1 pierce | Sem diferença relevante no código | - |
@@ -199,7 +198,7 @@ cima, escorrendo.
 |---|---|---|---|---|---|---|
 | 0-0-0 | Sniper Monkey | Macaco Atirador | Macaco deitado com rifle longo. Alcance no mapa inteiro, o círculo só marca a posição | tiro instantâneo, sprite 'bala' | Sem diferença relevante no código | - |
 | 3-0-0 | Deadly Precision | Precisão Mortal | Boina preta e rifle com faixas vermelhas. Tiro instantâneo: um risco de luz branco e amarelo sai do cano, sem projétil em voo | 20 de dano, +50 em cerâmica | Sem diferença relevante no código | - |
-| 5-0-0 | Cripple MOAB | Aleijar M.O.A.B. | Roupa de camuflagem de folhas (ghillie) e rifle grande. O MOAB atingido fica com estrelas brancas de atordoamento | 140 de dano, explosão de 28 e +5 de dano em dirigíveis atingidos | Conferir as estrelas de atordoamento sobre o dirigível | P2 |
+| 5-0-0 | Cripple MOAB | Aleijar M.O.A.B. | Roupa de camuflagem de folhas (ghillie) e rifle grande. O MOAB atingido fica com estrelas brancas de atordoamento | 140 de dano, explosão de 28 e +5 de dano em dirigíveis atingidos | Equivalente: o clone desenha o estado atordoado em todo bloon com `atord_t > 0`, inclusive dirigíveis (`render.cpp`, `arte::estado_bloon`) | - |
 | 0-5-0 | Elite Sniper | Atirador de Elite | Armadura preta com lentes verdes. Novo modo de alvo "Elite" no painel. O acerto solta estilhaços brancos. Habilidade Supply Drop (caixa que cai e dá dinheiro) | Muito mais rápido; os outros Snipers do mapa atacam 33% mais rápido. Habilidade: caixa de $3.000 (habilidade dinheiro) | Sem o modo de alvo Elite; a caixa de suprimentos é dinheiro direto, sem a caixa caindo no mapa | P1 |
 | 0-0-5 | Elite Defender | Defensor de Elite | Capacete preto e rifle com detalhes laranja. Tiro muito rápido, com clarão laranja e amarelo no cano | 2x mais rápido, +4 em M.O.A.B | Sem diferença relevante no código | - |
 
@@ -240,7 +239,7 @@ O avião é grande: o sprite cobre duas faixas da pista.
 | Up | Nome BTD6 | Nome no clone | Disparo no BTD6 | Disparo no clone | Diferença | Prioridade |
 |---|---|---|---|---|---|---|
 | 0-0-0 | Dartling Gunner | Atirador Dartling | Metralhadora giratória que aponta para o cursor do mouse (modo de alvo "Normal") | projétil, sprite 'dardo' | O clone mira no bloon; no BTD6 a Dartling aponta para o cursor (pendência) | P0 |
-| 5-0-0 | Ray of Doom | Raio da Perdição | Canhão pesado vermelho e dourado. Raio laser vermelho grosso e contínuo que atravessa o mapa inteiro na direção do cursor | Raio de 30 de dano, pierce 999 | O clone herda o tiro instantâneo do Plasma Accelerator (raio_plasma). Conferir se o raio fica contínuo e atravessa o mapa na direção do cursor | P1 |
+| 5-0-0 | Ray of Doom | Raio da Perdição | Canhão pesado vermelho e dourado. Raio laser vermelho grosso e contínuo que atravessa o mapa inteiro na direção do cursor | Raio de 30 de dano, pierce 999 | Confirmado pelo código: cada tiro instantâneo vira uma linha de 6 px da torre até o alvo que dura 0,09 s, disparada a cada 0,2 s. Fica um raio piscando até o bloon, e não um feixe contínuo que atravessa o mapa | P1 |
 | 0-5-0 | M.A.D | M.A.D. | Lançador duplo roxo e verde. Míssil verde com rastro verde | Mega mísseis: +450 em M.O.A.B | Sem diferença relevante no código | - |
 | 0-0-5 | Bloon Exclusion Zone | Zona de Exclusão Bloon | Torre cilíndrica azul e dourada. Rajada de bolinhas escuras | 6 canos: 12 projéteis de 6 de dano | Sem diferença relevante no código | - |
 
@@ -308,7 +307,7 @@ O avião é grande: o sprite cobre duas faixas da pista.
 | Up | Nome BTD6 | Nome no clone | Disparo no BTD6 | Disparo no clone | Diferença | Prioridade |
 |---|---|---|---|---|---|---|
 | 0-0-0 | Monkey Buccaneer | Macaco Bucaneiro | Só na água. Navio que atira dardos para os dois lados | projétil, 2 por vez, sprite 'dardo' | Sem diferença relevante no código | - |
-| 5-0-0 | Carrier Flagship | Nau Capitânia | Porta-aviões cinza com pista. Aviõezinhos pretos e vermelhos voam em volta soltando dardos | Torres na água e Ases em todo o mapa atacam 25% mais rápido | Conferir se o clone deixa pôr torres sobre o porta-aviões | P2 |
+| 5-0-0 | Carrier Flagship | Nau Capitânia | Porta-aviões cinza com pista. Aviõezinhos pretos e vermelhos voam em volta soltando dardos | Torres na água e Ases em todo o mapa atacam 25% mais rápido | Confirmado pelo código: não há colocação de torres sobre o navio | P2 |
 | 0-5-0 | Pirate Lord | Senhor Pirata | Navio pirata roxo-escuro com detalhes verdes. Balas de canhão pretas, explosão amarela em estrela, ganchos para puxar dirigíveis | 35% mais rápido; uvas com 8 de dano (habilidade dano_forte) | Sem diferença relevante no código | - |
 | 0-0-5 | Trade Empire | Império Comercial | Cargueiro vermelho com contêineres coloridos. Contador "x1" sobre o navio | Gera $800 por rodada | Sem diferença relevante no código | - |
 
@@ -371,11 +370,11 @@ O avião é grande: o sprite cobre duas faixas da pista.
 | Colado | A cola cobre o bloon e escorre. A cor muda com o upgrade: amarela (base), verde (corrosiva), rosa (Super Glue) | Um estado de cola só | Falta a cor por upgrade | P2 |
 | Queimando | Chamas laranja e azuladas por cima do bloon | Estado queimando próprio | Equivalente | - |
 | Atordoado | Estrelas brancas girando sobre o bloon ou o dirigível | Estado atordoado próprio | Equivalente | - |
-| Crítico | Texto laranja "CRIT" sobre o alvo | Crítico calculado, sem texto | Falta o texto | P1 |
+| Crítico | Texto laranja "CRIT" sobre o alvo | Crítico calculado, sem texto. O `render.cpp` já tem o efeito de texto flutuante (usado em "+$" e "NÍVEL"), então basta um evento novo | Falta o texto | P1 |
 | Estouro | Respingo branco e azul com lascas; cerâmica solta lascas marrons | Efeito de estouro próprio (evento "pop") | Equivalente | - |
 | Dinheiro por estouro | Soma até no Sandbox | Soma (eventos "dinheiro") | Equivalente | - |
 | Dirigíveis | MOAB grande (cobre quase duas faixas da pista), com 4 a 5 estados de dano | 5 estados de dano e fortificado | Equivalente | - |
-| Pilhas na pista | Espinhos continuam na pista depois de vender a fábrica | `Pista::vender` não mexe nas pilhas | Parece igual; conferir na tela | P2 |
+| Pilhas na pista | Espinhos continuam na pista depois de vender a fábrica | `Pista::vender` não mexe nas pilhas, e cada pilha guarda a própria referência da torre | Igual | - |
 | Modos de alvo | Além de First, Last, Close e Strong, cada torre tem os seus: rotas do Ás (Circle, Infinite, Figure Eight, Centered Path), Heli (Pursuit, Follow Mouse, Lock in Place, Patrol Points), Dartling no cursor (Normal, Locked), Mortar com "Set Target", Sniper "Elite", Anti-Bloon com um alvo por braço | Só os 4 genéricos (`MODOS_ALVO` em `sim.cpp`, `NOMES_MODO` em `cena_jogo.cpp`) | É a maior lacuna de jogabilidade | P0 |
 | Diálogos de confirmação | Sun Temple e True Sun God pedem confirmação ("Temple Sacrifice") | Não há | Falta, junto com o sacrifício | P1 |
 | Upgrade condicional | Monkeyopolis mostra "Requires Banana Farm" com o ícone da fazenda; Beast Handler mostra "Needs Water" e "Requires Beast 1/4" | Não há trava condicional | Falta | P1 |
@@ -428,8 +427,8 @@ O avião é grande: o sprite cobre duas faixas da pista.
 ## 7. O que não foi possível observar e por quê
 
 - **O clone na tela:** a permissão para controlar o `BloonsBattles.exe` foi negada. A fase 2 usou
-  o código e as capturas antigas; todas as diferenças marcadas "conferir" pedem uma olhada no
-  jogo rodando (F9 repete o disparo da torre selecionada).
+  o código e as capturas antigas. A leitura do código resolveu os 8 itens
+  "conferir", mas o visual final do clone (cores, tamanhos, animação) não foi visto em tela.
 - **Mermonkey e Skywarden:** sem tecla de atalho, e a rolagem da loja parou de responder.
 - **Desperado:** bloqueado na conta.
 - **Tiers 1, 2 e 4 da maioria das torres:** para caber no tempo, cada caminho foi capturado no
