@@ -191,9 +191,9 @@ const Biblioteca& bib() {
 }  // namespace
 
 const Clipe& clipe_disparo(const std::string& k) {
-    static const std::set<std::string> arremesso{"dardo", "bumerangue", "ninja", "sauda", "pat", "alquimista", "cola", "brickell"};
+    static const std::set<std::string> arremesso{"dardo", "bumerangue", "ninja", "sauda", "pat", "alquimista", "cola", "brickell", "dan"};
     static const std::set<std::string> arco{"quincy"};
-    static const std::set<std::string> tiro{"sniper", "dartling", "engenheiro", "striker", "rosalia", "jericho"};
+    static const std::set<std::string> tiro{"sniper", "dartling", "engenheiro", "striker", "rosalia"};
     static const std::set<std::string> canhao{"bomba", "sentinela", "churchill", "morteiro", "submarino", "bucaneiro"};
     static const std::set<std::string> pulso{"tachinha", "espinhos", "heli", "as", "fenix", "vila", "fazenda"};
     const Biblioteca& b = bib();

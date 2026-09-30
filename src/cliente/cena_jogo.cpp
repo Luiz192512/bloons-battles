@@ -460,7 +460,8 @@ void CenaJogo::painel_lateral(Vector2 mouse) {
     arte::icone("rodada", pr.x + 12, pr.y + 12, 32);
     ui::texto("RODADA", pr.x + 50, pr.y + 13, 9, ui::BEGE, 0);
     const std::string rod = ctl_->online() ? std::to_string(std::max(1, p.rodada))
-                                           : std::to_string(std::max(1, p.rodada)) + "/" + std::to_string(p.ultima_rodada);
+                   : ctl_->partida->em_freeplay ? std::to_string(std::max(1, p.rodada))
+                                                : std::to_string(std::max(1, p.rodada)) + "/" + std::to_string(p.ultima_rodada);
     ui::texto(rod, pr.x + 48, pr.y + 36, 23, ui::BRANCO, 4, Ancora::MIDLEFT);
     const float dx = pr.x + pr.width - 12;
     if (ctl_->online()) {
@@ -741,7 +742,7 @@ void CenaJogo::linha_upgrade(const TorreP& tp, int pth, float x, float y, float 
     nome_card(up.nome, pode ? ui::BRANCO : rgb(228, 232, 238), rc.y + 34);
     ui::pilula_preco(*custo, cc.x, rc.y + rc.height - 36, pode, 13);
     if (!pode)
-        ui::texto("faltam $" + ui::formatar(*custo - p.dinheiro), cc.x, rc.y + rc.height - 16, 11, rgb(255, 217, 212), 0,
+        ui::texto("faltam $" + ui::formatar(std::ceil(*custo - p.dinheiro)), cc.x, rc.y + rc.height - 16, 11, rgb(255, 217, 212), 0,
                   Ancora::CENTER, ui::Peso::TEXTO);
     botoes_up_.push_back({card, [this, pth] { upar(pth); }});
     if (sobre) {
@@ -756,7 +757,7 @@ void CenaJogo::linha_upgrade(const TorreP& tp, int pth, float x, float y, float 
 void CenaJogo::painel_heroi(const Torre& t, float x, float y, float w) {
     ui::texto("Nível " + std::to_string(t.nivel), x, y + 12, 20, ui::AMARELO, 4, Ancora::MIDLEFT);
     if (t.nivel < 20) {
-        const double a = XP_NIVEL[t.nivel], b = XP_NIVEL[t.nivel + 1];
+        const double a = XP_NIVEL[t.nivel] * t.dfn->xp_escala, b = XP_NIVEL[t.nivel + 1] * t.dfn->xp_escala;
         ui::barra({x + 120, y + 8, w - 130, 12}, static_cast<float>((t.xp - a) / std::max(1.0, b - a)), rgb(120, 200, 255));
         ui::texto("XP " + std::to_string(static_cast<int>(t.xp)) + "/" + std::to_string(static_cast<int>(b)), x + 120,
                   y + 32, 12, ui::BRANCO, 0, Ancora::MIDLEFT, ui::Peso::TEXTO);
@@ -1004,11 +1005,15 @@ void CenaJogo::tela_fim() {
                                    "Vidas restantes: " + std::to_string(std::max(0, p.vidas))};
     for (int i = 0; i < 3; ++i) ui::texto(linhas[i], r.x + r.width / 2, r.y + 118 + i * 32.0f, 20, ui::BRANCO, 3, Ancora::CENTER);
     std::vector<std::tuple<std::string, Acao, Color>> opcoes;
+    if (!ctl_->online() && ganhou)
+        opcoes.emplace_back("Continuar em freeplay", [this] { ctl_->partida->continuar_freeplay(); }, ui::AMARELO);
     if (!ctl_->online()) opcoes.emplace_back("Jogar novamente", [this] { reiniciar(); }, ui::VERDE);
     opcoes.emplace_back("Menu principal", [this] { app.ir_menu(); }, ui::AZUL);
+    const bool tres = opcoes.size() > 2;  // com o freeplay os botoes ficam mais juntos para caber no painel
     for (size_t i = 0; i < opcoes.size(); ++i) {
         auto& [rot, acao, cor] = opcoes[i];
-        ui::Botao b{{r.x + 110, r.y + 240 + i * 66.0f, r.width - 220, 54}, rot, cor, 20};
+        ui::Botao b{{r.x + 110, r.y + (tres ? 222 : 240) + i * (tres ? 62.0f : 66.0f), r.width - 220, tres ? 50.0f : 54.0f},
+                    rot, cor, 20};
         b.desenhar();
         botoes_menu_.push_back({b, acao});
     }

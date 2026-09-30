@@ -47,7 +47,11 @@ public:
 
 private:
     Rectangle rect_mapa(size_t i) const { return {40 + i * 304.5f, 124, 286.5f, 172}; }
-    Rectangle rect_dif(size_t i) const { return {40 + i * 302.5f, 368, 292.5f, 56}; }
+    // 4 dificuldades + 3 modos do BTD6 (CHIMPS, Meio Dinheiro, Deflacao) numa linha so
+    Rectangle rect_dif(size_t i) const {
+        const float w = (1200.0f - (DIFICULDADES.size() - 1) * 8.0f) / DIFICULDADES.size();
+        return {40 + i * (w + 8.0f), 368, w, 56};
+    }
     std::string mapa_ = "prado", dif_ = "medio";
     GradeHerois herois_{40, 496, 9, 58};
     ui::Botao voltar_, jogar_;

@@ -225,8 +225,9 @@ void CenaSolo::desenhar() {
         ui::ret({f.x, f.y, f.width, f.height - 5}, face, 9);
         ui::ret({f.x + 4, f.y + 2, f.width - 8, 3}, rgb(255, 255, 255, 77), 2);
         ui::texto(d.nome, r.x + r.width / 2, r.y + 20, 15, sel ? ui::BRANCO : ui::MADEIRA_ESCURA, sel ? 4 : 0, Ancora::CENTER);
-        ui::texto(std::to_string(d.vidas) + " vidas · " + std::to_string(d.ultima_rodada) + " rodadas", r.x + r.width / 2,
-                  r.y + 40, 12, sel ? ui::BRANCO : rgb(110, 69, 35), 0, Ancora::CENTER, ui::Peso::TEXTO);
+        const std::string vidas = std::to_string(d.vidas) + (d.vidas == 1 ? " vida" : " vidas");
+        ui::texto(vidas + " · R" + std::to_string(d.primeira_rodada) + " a R" + std::to_string(d.ultima_rodada),
+                  r.x + r.width / 2, r.y + 40, 11, sel ? ui::BRANCO : rgb(110, 69, 35), 0, Ancora::CENTER, ui::Peso::TEXTO);
     }
     painel_passo({24, 452, 1232, 176}, "3 · Herói");
     const DefTorre& h = herois_.desenhar();

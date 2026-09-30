@@ -15,7 +15,7 @@ const std::set<std::string> SOMA = {"dano", "pierce", "n", "splash", "sdano", "s
                                     "fort", "dist", "raio_proj", "valor", "pilha_pierce", "saltos", "empurra",
                                     "fragiliza", "nivel_inv", "raio_aura"};
 const std::set<std::string> MULT = {"cad", "vel", "pilha_vida", "impreciso"};
-const std::set<std::string> NIVEL_TORRE = {"alcance", "alcance_x", "camo", "ouro", "desconto", "venda", "hab",
+const std::set<std::string> NIVEL_TORRE = {"alcance", "alcance_x", "camo", "ouro", "ouro_chumbo", "desconto", "venda", "hab",
                                            "persegue"};
 
 const std::map<std::string, double Ataque::*> NUMEROS = {
@@ -27,7 +27,9 @@ const std::map<std::string, double Ataque::*> NUMEROS = {
     {"quica", &Ataque::quica}, {"raio_aura", &Ataque::raio_aura}, {"pilha_pierce", &Ataque::pilha_pierce},
     {"pilha_vida", &Ataque::pilha_vida}, {"saltos", &Ataque::saltos}, {"valor", &Ataque::valor},
     {"fusivel", &Ataque::fusivel}, {"impreciso", &Ataque::impreciso}, {"dur", &Ataque::dur},
-    {"nivel_inv", &Ataque::nivel_inv},
+    {"nivel_inv", &Ataque::nivel_inv}, {"crit_cada", &Ataque::crit_cada}, {"crit_max", &Ataque::crit_max},
+    {"crit_dano", &Ataque::crit_dano}, {"crit_mais", &Ataque::crit_mais}, {"pocao_max", &Ataque::pocao_max},
+    {"pocao_bloq", &Ataque::pocao_bloq},
 };
 
 const std::map<std::string, bool Ataque::*> LOGICOS = {
@@ -36,6 +38,7 @@ const std::map<std::string, bool Ataque::*> LOGICOS = {
     {"moab_lento", &Ataque::moab_lento}, {"moab_congela", &Ataque::moab_congela},
     {"moab_cola", &Ataque::moab_cola}, {"moab_atordoa", &Ataque::moab_atordoa},
     {"na_trilha", &Ataque::na_trilha}, {"linha", &Ataque::linha},
+    {"armadilha", &Ataque::armadilha}, {"prende_moab", &Ataque::prende_moab}, {"pocao", &Ataque::pocao},
 };
 
 TipoAtaque tipo_de(const std::string& s) {
@@ -46,6 +49,17 @@ TipoAtaque tipo_de(const std::string& s) {
         {"buff", TipoAtaque::BUFF},         {"invocar", TipoAtaque::INVOCAR},
     };
     return M.at(s);
+}
+
+// Um filtro "a" em texto escolhe os ataques pelo tipo ("projetil") ou pelo visual ("uva")
+bool casa(const Ataque& at, const std::string& filtro) {
+    static const std::map<TipoAtaque, std::string> NOMES = {
+        {TipoAtaque::PROJETIL, "projetil"}, {TipoAtaque::RADIAL, "radial"}, {TipoAtaque::AURA, "aura"},
+        {TipoAtaque::HITSCAN, "hitscan"},   {TipoAtaque::CADEIA, "cadeia"}, {TipoAtaque::MORTEIRO, "morteiro"},
+        {TipoAtaque::PILHA, "pilha"},       {TipoAtaque::QUEDA, "queda"},   {TipoAtaque::RENDA, "renda"},
+        {TipoAtaque::BUFF, "buff"},         {TipoAtaque::INVOCAR, "invocar"},
+    };
+    return filtro == "todos" || at.visual == filtro || NOMES.at(at.tipo) == filtro;
 }
 
 double num(const J& v) { return v.is_boolean() ? (v.get<bool>() ? 1.0 : 0.0) : v.get<double>(); }
@@ -110,27 +124,60 @@ void Buffs::mesclar(const Buffs& o) {
     if (o.vazio) return;
     cad *= o.cad;
     alcance_pct += o.alcance_pct;
+    alcance += o.alcance;
     pierce += o.pierce;
+    pierce_pct += o.pierce_pct;
+    vel_pct += o.vel_pct;
     dano += o.dano;
     moab += o.moab;
+    cer += o.cer;
+    fort += o.fort;
     ouro += o.ouro;
     camo = camo || o.camo;
     dtype_normal = dtype_normal || o.dtype_normal;
+    chumbo = chumbo || o.chumbo;
     vazio = false;
+}
+
+void Buffs::melhor(const Buffs& o) {
+    if (o.vazio) return;
+    if (vazio) {
+        *this = o;
+        return;
+    }
+    cad = std::min(cad, o.cad);
+    for (auto campo : {&Buffs::alcance_pct, &Buffs::alcance, &Buffs::pierce, &Buffs::pierce_pct, &Buffs::vel_pct,
+                       &Buffs::dano, &Buffs::moab, &Buffs::cer, &Buffs::fort, &Buffs::ouro})
+        this->*campo = std::max(this->*campo, o.*campo);
+    camo = camo || o.camo;
+    dtype_normal = dtype_normal || o.dtype_normal;
+    chumbo = chumbo || o.chumbo;
 }
 
 void Buffs::mesclar(const J& novos) {
     for (auto& [k, v] : novos.items()) {
-        vazio = false;
-        if (k == "cad") cad *= num(v);
-        else if (k == "alcance_pct") alcance_pct += num(v);
-        else if (k == "pierce") pierce += num(v);
-        else if (k == "dano") dano += num(v);
-        else if (k == "moab") moab += num(v);
-        else if (k == "ouro") ouro += num(v);
-        else if (k == "camo") camo = v.get<bool>();
-        else if (k == "dtype_normal") dtype_normal = v.get<bool>();
-        else throw std::invalid_argument("buff desconhecido: " + k);
+        if (k == "escopo") escopo = v.get<std::string>();
+        else if (k == "global_") global_ = v.get<bool>();
+        else if (k == "sem_si") sem_si = v.get<bool>();
+        else if (k == "acumula") acumula = v.get<int>();
+        else {
+            vazio = false;
+            if (k == "cad") cad *= num(v);
+            else if (k == "alcance_pct") alcance_pct += num(v);
+            else if (k == "alcance") alcance += num(v);
+            else if (k == "pierce") pierce += num(v);
+            else if (k == "pierce_pct") pierce_pct += num(v);
+            else if (k == "vel_pct") vel_pct += num(v);
+            else if (k == "dano") dano += num(v);
+            else if (k == "moab") moab += num(v);
+            else if (k == "cer") cer += num(v);
+            else if (k == "fort") fort += num(v);
+            else if (k == "ouro") ouro += num(v);
+            else if (k == "camo") camo = v.get<bool>();
+            else if (k == "dtype_normal") dtype_normal = v.get<bool>();
+            else if (k == "chumbo") chumbo = v.get<bool>();
+            else throw std::invalid_argument("buff desconhecido: " + k);
+        }
     }
 }
 
@@ -141,12 +188,17 @@ Ataque novo_ataque(const J& d) {
 }
 
 void aplicar(Stats& st, const J& ef) {
-    // indices dos ataques afetados; "todos" inclui os criados durante este mesmo efeito
-    bool todos = false;
+    // uma lista de efeitos e aplicada em ordem (permite mirar ataques diferentes no mesmo upgrade)
+    if (ef.is_array()) {
+        for (const J& e : ef) aplicar(st, e);
+        return;
+    }
+    // indices dos ataques afetados; um filtro em texto inclui os criados durante este mesmo efeito
+    std::string filtro;
     std::vector<size_t> alvos;
     auto a = ef.find("a");
     if (a != ef.end() && a->is_string()) {
-        todos = true;
+        filtro = a->get<std::string>();
     } else {
         size_t idx = a == ef.end() ? 0 : a->get<size_t>();
         if (idx < st.ataques.size()) alvos.push_back(idx);
@@ -158,6 +210,7 @@ void aplicar(Stats& st, const J& ef) {
             if (k == "alcance") st.alcance += num(v);
             else if (k == "alcance_x") st.alcance *= num(v);
             else if (k == "ouro") st.ouro += num(v);
+            else if (k == "ouro_chumbo") st.ouro_chumbo += num(v);
             else if (k == "desconto") st.desconto = std::max(st.desconto, num(v));
             else if (k == "hab") st.habs.push_back(v);
             else if (k == "camo") st.camo = v.get<bool>();
@@ -173,9 +226,10 @@ void aplicar(Stats& st, const J& ef) {
             st.ataques[0] = novo_ataque(v);
             continue;
         }
-        if (todos) {
+        if (!filtro.empty()) {
             alvos.clear();
-            for (size_t i = 0; i < st.ataques.size(); ++i) alvos.push_back(i);
+            for (size_t i = 0; i < st.ataques.size(); ++i)
+                if (casa(st.ataques[i], filtro)) alvos.push_back(i);
         }
         for (size_t i : alvos) {
             Ataque& at = st.ataques[i];
@@ -198,12 +252,30 @@ Stats calcular(const std::string& chave, std::array<int, 3> caminhos, int nivel)
         for (int p = 0; p < 3; ++p)
             for (int i = 0; i < caminhos[p]; ++i) aplicar(st, dfn.caminhos[p][i].ef);
     if (dfn.heroi) {
+        // "h3" e "h10" num efeito de nivel trocam campos das habilidades (no BTD6 elas melhoram com o nivel)
+        J h3 = dfn.hab3, h10 = dfn.hab10;
+        auto separar = [&](J& e) {
+            if (!e.is_object()) return;
+            for (auto [chave, hab] : {std::pair<const char*, J*>{"h3", &h3}, {"h10", &h10}}) {
+                auto it = e.find(chave);
+                if (it == e.end()) continue;
+                for (auto& [k, v] : it->items()) (*hab)[k] = v;
+                e.erase(it);
+            }
+        };
         for (int n = 2; n <= nivel; ++n) {
             auto it = dfn.niveis.find(n);
-            if (it != dfn.niveis.end() && !it->second.empty()) aplicar(st, it->second);
+            if (it == dfn.niveis.end()) continue;
+            J ef = it->second;
+            if (ef.is_array()) {
+                for (J& e : ef) separar(e);
+            } else {
+                separar(ef);
+            }
+            if (!ef.empty()) aplicar(st, ef);
         }
-        if (nivel >= 3 && !dfn.hab3.is_null()) st.habs.push_back(dfn.hab3);
-        if (nivel >= 10 && !dfn.hab10.is_null()) st.habs.push_back(dfn.hab10);
+        if (nivel >= 3 && !h3.is_null()) st.habs.push_back(h3);
+        if (nivel >= 10 && !h10.is_null()) st.habs.push_back(h10);
     }
     return st;
 }

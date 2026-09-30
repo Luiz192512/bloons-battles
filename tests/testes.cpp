@@ -20,6 +20,7 @@
 #include "ipc/memoria.hpp"
 #include "ipc/placar.hpp"
 #include "jogo/defs.hpp"
+#include "jogo/rodadas.hpp"
 #include "jogo/sim.hpp"
 #include "jogo/stats.hpp"
 #include "rede/socket.hpp"
@@ -155,8 +156,37 @@ TESTE(dados_22_torres_com_3x5_upgrades) {
 }
 
 TESTE(dados_herois) {
-    CHECA(herois().size() >= 17);
-    for (auto& h : herois()) calcular(h.chave, {0, 0, 0}, 20);
+    CHECA_IGUAL(herois().size(), size_t(18));  // os 17 do BTD6 que o clone tinha + Dan D'Monke (no lugar do Jericho)
+    CHECA(achar_heroi("dan") && !achar_heroi("jericho"));
+    for (auto& h : herois())
+        for (int n = 1; n <= 20; ++n) {
+            Stats st = calcular(h.chave, {0, 0, 0}, n);
+            CHECA_IGUAL(st.habs.size(), size_t(n >= 10 ? 2 : n >= 3 ? 1 : 0));
+        }
+    // as habilidades mudam com o nivel (BTD6): Quincy tem Rapid Shot de 8 s, 12 s no nivel 13
+    CHECA_IGUAL(calcular("quincy", {0, 0, 0}, 3).habs[0]["dur"].get<double>(), 8.0);
+    CHECA_IGUAL(calcular("quincy", {0, 0, 0}, 13).habs[0]["dur"].get<double>(), 12.0);
+    CHECA_IGUAL(calcular("churchill", {0, 0, 0}, 20).habs[1]["valor"].get<double>(), 19200.0);
+    // XP oficial do nivel 20 (213.560 com escala 1)
+    CHECA_IGUAL(XP_NIVEL[20], 213560);
+}
+
+TESTE(btd6_herois_nivel_20_atacam_e_usam_habilidades) {
+    for (auto& h : herois()) {
+        Partida p("solo", h.agua ? "lago" : "prado", 3, "facil", {{1, h.chave}});
+        Pista& pi = p.pista(1);
+        pi.dinheiro = 1e7;
+        const char* pos = h.agua ? "530,300" : "300,220";
+        const char e = p.aplicar(1, "T" + h.chave + "@" + pos);
+        if (e) throw Falha{"nao colocou " + h.chave};
+        Torre& t = *pi.torre(1);
+        t.nivel = 20;
+        t.recalcular();
+        for (int i = 0; i < 30 * 46; ++i) p.passo();
+        for (size_t k = 0; k < t.st.habs.size(); ++k) p.aplicar(1, "B1:" + std::to_string(k));
+        for (const char* b : {"ceramica", "moab", "chumbo", "zebra", "ddt"}) pi.agendar(b, 0.1);
+        for (int i = 0; i < 30 * 12; ++i) p.passo();
+    }
 }
 
 TESTE(dados_todas_as_combinacoes_validas_calculam) {
@@ -232,6 +262,191 @@ TESTE(sim_imunidades) {
     BloonP preto = pi.criar_bloon("preto", 100);
     pi.aplicar_dano(*preto, 1, novo_ataque({{"dtype", "explosao"}}), nullptr);
     CHECA(preto->vivo);  // preto e imune a explosao
+}
+
+TESTE(btd6_rodadas_oficiais_e_renda_por_rodada) {
+    auto r40 = grupos_da_rodada(40);
+    CHECA(r40.size() == 1 && r40[0].tipo == "moab" && r40[0].qtd == 1);
+    bool bad = false;
+    for (auto& g : grupos_da_rodada(100)) bad = bad || g.tipo == "bad";
+    CHECA(bad);
+    CHECA_IGUAL(mult_renda_da_rodada(50), 1.0);
+    CHECA_IGUAL(mult_renda_da_rodada(51), 0.5);
+    CHECA_IGUAL(mult_renda_da_rodada(141), 0.02);
+    CHECA_IGUAL(mult_vida_moab(80), 1.0);
+    CHECA(std::abs(mult_vida_moab(100) - 1.4) < 1e-9);
+    Partida p = solo();
+    Pista& pi = p.pista(1);
+    pi.mult_renda = 0.5;
+    double antes = pi.dinheiro;
+    pi.aplicar_dano(*pi.criar_bloon("vermelho", 100), 1, novo_ataque({{"dano", 1}}), nullptr);
+    CHECA_IGUAL(pi.dinheiro, antes + 0.5);
+}
+
+TESTE(btd6_upgrade_mira_ataque_por_visual) {
+    // Merchantman com uvas no caminho 2: a renda e melhorada, nao as uvas
+    Stats st = calcular("bucaneiro", {0, 2, 5});
+    double renda = 0;
+    for (const Ataque& at : st.ataques)
+        if (at.tipo == TipoAtaque::RENDA) renda += at.valor;
+    CHECA_IGUAL(renda, 800.0);
+    // Mestre Bombardeiro melhora a bomba grudenta
+    Stats ninja = calcular("ninja", {0, 0, 5});
+    bool grudenta = false;
+    for (const Ataque& at : ninja.ataques) grudenta = grudenta || (at.so_moab && at.dano == 3000);
+    CHECA(grudenta);
+}
+
+TESTE(btd6_armadilha_e_emprestimo) {
+    Partida p = solo();
+    Pista& pi = p.pista(1);
+    auto at = std::make_shared<const Ataque>(novo_ataque({{"tipo", "pilha"}, {"armadilha", true}, {"valor", 2}}));
+    BloonP rosa = pi.criar_bloon("rosa", 300);
+    BloonP cer = pi.criar_bloon("ceramica", 300);
+    pi.pilhas.push_back(std::unique_ptr<Pilha>(new Pilha{rosa->x, rosa->y, 30, at, nullptr, 50, {}, true, "armadilha"}));
+    double antes = pi.dinheiro;
+    p.passo();
+    CHECA(!rosa->vivo);  // RBE 5 cabe na armadilha
+    CHECA(cer->vivo);    // RBE 104 nao cabe
+    CHECA_IGUAL(pi.dinheiro, antes + 10);
+    pi.divida = 100;
+    pi.receber(50);
+    CHECA_IGUAL(pi.divida, 75.0);
+}
+
+TESTE(btd6_criticos_a_cada_n_tiros) {
+    Partida p = solo();
+    Pista& pi = p.pista(1);
+    pi.dinheiro = 1e6;
+    CHECA_IGUAL(p.aplicar(1, "Tdardo@230,250"), OK);
+    for (int k = 0; k < 4; ++k) CHECA_IGUAL(p.aplicar(1, "U1:2"), OK);  // Sharp Shooter: 50 a cada 10 tiros
+    Torre& t = *pi.torres.at(1);
+    std::vector<int> crit;
+    for (int k = 1; k <= 30; ++k)
+        if (pi.critico(t, 0, t.ats[0])->dano == 50) crit.push_back(k);
+    CHECA((crit == std::vector<int>{10, 20, 30}));
+    CHECA_IGUAL(t.ats[0]->dano, 6.0);
+    CHECA_IGUAL(p.aplicar(1, "U1:2"), OK);  // Crossbow Master: 80 a cada 5 tiros
+    int c80 = 0;
+    for (int k = 0; k < 20; ++k) c80 += pi.critico(t, 0, t.ats[0])->dano == 80;
+    CHECA_IGUAL(c80, 4);
+    // Robo Monkey: +9 de dano a cada 15 a 20 tiros
+    CHECA_IGUAL(p.aplicar(1, "Tsuper@600,500"), OK);
+    const int id = pi.torres.rbegin()->first;
+    for (int k = 0; k < 3; ++k) CHECA_IGUAL(p.aplicar(1, "U" + std::to_string(id) + ":1"), OK);
+    Torre& r = *pi.torres.at(id);
+    int ultimo = 0;
+    for (int k = 1; k <= 200; ++k)
+        if (pi.critico(r, 0, r.ats[0])->dano == r.ats[0]->dano + 9) {
+            CHECA(k - ultimo >= 15 && k - ultimo <= 20);
+            ultimo = k;
+        }
+    CHECA(ultimo >= 180);
+}
+
+TESTE(btd6_buffs_por_escopo_sem_acumular_e_pocao_por_torre) {
+    Partida p = solo();
+    Pista& pi = p.pista(1);
+    pi.dinheiro = 1e7;
+    auto colocar = [&](const std::string& k, int x, int y, std::vector<int> ups) {
+        const char e = p.aplicar(1, "T" + k + "@" + std::to_string(x) + "," + std::to_string(y));
+        if (e) throw Falha{"nao colocou " + k + " (" + std::to_string(e) + ")"};
+        const int id = pi.torres.rbegin()->first;
+        for (int u : ups) CHECA_IGUAL(p.aplicar(1, "U" + std::to_string(id) + ":" + std::to_string(u)), OK);
+        return id;
+    };
+    const int dardo = colocar("dardo", 290, 225, {});
+    const int mago = colocar("mago", 330, 380, {});
+    colocar("vila", 350, 200, {0, 0, 0});  // Jungle Drums + Primary Training
+    p.passo();
+    // Primary Training so vale para Primarias: o dardo ganha +1 pierce, o mago nao
+    CHECA_IGUAL(pi.torres.at(dardo)->buff.pierce, 1.0);
+    CHECA_IGUAL(pi.torres.at(mago)->buff.pierce, 0.0);
+    CHECA(std::abs(pi.torres.at(mago)->buff.cad - 0.85) < 1e-9);
+    // uma segunda Vila igual nao acumula Jungle Drums
+    colocar("vila", 230, 250, {0, 0});
+    pi.buff_t = 0;
+    p.passo();
+    CHECA(std::abs(pi.torres.at(dardo)->buff.cad - 0.85) < 1e-9);
+    // Berserker Brew: pocao numa torre, gasta 1 por tiro
+    const int alq = colocar("alquimista", 240, 340, {0, 0, 0});
+    Torre& a = *pi.torres.at(alq);
+    size_t idx = 0;
+    for (size_t i = 0; i < a.ats.size(); ++i)
+        if (a.ats[i]->visual == "pocao_brew") idx = i;
+    a.recargas[idx] = 0;
+    p.passo();
+    int com = 0;
+    Torre* alvo_ = nullptr;
+    for (auto& [id, t] : pi.torres)
+        if (t->pocoes.count("pocao_brew")) com++, alvo_ = t.get();
+    CHECA_IGUAL(com, 1);
+    CHECA_IGUAL(alvo_->pocoes["pocao_brew"].tiros, 25.0);
+    p.passo();
+    CHECA_IGUAL(alvo_->buff.dano, 1.0);
+}
+
+TESTE(btd6_freeplay_super_ceramica_e_filho_unico) {
+    Partida p = solo();
+    Pista& pi = p.pista(1);
+    CHECA_IGUAL(pi.rbe_restante(*pi.criar_bloon("ceramica", 100)), 104);
+    pi.freeplay = true;
+    pi.mult_renda = 1.0;
+    BloonP c = pi.criar_bloon("ceramica", 100);
+    CHECA_IGUAL(c->vida, 60.0);
+    CHECA_IGUAL(pi.rbe_restante(*c), 68);  // 60 + arco-iris com um filho so ate o vermelho
+    const double antes = pi.dinheiro;
+    const size_t n = pi.bloons.size();
+    pi.aplicar_dano(*c, 60, novo_ataque({{"dano", 60}, {"dtype", "normal"}}), nullptr);
+    CHECA(!c->vivo);
+    CHECA_IGUAL(pi.bloons.size(), n + 1);  // um arco-iris so
+    CHECA_IGUAL(pi.dinheiro, antes + 87);
+    CHECA_IGUAL(pi.criar_bloon("ceramica", 100, -1, false, false, true)->vida, 120.0);
+    CHECA_IGUAL(pi.rbe_restante(*pi.criar_bloon("moab", 100)), 200 + 4 * 68);
+    // depois de vencer da para continuar em freeplay; na batalha, nao
+    CHECA(!p.continuar_freeplay());
+    p.fim = true;
+    p.vencedor = 1;
+    CHECA(p.continuar_freeplay());
+    CHECA(!p.fim && p.em_freeplay && p.ultima_rodada > 1000);
+}
+
+TESTE(btd6_modos_chimps_meio_dinheiro_e_deflacao) {
+    {
+        Partida p("solo", "prado", 1, "chimps", {});
+        Pista& pi = p.pista(1);
+        CHECA_IGUAL(pi.vidas, 1);
+        CHECA_IGUAL(p.ultima_rodada, 100);
+        CHECA_IGUAL(p.aplicar(1, "Tdardo@230,250"), OK);
+        CHECA_IGUAL(p.aplicar(1, "V1"), ERRO_BLOQUEADO);  // sem venda
+        CHECA_IGUAL(p.aplicar(1, "N"), OK);
+        CHECA_IGUAL(p.rodada, 6);  // comeca na R6
+        const double antes = pi.dinheiro;
+        pi.pagar_renda();
+        CHECA_IGUAL(pi.dinheiro, antes);
+    }
+    {
+        Partida p("solo", "prado", 1, "metade", {});
+        Pista& pi = p.pista(1);
+        CHECA_IGUAL(pi.dinheiro, 325.0);
+        const double antes = pi.dinheiro;
+        pi.aplicar_dano(*pi.criar_bloon("vermelho", 100), 1, novo_ataque({{"dano", 1}}), nullptr);
+        CHECA_IGUAL(pi.dinheiro, antes + 0.5);
+    }
+    {
+        Partida p("solo", "prado", 1, "deflacao", {});
+        Pista& pi = p.pista(1);
+        CHECA_IGUAL(pi.dinheiro, 20000.0);
+        CHECA_IGUAL(p.aplicar(1, "N"), OK);
+        CHECA_IGUAL(p.rodada, 31);
+        const double antes = pi.dinheiro;
+        pi.aplicar_dano(*pi.criar_bloon("vermelho", 100), 1, novo_ataque({{"dano", 1}}), nullptr);
+        CHECA_IGUAL(pi.dinheiro, antes);  // estourar nao paga
+        CHECA_IGUAL(p.aplicar(1, "Tdardo@230,250"), OK);
+        const int id = pi.torres.rbegin()->first;
+        CHECA_IGUAL(p.aplicar(1, "V" + std::to_string(id)), OK);  // vender funciona
+        CHECA(pi.dinheiro > antes - 200);
+    }
 }
 
 TESTE(sim_vazamento_tira_vidas_pelo_rbe) {

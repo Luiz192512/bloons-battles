@@ -29,10 +29,11 @@ std::vector<HabInfo> todas_habs() {
     for (const DefTorre& t : torres())
         for (int c = 0; c < 3; ++c)
             for (int k = 0; k < 5; ++k) {
-                const J& ef = t.caminhos[c][k].ef;
-                if (ef.contains("hab"))
-                    v.push_back({t.chave, ef["hab"].value("tipo", std::string("invocar")), ef["hab"].value("nome", std::string()),
-                                 false, c, k + 1, 1});
+                const J& efs = t.caminhos[c][k].ef;
+                for (const J& ef : efs.is_array() ? efs : J::array({efs}))
+                    if (ef.contains("hab"))
+                        v.push_back({t.chave, ef["hab"].value("tipo", std::string("invocar")),
+                                     ef["hab"].value("nome", std::string()), false, c, k + 1, 1});
             }
     for (const DefTorre& h : herois())
         for (auto [nivel, hab] : {std::pair<int, const J*>{3, &h.hab3}, std::pair<int, const J*>{10, &h.hab10}})
@@ -66,7 +67,7 @@ Exemplo exemplo(const anim::Clipe& c) {
     if (n.find("espinhos") != std::string::npos) return {"obyn", {}};
     if (n.find("invocar") != std::string::npos) return {"mago", V(1, 3)};
     if (n.find("reverso") != std::string::npos) return {"super", V(2, 5)};
-    return {"jericho", {}};
+    return {"dan", {}};
 }
 
 class CenaVitrine : public Cena {
@@ -198,7 +199,16 @@ void CenaVitrine::tiers(int parte) {
             arte::torre_icone(t.chave, v, x + 30, y + 29, 52);
             const std::string rot = k == 0 ? "Base" : "C" + std::to_string(cam + 1) + " T" + std::to_string(tier);
             ui::texto(rot, x + 60, y + 18, 10, ui::BRANCO, 3, Ancora::MIDLEFT);
-            if (k) ui::texto(t.caminhos[cam][tier - 1].nome, x + 60, y + 38, 9, ui::TINTA, 0, Ancora::MIDLEFT, ui::Peso::TEXTO);
+            if (!k) continue;
+            // nomes longos do BTD6 (ex.: "Agencia de Inteligencia Macaco") quebram em duas linhas
+            const std::string& nome = t.caminhos[cam][tier - 1].nome;
+            if (ui::medir(nome, 9, ui::Peso::TEXTO).x <= 76) {
+                ui::texto(nome, x + 60, y + 38, 9, ui::TINTA, 0, Ancora::MIDLEFT, ui::Peso::TEXTO);
+            } else {
+                auto linhas = ui::quebrar(nome, 8, 76, ui::Peso::TEXTO);
+                for (size_t l = 0; l < linhas.size() && l < 2; ++l)
+                    ui::texto(linhas[l], x + 60, y + 34 + l * 10.0f, 8, ui::TINTA, 0, Ancora::MIDLEFT, ui::Peso::TEXTO);
+            }
         }
     }
 }
@@ -284,12 +294,13 @@ void CenaVitrine::pag_efeitos() {
 void CenaVitrine::pag_habilidades() {
     for (size_t i = 0; i < habs_.size(); ++i) {
         const HabInfo& h = habs_[i];
-        const float x = 12 + (i % 15) * 84.0f, y = 72 + (i / 15) * 128.0f;
-        celula({x, y, 80, 122}, ui::MADEIRA_ESCURA);
-        arte::habilidade(h.dono, h.heroi, h.cam, h.tier, h.nivel, h.efeito, x + 40, y + 44, 70);
-        auto linhas = ui::quebrar(h.nome, 8, 74);
+        // 16 colunas: as habilidades do BTD6 passam de 75 e nao cabiam em 5 linhas de 15
+        const float x = 12 + (i % 16) * 78.5f, y = 72 + (i / 16) * 128.0f;
+        celula({x, y, 75, 122}, ui::MADEIRA_ESCURA);
+        arte::habilidade(h.dono, h.heroi, h.cam, h.tier, h.nivel, h.efeito, x + 37.5f, y + 44, 66);
+        auto linhas = ui::quebrar(h.nome, 8, 70);
         for (size_t k = 0; k < linhas.size() && k < 2; ++k)
-            ui::texto(linhas[k], x + 40, y + 92 + k * 13.0f, 8, ui::BRANCO, 2, Ancora::CENTER);
+            ui::texto(linhas[k], x + 37.5f, y + 92 + k * 13.0f, 8, ui::BRANCO, 2, Ancora::CENTER);
     }
 }
 

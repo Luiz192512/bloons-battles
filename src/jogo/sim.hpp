@@ -89,7 +89,7 @@ using AtaqueP = std::shared_ptr<const Ataque>;
 struct Torre {
     Torre(int id, const std::string& chave, int dono, double x, double y, double custo, double temporaria = 0.0);
     void recalcular(int extra_nivel_inv = 0);
-    double alcance() const { return st.alcance * (1.0 + buff.alcance_pct); }
+    double alcance() const { return (st.alcance + buff.alcance) * (1.0 + buff.alcance_pct); }
     bool detecta_camo() const { return st.camo || buff.camo; }
 
     int id;
@@ -112,6 +112,14 @@ struct Torre {
     Stats st;
     std::vector<AtaqueP> ats;  // st.ataques congelados (projeteis guardam o ataque que os criou)
     std::vector<double> recargas;
+    std::vector<int> crit_conta;  // tiros que faltam para o proximo critico, por ataque
+    // pocoes do Alquimista recebidas, por tipo de pocao (visual do ataque): buff, segundos e tiros que faltam
+    struct Pocao {
+        Buffs b;
+        double t = 0, tiros = 0;
+    };
+    std::map<std::string, Pocao> pocoes;
+    std::map<std::string, double> pocao_bloq;  // segundos ate poder receber outra pocao do mesmo tipo
     std::vector<double> hab_rec;
 };
 using TorreP = std::shared_ptr<Torre>;
@@ -178,8 +186,12 @@ public:
     bool aplicar_dano(Bloon& b, double dano, const Ataque& at, Torre* torre, Projetil* proj = nullptr,
                       DType dtype = 0);
     int rbe_restante(const Bloon& b) const;
+    int rbe_tipo(const TipoBloon& tp, bool fort) const;  // RBE de um bloon novo, com as regras do freeplay
     void xp(double v);
     void pagar_renda();
+    void receber(double v);  // entrada de dinheiro; metade vai para a divida do emprestimo
+    AtaqueP critico(Torre& t, size_t i, const AtaqueP& at);  // conta o tiro; no critico devolve o ataque forte
+    bool jogar_pocao(const TorreP& f, const Ataque& at);     // Alquimista joga uma pocao numa torre no alcance
     void evento(Evento e);
 
     void passo();
@@ -190,6 +202,18 @@ public:
     int vidas;
     double dinheiro;
     double eco = ECO_INICIAL;
+    double divida = 0.0;      // IMF Loan
+    double mult_renda = 1.0;  // dinheiro por estouro conforme a rodada (BTD6)
+    double mult_vida = 1.0;   // vida dos dirigiveis no freeplay
+    double mult_vel = 1.0;    // velocidade dos bloons no freeplay
+    // freeplay do BTD6 (R81 em diante, so no solo): Super Ceramicas (60 de vida, $87 na camada) e
+    // bloons que nao sao dirigiveis soltam um filho so
+    bool freeplay = false;
+    bool xp_por_estouro = true;  // Battles: estouros dao XP; no solo do BTD6, so as rodadas
+    // modos do BTD6: renda multiplicada (Half Cash, Deflation), venda e renda extra bloqueadas (CHIMPS)
+    double mult_dinheiro = 1.0;
+    bool sem_venda = false, so_estouro_e_rodada = false;
+    double mult_vel_dificuldade = 1.0;
     double mult_custo;
     std::vector<BloonP> bloons;
     std::vector<std::unique_ptr<Projetil>> projeteis;
@@ -254,6 +278,9 @@ public:
     char aplicar(int jogador, const std::string& cmd);
     char enviar(int jogador, const std::string& chave);
     char iniciar_rodada();
+    // BTD6: depois de vencer no solo, da para seguir jogando em freeplay (sem ultima rodada)
+    bool continuar_freeplay();
+    bool em_freeplay = false;
     void passo();
     double tempo_para_rodada() const;
     double tempo_para_eco() const;
