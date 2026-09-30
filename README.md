@@ -50,8 +50,26 @@ está marcada como **Privada** nas configurações do Windows.
 | O | ver o mapa do oponente (batalha) |
 | F1 | painel de mensagens trocadas (batalha) |
 | F3 | mostrar FPS |
-| F12 | salvar captura de tela |
+| F9 / Shift+F9 | repetir a animação de disparo / habilidade da torre selecionada (só visual) |
+| F12 | salvar captura de tela (`captura_AAAAMMDD_HHMMSS.png`) |
 | Esc | cancelar / menu |
+
+## Visual e ferramentas de arte
+
+O visual segue o projeto do Claude Design (sprites e auditoria de interface). Tudo é desenhado
+por código: os sprites em `src/cliente/sprites.cpp` (desenhados com a caneta de
+`src/cliente/caneta.cpp` e guardados em RenderTextures por `arte.cpp`) e as animações de disparo
+e habilidade em `src/cliente/anim.cpp`. O inventário do que foi aplicado está em
+[docs/design/inventario.md](docs/design/inventario.md), com capturas em `docs/design/capturas/`.
+
+Opções de linha de comando para conferir o visual:
+
+| Opção | O que faz |
+|---|---|
+| `--vitrine [0-10]` | galeria de sprites; a página 9 toca as animações e mostra as curvas de cada clipe |
+| `--demo solo` / `--demo batalha` | partida local já montada, com torres, upgrades e bloons |
+| `--tela solo\|hospedar\|entrar\|entrar-erro\|lobby` | abre direto uma tela de menu |
+| `--captura arquivo.png [s] [n] [intervalo]` | salva n capturas depois de s segundos e fecha |
 
 ## Compilar
 
