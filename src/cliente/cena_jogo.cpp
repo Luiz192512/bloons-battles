@@ -757,7 +757,7 @@ void CenaJogo::linha_upgrade(const TorreP& tp, int pth, float x, float y, float 
 void CenaJogo::painel_heroi(const Torre& t, float x, float y, float w) {
     ui::texto("Nível " + std::to_string(t.nivel), x, y + 12, 20, ui::AMARELO, 4, Ancora::MIDLEFT);
     if (t.nivel < 20) {
-        const double a = XP_NIVEL[t.nivel], b = XP_NIVEL[t.nivel + 1];
+        const double a = XP_NIVEL[t.nivel] * t.dfn->xp_escala, b = XP_NIVEL[t.nivel + 1] * t.dfn->xp_escala;
         ui::barra({x + 120, y + 8, w - 130, 12}, static_cast<float>((t.xp - a) / std::max(1.0, b - a)), rgb(120, 200, 255));
         ui::texto("XP " + std::to_string(static_cast<int>(t.xp)) + "/" + std::to_string(static_cast<int>(b)), x + 120,
                   y + 32, 12, ui::BRANCO, 0, Ancora::MIDLEFT, ui::Peso::TEXTO);

@@ -1432,8 +1432,9 @@ const std::map<std::string, std::array<Estilo, 3>>& HS() {
                        E().Cost("asas", 0x1C1B20, "pena").Olhos(0x8FD3FF).Aura(0x6A3FC4)};
         h["rosalia"] = {E().Pelo(0xC85A78).Rosto2("goggles", 0xFFD632).Cost("jetpack", 0x8E97A4), E().Mao(It("pistola")),
                         E().Mao(It("laser")).Cost("jetpack", 0xFFD632).Aura(0xFF6FAE)};
-        h["jericho"] = {E().Pelo(0x6E5032).Chap("cowboy", 0x2B2B2B).Mao(It("pistola")), E().Capa(0x8E1E16),
-                        E().Mao2(It("pistola")).Aura(0xFFD632)};
+        // Dan D'Monke usa por enquanto a arte do antigo Jericho, com espada no lugar da pistola
+        h["dan"] = {E().Pelo(0x6E5032).Chap("cowboy", 0x2B2B2B).Mao(It("espada")), E().Capa(0x8E1E16),
+                    E().Mao2(It("espada")).Aura(0xFFD632)};
         h["silas"] = {E().Pelo(0x78BEE6).Rosto(0xEAF6FF).Chap("gorro", 0xFFFFFF).Mao(Ic("cajado", 0x8FD3FF)), E().Chap("coroaGelo"),
                       E().Orb("fragmento_gelo", 4).Capa(0x3AA0E6).Aura(0x8FD3FF)};
         return h;

@@ -252,12 +252,30 @@ Stats calcular(const std::string& chave, std::array<int, 3> caminhos, int nivel)
         for (int p = 0; p < 3; ++p)
             for (int i = 0; i < caminhos[p]; ++i) aplicar(st, dfn.caminhos[p][i].ef);
     if (dfn.heroi) {
+        // "h3" e "h10" num efeito de nivel trocam campos das habilidades (no BTD6 elas melhoram com o nivel)
+        J h3 = dfn.hab3, h10 = dfn.hab10;
+        auto separar = [&](J& e) {
+            if (!e.is_object()) return;
+            for (auto [chave, hab] : {std::pair<const char*, J*>{"h3", &h3}, {"h10", &h10}}) {
+                auto it = e.find(chave);
+                if (it == e.end()) continue;
+                for (auto& [k, v] : it->items()) (*hab)[k] = v;
+                e.erase(it);
+            }
+        };
         for (int n = 2; n <= nivel; ++n) {
             auto it = dfn.niveis.find(n);
-            if (it != dfn.niveis.end() && !it->second.empty()) aplicar(st, it->second);
+            if (it == dfn.niveis.end()) continue;
+            J ef = it->second;
+            if (ef.is_array()) {
+                for (J& e : ef) separar(e);
+            } else {
+                separar(ef);
+            }
+            if (!ef.empty()) aplicar(st, ef);
         }
-        if (nivel >= 3 && !dfn.hab3.is_null()) st.habs.push_back(dfn.hab3);
-        if (nivel >= 10 && !dfn.hab10.is_null()) st.habs.push_back(dfn.hab10);
+        if (nivel >= 3 && !h3.is_null()) st.habs.push_back(h3);
+        if (nivel >= 10 && !h10.is_null()) st.habs.push_back(h10);
     }
     return st;
 }

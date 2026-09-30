@@ -33,7 +33,7 @@ A pesquisa foi feita em 30/09/2026, com os dados que a Blooncyclopedia mostra ho
 | Custos dos upgrades | Valores próprios | 330 custos oficiais | **Aplicado** (330 upgrades) |
 | Status base das torres | Parcial | Ex.: Tachinha a cada 1,12 s; Mago pierce 3; Ninja 0,62 s; Espinhos a cada 1,75 s com duração de 50 s; explosão do Morteiro com 2 de dano e pierce 25 | **Aplicado** |
 | Efeitos dos upgrades | Números do BTDB2 ou inventados | Números da wiki para cada upgrade | **Aplicado** onde o motor expressa (ver pendências) |
-| Heróis | 18 (Jericho é do BTDB2) | 17 do clone existem no BTD6; Dan D'Monke falta | Custos e escala de XP **aplicados**; Jericho vira pendência |
+| Heróis | 18 (Jericho é do BTDB2) | 17 do clone existem no BTD6; Dan D'Monke falta | **Aplicado**: níveis 2 a 20, habilidades e XP do BTD6; Jericho trocado por Dan D'Monke |
 | Mapas | 4 próprios | Mapas do BTD6 por categoria | Mantidos (arte própria) |
 
 ## O que foi aplicado
@@ -83,6 +83,12 @@ A pesquisa foi feita em 30/09/2026, com os dados que a Blooncyclopedia mostra ho
     - As cerâmicas viram Super Cerâmicas: 60 de vida (120 fortificadas) e $87 ao estourar a camada, multiplicado pela renda da rodada.
     - Bloons que não são dirigíveis soltam um filho só; o vazamento em vidas segue essa regra.
     - Depois de vencer, a tela de vitória oferece "Continuar em freeplay", que segue sem última rodada.
+13. **Heróis com os níveis 2 a 20 do BTD6** (páginas "<Herói> (BTD6)" da [B1]). Ataque principal, passivas e habilidades seguem as tabelas de nível, com alcance em unidades ×4 e raio de explosão ×2,5, como nas torres.
+    - Os efeitos de nível podem mudar campos das habilidades (`h3` e `h10`), por exemplo o Rapid Shot do Quincy com 12 s no nível 13 e ×4 no 15, e a MOAB Barrage do Churchill com 19.200 por alvo e recarga de 30 s no 20.
+    - Buffs dos heróis com escopo: Striker (Bombas e Morteiros do mapa, x0,9 e x0,81), Obyn (Druidas e torres Mágicas), Etienne (+10% e +20% de alcance, UAV com camo no mapa), Brickell (+1 pierce na água), Gwendolin (Heat It Up com +1 pierce e chumbo).
+    - Habilidades novas no motor: `recarregar` (Artillery Command zera a recarga das Bombas e Morteiros), `sem_regen` (Heartstopper) e `pct` (MOAB Hex tira parte da vida máxima). O `turbo_area` agora aceita `buffs` temporários (Rallying Roar, Biohack, Naval Tactics, Long Arm of Light) e `n` (as torres mais próximas).
+    - XP oficial (módulo "BTD6 hero xp" e página "Experience"): 180 a 17.280 por nível; no solo, só as rodadas dão XP (20r+20, 40r-380 e 90r-2880), ×1,1 a ×1,3 conforme o mapa, e o freeplay depois de vencer corta 70% até a R100 e 90% depois. Na Batalha continua a XP por estouro.
+    - **Jericho saiu** (é do Battles 2) e entrou **Dan D'Monke** ($650, escala de XP 1,425), com a arte do Jericho e espada até ter arte própria. Decisão do dono em 30/09/2026.
 
 ## Pendências
 
@@ -117,7 +123,15 @@ Ficaram de fora porque não há fonte com o número ou porque o motor ainda não
   - Stun do Relentless Glue.
   - Unstable Concoction (20 de dano em MOAB).
   - Recarga de algumas habilidades que a wiki não listava (mantidas como estavam).
-- **Heróis:** os níveis 2 a 20 e as habilidades seguem o molde genérico do clone. Jericho é do BTDB2 e não existe no BTD6. Dan D'Monke falta porque precisa de arte.
+- **Heróis, aproximações** (a mecânica não existe no motor ou a wiki não dá o número):
+  - Psi: a vibração psiônica destrói o bloon sem filhos depois de um tempo; aqui é dano alto (5, depois 7, 12 e 16, mais bônus em dirigível), com as restrições de alvo por tipo de dano.
+  - Corvus: livro de feitiços e mana ficaram de fora; o espírito é um projétil teleguiado com recarga própria.
+  - Geraldo: a loja não existe; as duas habilidades são itens da loja (Torreta e Armadilha de Lâminas).
+  - Habilidades resumidas num golpe: Storm of Arrows, Dark Ritual, Sword Charge, Psionic Scream, Scatter Missile (soma dos mísseis) e MOAB Barrage (soma dos tiros).
+  - Wall of Trees vira pilha com 2.500 (7.500 no 20) de pierce; Ball of Light e UCAV viram a Fênix invocada; Drone Swarm vira turbo.
+  - Dan D'Monke: a segunda forma (Masqued Macaque), a rede, o escudo etéreo e a recuperação de vidas não entraram; Rabble Rouser dá +1 de dano em vez de ×1,5.
+  - Passivas que dependem de sub-torre ou de mecânica própria: totem do Obyn, Pyrotechnics Expert da Gwendolin, Cyber Security e Trojan do Benjamin, Adrenaline Rush e granadas da Rosalia, Ice Walls e fragmentos do Silas, tapa do Pat.
+  - Rapid Shot, Armor Piercing Shells e Transformation têm a duração do nível citado; o BTD6 soma 0,5 s por nível em algumas.
 - **Torres novas do BTD6** (Beast Handler, Desperado, Mermonkey, Skywarden) não foram criadas porque precisam de arte e mecânicas próprias.
 - **Freeplay, aproximações:**
   - Vazamento da Super Cerâmica: o motor conta 68 vidas (60 + arco-íris em fila); a wiki lista 65. O M.O.A.B. dá 472 contra 460.

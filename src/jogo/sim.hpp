@@ -209,6 +209,7 @@ public:
     // freeplay do BTD6 (R81 em diante, so no solo): Super Ceramicas (60 de vida, $87 na camada) e
     // bloons que nao sao dirigiveis soltam um filho so
     bool freeplay = false;
+    bool xp_por_estouro = true;  // Battles: estouros dao XP; no solo do BTD6, so as rodadas
     double mult_custo;
     std::vector<BloonP> bloons;
     std::vector<std::unique_ptr<Projetil>> projeteis;

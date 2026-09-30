@@ -259,7 +259,7 @@ void Pista::estourar(Bloon& b, double excesso, DType dtype, Torre* torre, Projet
     const double base = freeplay && b.tipo->nome == "ceramica" ? SUPER_CERAMICA_DINHEIRO : 1.0;
     receber((base + ouro) * mult_renda);
     pops_total += 1;
-    xp(1.0);
+    if (xp_por_estouro) xp(1.0);
     evento({"pop", b.x, b.y, 0, 0, 0, b.tipo->nome});
     const TipoBloon& tp = *b.tipo;
     const int n = freeplay && !tp.moab ? std::min(1, static_cast<int>(tp.filhos.size())) : static_cast<int>(tp.filhos.size());
@@ -394,6 +394,8 @@ void Pista::executar_habilidade(const TorreP& tp, const J& h) {
     J def = {{"dtype", "normal"}, {"atordoa", h.value("atordoa", 0.0)}, {"congela", congela},
              {"moab_atordoa", true}, {"moab_congela", congela != 0}};
     if (h.contains("queima")) def["queima"] = h["queima"];
+    def["moab"] = h.value("moab_mais", 0.0);  // dano extra em dirigiveis e ceramicas (Storm of Arrows, Firestorm)
+    def["cer"] = h.value("cer_mais", 0.0);
     const Ataque at = novo_ataque(def);
 
     if (tipo == "turbo") {
@@ -404,11 +406,32 @@ void Pista::executar_habilidade(const TorreP& tp, const J& h) {
         std::stringstream ss(h.value("filtro", std::string()));
         for (std::string item; std::getline(ss, item, ',');)
             if (!item.empty()) filtro.insert(item);
+        // "n": so as n torres mais proximas (Biohack); "buffs": buff temporario alem do turbo (Rallying Roar)
+        std::vector<Torre*> alvos;
         for (auto& [id, o] : torres) {
             if (!filtro.empty() && !filtro.count(o->chave)) continue;
-            if (h.value("global_", false) || quad(o->x - t.x) + quad(o->y - t.y) <= quad(t.alcance() + 60)) {
+            if (h.value("sem_si", false) && o.get() == &t) continue;
+            if (h.value("global_", false) || quad(o->x - t.x) + quad(o->y - t.y) <= quad(t.alcance() + 60))
+                alvos.push_back(o.get());
+        }
+        if (h.contains("n")) {
+            std::stable_sort(alvos.begin(), alvos.end(), [&](Torre* a, Torre* b) {
+                return quad(a->x - t.x) + quad(a->y - t.y) < quad(b->x - t.x) + quad(b->y - t.y);
+            });
+            alvos.resize(std::min(alvos.size(), static_cast<size_t>(h["n"].get<int>())));
+        }
+        for (Torre* o : alvos) {
+            if (h.contains("valor")) {
                 o->turbo = std::min(o->turbo, h["valor"].get<double>());
                 o->turbo_t = std::max(o->turbo_t, h["dur"].get<double>());
+            }
+            if (h.contains("buffs")) {
+                Torre::Pocao& p = o->pocoes["hab:" + h["nome"].get<std::string>()];
+                p.b = Buffs{};
+                p.b.mesclar(h["buffs"]);
+                p.t = h["dur"].get<double>();
+                p.tiros = 1e18;
+                buff_t = 0;
             }
         }
     } else if (tipo == "dano_global") {
@@ -428,10 +451,23 @@ void Pista::executar_habilidade(const TorreP& tp, const J& h) {
             Bloon& b = *alvos[i];
             evento({"raio", t.x, t.y, 0, b.x, b.y});
             double bx = b.x, by = b.y;
-            aplicar_dano(b, h["valor"].get<double>(), at, &t);
+            // "pct": parte da vida maxima do alvo (MOAB Hex da Ezili tira 4% por segundo por 25 s)
+            aplicar_dano(b, h["valor"].get<double>() + b.vida_max * h.value("pct", 0.0), at, &t);
             if (h.value("splash", 0.0))
                 explosao(bx, by, h["splash"].get<double>(), h.value("sdano", 1.0), 999, at, &t, DT_NORMAL);
         }
+    } else if (tipo == "recarregar") {
+        // Artillery Command: zera a recarga das habilidades das torres do filtro
+        std::stringstream ss(h.value("filtro", std::string()));
+        std::set<std::string> filtro;
+        for (std::string item; std::getline(ss, item, ',');) filtro.insert(item);
+        for (auto& [id, o] : torres)
+            if (filtro.count(o->chave))
+                for (double& r : o->hab_rec) r = 0;
+    } else if (tipo == "sem_regen") {
+        // Heartstopper: os bloons na tela perdem a regeneracao
+        for (auto& b : bloons) b->regen = false;
+        evento({"flash", 0, 0, 0, 0, 0, "", {150, 40, 90}});
     } else if (tipo == "lentidao") {
         lentidao_global_f = h["valor"].get<double>();
         lentidao_global_t = h["dur"].get<double>();
@@ -1315,6 +1351,7 @@ Partida::Partida(const std::string& modo_, const std::string& chave_mapa, int se
         dificuldade = dif;
         ultima_rodada = d->ultima_rodada;
         pistas[1] = std::make_unique<Pista>(1, mapa, seed, d->vidas, DINHEIRO_INICIAL, d->mult_custo);
+        pistas[1]->xp_por_estouro = false;
     } else {
         dificuldade = "medio";
         ultima_rodada = 1000000000;
@@ -1428,7 +1465,9 @@ void Partida::passo_solo() {
         em_rodada = false;
         p.receber(100 + rodada);
         p.pagar_renda();
-        p.xp(20 + rodada * 2);
+        // no freeplay (depois de vencer) a XP cai 70% ate a R100 e 90% depois
+        const double corte = !em_freeplay ? 1.0 : rodada <= 100 ? 0.3 : 0.1;
+        p.xp(xp_da_rodada(rodada) * mult_xp_mapa(mapa.def.dificuldade) * corte);
         p.evento({"fim_rodada", 0, 0, static_cast<double>(rodada)});
         if (rodada >= ultima_rodada) {
             fim = true;

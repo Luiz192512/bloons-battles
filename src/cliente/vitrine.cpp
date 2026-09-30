@@ -67,7 +67,7 @@ Exemplo exemplo(const anim::Clipe& c) {
     if (n.find("espinhos") != std::string::npos) return {"obyn", {}};
     if (n.find("invocar") != std::string::npos) return {"mago", V(1, 3)};
     if (n.find("reverso") != std::string::npos) return {"super", V(2, 5)};
-    return {"jericho", {}};
+    return {"dan", {}};
 }
 
 class CenaVitrine : public Cena {

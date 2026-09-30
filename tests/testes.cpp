@@ -156,8 +156,37 @@ TESTE(dados_22_torres_com_3x5_upgrades) {
 }
 
 TESTE(dados_herois) {
-    CHECA(herois().size() >= 17);
-    for (auto& h : herois()) calcular(h.chave, {0, 0, 0}, 20);
+    CHECA_IGUAL(herois().size(), size_t(18));  // os 17 do BTD6 que o clone tinha + Dan D'Monke (no lugar do Jericho)
+    CHECA(achar_heroi("dan") && !achar_heroi("jericho"));
+    for (auto& h : herois())
+        for (int n = 1; n <= 20; ++n) {
+            Stats st = calcular(h.chave, {0, 0, 0}, n);
+            CHECA_IGUAL(st.habs.size(), size_t(n >= 10 ? 2 : n >= 3 ? 1 : 0));
+        }
+    // as habilidades mudam com o nivel (BTD6): Quincy tem Rapid Shot de 8 s, 12 s no nivel 13
+    CHECA_IGUAL(calcular("quincy", {0, 0, 0}, 3).habs[0]["dur"].get<double>(), 8.0);
+    CHECA_IGUAL(calcular("quincy", {0, 0, 0}, 13).habs[0]["dur"].get<double>(), 12.0);
+    CHECA_IGUAL(calcular("churchill", {0, 0, 0}, 20).habs[1]["valor"].get<double>(), 19200.0);
+    // XP oficial do nivel 20 (213.560 com escala 1)
+    CHECA_IGUAL(XP_NIVEL[20], 213560);
+}
+
+TESTE(btd6_herois_nivel_20_atacam_e_usam_habilidades) {
+    for (auto& h : herois()) {
+        Partida p("solo", h.agua ? "lago" : "prado", 3, "facil", {{1, h.chave}});
+        Pista& pi = p.pista(1);
+        pi.dinheiro = 1e7;
+        const char* pos = h.agua ? "530,300" : "300,220";
+        const char e = p.aplicar(1, "T" + h.chave + "@" + pos);
+        if (e) throw Falha{"nao colocou " + h.chave};
+        Torre& t = *pi.torre(1);
+        t.nivel = 20;
+        t.recalcular();
+        for (int i = 0; i < 30 * 46; ++i) p.passo();
+        for (size_t k = 0; k < t.st.habs.size(); ++k) p.aplicar(1, "B1:" + std::to_string(k));
+        for (const char* b : {"ceramica", "moab", "chumbo", "zebra", "ddt"}) pi.agendar(b, 0.1);
+        for (int i = 0; i < 30 * 12; ++i) p.passo();
+    }
 }
 
 TESTE(dados_todas_as_combinacoes_validas_calculam) {

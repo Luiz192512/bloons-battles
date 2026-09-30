@@ -53,6 +53,21 @@ double mult_velocidade(int r) {
     return 1.6 + 0.02 * (r - 101);
 }
 
+// XP ao fim de cada rodada (Blooncyclopedia, "Experience", secao Bloons TD 6). No BTD6 estourar nao da XP.
+double xp_da_rodada(int r) {
+    if (r <= 20) return 20.0 * r + 20;
+    if (r <= 50) return 40.0 * r - 380;
+    return 90.0 * r - 2880;
+}
+
+// Mapas mais dificeis dao mais XP: x1,1 intermediario, x1,2 avancado, x1,3 especialista
+double mult_xp_mapa(const std::string& d) {
+    if (d == "Intermediário") return 1.1;
+    if (d == "Avançado") return 1.2;
+    if (d == "Especialista") return 1.3;
+    return 1.0;
+}
+
 double duracao_rodada(int r) {
     auto ag = agenda_da_rodada(r);
     return ag.empty() ? 0.0 : ag.back().first;

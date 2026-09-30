@@ -766,97 +766,108 @@ static DefTorre aux_fenix() {
 }
 
 // ================================================================ HEROIS
+// Herois do BTD6. Niveis e habilidades da Blooncyclopedia (paginas "<Heroi> (BTD6)"), lidas pela API em
+// 30/09/2026. Alcance em unidades x4 e raio de explosao x2,5 (a escala que o clone usa nas torres). Os
+// numeros marcados com "aprox." nao tem fonte ou dependem de uma mecanica que o motor nao tem; a lista
+// esta em docs/btd6-transformacao.md. "h3" e "h10" num nivel mudam os campos das habilidades.
 static DefTorre h_quincy() {
-    DefTorre t("quincy", "Quincy", 540, "u", 160);
-    t.ataques = {A("projetil", {{"cad", 0.95}, {"dano", 1}, {"pierce", 3}, {"vel", 900}, {"dist", 260}, {"visual", "flecha"}})};
+    DefTorre t("quincy", "Quincy", 540, "u", 200);
+    t.ataques = {A("projetil", {{"cad", 0.95}, {"dano", 1}, {"pierce", 3}, {"quica", 3}, {"vel", 900}, {"dist", 260}, {"visual", "flecha"}})};
     t.cor = {150, 95, 45};
     t.heroi = true;
     t.xp_escala = 1.0;
     t.titulo = "Arqueiro Orgulhoso";
+    // flecha explosiva a cada 3 tiros (2 a partir do nivel 17) vira um segundo ataque com 3x a recarga;
+    // raio da explosao aprox. (a wiki diz "pequena area", 10 de pierce)
+    const J explosiva = A("projetil", {{"cad", 2.85}, {"dano", 1}, {"pierce", 3}, {"quica", 3}, {"vel", 900}, {"dist", 260}, {"splash", 30}, {"sdano", 1}, {"spierce", 10}, {"sdtype", "explosao"}, {"visual", "flecha"}});
     t.niveis = {
-        {2, {{"alcance", 8}}},
-        {3, {{"quica", 1}}},
-        {4, {{"pierce", 1}}},
-        {5, {{"cad", 0.9}}},
-        {6, {{"dano", 1}}},
-        {7, {{"alcance", 10}, {"n", 1}, {"spread", 10}}},
-        {8, {{"pierce", 2}}},
-        {9, {{"cad", 0.9}}},
-        {11, {{"dano", 1}}},
-        {12, {{"pierce", 2}, {"camo", true}}},
-        {13, {{"alcance", 10}}},
-        {14, {{"cad", 0.85}}},
-        {15, {{"dano", 2}}},
-        {16, {{"pierce", 3}, {"moab", 3}}},
-        {17, {{"cad", 0.85}}},
-        {18, {{"dano", 2}}},
-        {19, {{"pierce", 4}}},
-        {20, {{"dano", 4}, {"cad", 0.8}}},
+        {2, {{"pierce", 1}, {"quica", 1}}},
+        {4, {{"alcance", 8}}},
+        {5, {{"camo", true}}},
+        {6, {{"n", 1}, {"spread", 10}}},
+        {7, J::array({{{"novo", explosiva}}, {{"a", 1}, {"pierce", 1}, {"quica", 1}}})},
+        {8, {{"a", "todos"}, {"moab", 2}}},
+        {9, {{"a", "todos"}, {"pierce", 2}, {"quica", 2}}},
+        {11, {{"a", "todos"}, {"cad", 0.6316}}},
+        {12, {{"a", "todos"}, {"pierce", 1}, {"quica", 1}}},
+        {13, {{"alcance", 8}, {"h3", {{"dur", 12}}}}},
+        {14, {{"a", "todos"}, {"moab", 1}}},
+        {15, {{"h3", {{"valor", 0.25}, {"recarga", 45}}}}},
+        {16, {{"a", "todos"}, {"cad", 0.6667}}},
+        {17, J::array({{{"a", "todos"}, {"dist", 65}}, {{"a", 1}, {"cad", 0.6667}}})},
+        {18, {{"a", "todos"}, {"cad", 0.625}, {"h10", {{"cer_mais", 18}, {"recarga", 55}}}}},
+        {19, {{"a", "todos"}, {"n", 1}, {"spread", 10}, {"pierce", 2}, {"quica", 2}}},
+        {20, {{"a", "todos"}, {"cad", 0.8}, {"h10", {{"valor", 10}, {"moab_mais", 10}, {"cer_mais", 24}}}}},
     };
-    t.hab3 = H("Tiro Rápido", "turbo", 45, {{"dur", 7}, {"valor", 0.33}});
-    t.hab10 = H("Tempestade de Flechas", "dano_global", 60, {{"valor", 12}});
+    t.hab3 = H("Tiro Rápido", "turbo", 60, {{"dur", 8}, {"valor", 0.333}});
+    // Storm of Arrows acerta varias vezes por bloon; aqui e um golpe unico em todos os bloons (aprox.)
+    t.hab10 = H("Tempestade de Flechas", "dano_global", 70, {{"valor", 6}, {"moab_mais", 6}});
     return t;
 }
 
 static DefTorre h_gwendolin() {
     DefTorre t("gwendolin", "Gwendolin", 725, "u", 152);
-    t.ataques = {A("projetil", {{"cad", 0.5}, {"dano", 1}, {"pierce", 2}, {"vel", 800}, {"dist", 240}, {"dtype", "energia"}, {"queima", J::array({1, 2})}, {"visual", "fogo"}})};
+    t.ataques = {A("projetil", {{"cad", 0.5}, {"dano", 1}, {"pierce", 2}, {"vel", 800}, {"dist", 240}, {"dtype", "energia"}, {"visual", "fogo"}})};
     t.cor = {200, 80, 40};
     t.heroi = true;
     t.xp_escala = 1.0;
     t.titulo = "Cientista Piromaníaca";
+    // Heat It Up: explosao de fogo em volta dela e +1 pierce e chumbo para as torres por perto
+    const J calor = A("aura", {{"cad", 1.5}, {"dano", 3}, {"pierce", 100}, {"raio_aura", 152}, {"dtype", "energia"}, {"visual", "chamas"}, {"buffs", {{"pierce", 1}, {"chumbo", true}, {"sem_si", true}}}});
     t.niveis = {
-        {2, {{"alcance", 8}}},
-        {4, {{"pierce", 1}}},
-        {5, {{"cad", 0.9}}},
-        {6, {{"dano", 1}, {"dtype", "normal"}}},
-        {7, {{"alcance", 10}}},
-        {8, {{"pierce", 2}}},
-        {9, {{"cad", 0.9}}},
-        {11, {{"dano", 1}, {"queima", J::array({3, 3})}}},
-        {12, {{"pierce", 2}}},
-        {13, {{"alcance", 10}}},
-        {14, {{"cad", 0.85}}},
-        {15, {{"dano", 2}}},
-        {16, {{"pierce", 3}, {"buffs", {{"dano", 1}}}}},
-        {17, {{"cad", 0.85}}},
-        {18, {{"dano", 2}}},
-        {19, {{"pierce", 4}}},
-        {20, {{"dano", 4}, {"cad", 0.8}}},
+        {2, {{"pierce", 1}}},
+        {4, {{"novo", calor}}},
+        {5, {{"pierce", 1}}},
+        {6, {{"queima", J::array({0.667, 3.1})}}},
+        {7, {{"a", "aura"}, {"raio_aura", 20}, {"h3", {{"valor", 600}}}}},
+        {8, {{"n", 1}, {"spread", 8}}},
+        {9, {{"dano", 1}, {"queima", J::array({1.333, 4})}}},
+        {10, {{"queima", J::array({2.0, 5})}}},
+        {11, J::array({{{"alcance", 12}, {"queima", J::array({2.667, 6})}}, {{"a", "aura"}, {"raio_aura", 12}}})},
+        {12, J::array({{{"cad", 0.8}, {"queima", J::array({3.333, 7})}}, {{"a", "aura"}, {"dano", 7}}})},
+        {13, {{"pierce", 4}, {"queima", J::array({4.0, 8})}}},
+        {14, {{"queima", J::array({4.667, 9})}, {"h3", {{"dano", 2}}}}},
+        {15, J::array({{{"cad", 0.75}, {"queima", J::array({5.333, 10})}}, {{"a", "aura"}, {"dano", 10}}})},
+        {16, J::array({J{{"dtype", "normal"}, {"queima", J::array({6.0, 11})}, {"h10", J{{"queima", J::array({10, 10.4})}}}}, J{{"a", "aura"}, {"dtype", "normal"}}})},
+        {17, J::array({{{"queima", J::array({6.667, 12})}}, {{"a", "aura"}, {"buffs", {{"dano", 1}}}}})},
+        {18, J::array({{{"cad", 0.5}, {"queima", J::array({7.333, 13})}}, {{"a", "aura"}, {"dano", 10}}})},
+        {19, {{"n", 1}, {"spread", 8}, {"queima", J::array({8.0, 14})}}},
+        {20, {{"queima", J::array({8.667, 15})}, {"h3", {{"dano", 5}}}, {"h10", {{"valor", 10}, {"moab_mais", 40}, {"queima", J::array({20, 10.4})}}}}},
     };
-    t.hab3 = H("Coquetel de Fogo", "spikes_local", 20, {{"valor", 30}, {"dano", 1}, {"dur", 8}});
-    t.hab10 = H("Tempestade de Fogo", "dano_global", 60, {{"valor", 40}, {"queima", J::array({5, 6})}});
+    // Cocktail of Fire: parede de fogo por 12 s; o pierce total da pilha e aprox.
+    t.hab3 = H("Coquetel de Fogo", "spikes_local", 30, {{"valor", 300}, {"dano", 1}, {"dur", 12}});
+    t.hab10 = H("Tempestade de Fogo", "dano_global", 60, {{"valor", 5}, {"moab_mais", 15}, {"queima", J::array({4, 8})}});
     return t;
 }
 
 static DefTorre h_striker() {
-    DefTorre t("striker", "Striker Jones", 700, "u", 170);
-    t.ataques = {A("projetil", {{"cad", 1.3}, {"dano", 1}, {"pierce", 1}, {"vel", 650}, {"dist", 280}, {"visual", "bomba"}, {"splash", 35}, {"sdano", 1}, {"spierce", 10}, {"sdtype", "explosao"}, {"raio_proj", 7}})};
+    DefTorre t("striker", "Striker Jones", 700, "u", 220);
+    t.ataques = {A("projetil", {{"cad", 1.2}, {"dano", 0}, {"pierce", 1}, {"vel", 650}, {"dist", 300}, {"visual", "bomba"}, {"splash", 37.5}, {"sdano", 2}, {"spierce", 10}, {"sdtype", "explosao"}, {"raio_proj", 7}})};
     t.cor = {80, 100, 60};
     t.heroi = true;
     t.xp_escala = 1.0;
     t.titulo = "Comandante de Artilharia";
     t.niveis = {
-        {2, {{"alcance", 8}}},
-        {4, {{"pierce", 1}, {"sdtype", "normal"}}},
-        {5, {{"cad", 0.9}}},
-        {6, {{"dano", 1}}},
-        {7, {{"alcance", 10}}},
-        {8, {{"pierce", 2}, {"splash", 10}, {"sdano", 1}}},
-        {9, {{"cad", 0.9}}},
-        {11, {{"dano", 1}}},
-        {12, {{"pierce", 2}}},
-        {13, {{"alcance", 10}}},
-        {14, {{"cad", 0.85}, {"sdano", 2}}},
-        {15, {{"dano", 2}}},
-        {16, {{"pierce", 3}}},
-        {17, {{"cad", 0.85}}},
-        {18, {{"dano", 2}, {"sdano", 4}}},
-        {19, {{"pierce", 4}}},
-        {20, {{"dano", 4}, {"cad", 0.8}}},
+        {2, {{"splash", 10}}},
+        // Bombas e Morteiros do mapa: x0,9 de recarga (x0,81 no nivel 18)
+        {4, {{"novo", A("buff", {{"visual", "buff_striker"}, {"buffs", {{"cad", 0.9}, {"escopo", "bomba|morteiro"}, {"global_", true}}}})}}},
+        {6, {{"spierce", 10}, {"splash", 33.75}}},
+        {7, {{"sdano", 2}}},
+        {8, {{"novo", A("buff", {{"visual", "buff_striker_alcance"}, {"buffs", {{"alcance_pct", 0.05}, {"pierce_pct", 0.25}}}})}}},
+        {9, {{"cad", 0.8333}, {"h3", {{"valor", 12}, {"sdano", 12}, {"atordoa", 4}}}}},
+        {11, {{"cad", 0.8}}},
+        {12, {{"alcance", 12}, {"sdano", 2}}},
+        {13, {{"cad", 0.75}}},
+        {14, {{"h3", {{"splash", 101}, {"atordoa", 6}}}}},
+        {15, {{"h3", {{"recarga", 11}}}}},
+        {16, {{"cad", 0.75}}},
+        {17, {{"alcance", 8}, {"sdano", 2}}},
+        {18, {{"a", "buff_striker"}, {"buffs", {{"cad", 0.9}}}}},
+        // 100% de chance de estourar o preto com explosao: aprox. com dano normal na explosao
+        {19, {{"cad", 0.6667}, {"sdtype", "normal"}}},
     };
-    t.hab3 = H("Projétil de Concussão", "dano_forte", 20, {{"valor", 40}, {"n", 1}, {"atordoa", 4}});
-    t.hab10 = H("Comando de Artilharia", "turbo_area", 60, {{"dur", 10}, {"valor", 0.5}, {"filtro", "bomba,morteiro"}, {"global_", true}});
+    t.hab3 = H("Projétil de Concussão", "dano_forte", 16, {{"valor", 2}, {"n", 1}, {"splash", 67.5}, {"sdano", 2}, {"atordoa", 1}});
+    t.hab10 = H("Comando de Artilharia", "recarregar", 80, {{"filtro", "bomba,morteiro"}});
     return t;
 }
 
@@ -868,341 +879,318 @@ static DefTorre h_obyn() {
     t.xp_escala = 1.0;
     t.titulo = "Guardião da Floresta";
     t.niveis = {
-        {2, {{"alcance", 8}, {"buffs", {{"pierce", 1}}}}},
-        {4, {{"pierce", 1}}},
-        {5, {{"cad", 0.9}}},
-        {6, {{"dano", 1}}},
-        {7, {{"alcance", 10}}},
-        {8, {{"pierce", 2}}},
-        {9, {{"cad", 0.9}}},
-        {11, {{"dano", 1}, {"buffs", {{"pierce", 2}, {"dano", 1}}}}},
-        {12, {{"pierce", 2}}},
-        {13, {{"alcance", 10}}},
-        {14, {{"cad", 0.85}}},
-        {15, {{"dano", 2}}},
-        {16, {{"pierce", 3}}},
-        {17, {{"cad", 0.85}}},
-        {18, {{"dano", 2}}},
-        {19, {{"pierce", 4}}},
-        {20, {{"dano", 4}, {"cad", 0.8}}},
+        // Nature's Wrath: Druidas no alcance
+        {2, {{"novo", A("buff", {{"visual", "buff_obyn"}, {"buffs", {{"pierce", 1}, {"escopo", "druida"}}}})}}},
+        {5, J::array({{{"cad", 0.8148}}, {{"a", "buff_obyn"}, {"buffs", {{"alcance_pct", 0.4}}}}})},
+        {6, {{"pierce", 5}}},
+        {7, {{"h3", {{"valor", 100}}}}},
+        {8, {{"a", "buff_obyn"}, {"buffs", {{"camo", true}}}}},
+        {9, {{"dano", 2}}},
+        // Nature's Clarity: torres Magicas no alcance
+        {11, {{"novo", A("buff", {{"visual", "buff_obyn_magia"}, {"buffs", {{"alcance", 20}, {"pierce", 2}, {"escopo", "magica"}}}})}}},
+        {12, {{"cad", 0.7273}}},
+        {13, {{"pierce", 5}}},
+        {14, {{"dano", 2}}},
+        {16, {{"h3", {{"valor", 500}}}}},
+        {17, {{"cad", 0.625}}},
+        {19, {{"dano", 2}}},
+        {20, {{"h10", {{"valor", 7500}, {"recarga", 75}}}}},
     };
-    t.hab3 = H("Espinheiros", "spikes_local", 25, {{"valor", 60}, {"dano", 1}, {"dur", 12}});
-    t.hab10 = H("Muralha de Árvores", "spikes_local", 50, {{"valor", 2000}, {"dano", 1}, {"dur", 15}});
+    t.hab3 = H("Espinheiros", "spikes_local", 30, {{"valor", 50}, {"dano", 1}, {"dur", 120}});
+    // Wall of Trees prende 2.500 de RBE; aqui e uma pilha com esse pierce (aprox.)
+    t.hab10 = H("Muralha de Árvores", "spikes_local", 90, {{"valor", 2500}, {"dano", 1}, {"dur", 30}});
     return t;
 }
 
 static DefTorre h_churchill() {
-    DefTorre t("churchill", "Capitão Churchill", 2000, "u", 170);
-    t.ataques = {A("projetil", {{"cad", 0.6}, {"dano", 3}, {"pierce", 1}, {"vel", 900}, {"dist", 300}, {"dtype", "normal"}, {"splash", 25}, {"sdano", 2}, {"spierce", 6}, {"sdtype", "normal"}, {"visual", "bala_canhao"}, {"raio_proj", 8}})};
+    DefTorre t("churchill", "Capitão Churchill", 2000, "u", 260);
+    // o projetil atravessa e explode ate 3 vezes (pierce 3); a explosao da o dano
+    t.ataques = {A("projetil", {{"cad", 1.5}, {"dano", 0}, {"pierce", 3}, {"vel", 900}, {"dist", 320}, {"dtype", "normal"}, {"splash", 45}, {"sdano", 3}, {"spierce", 12}, {"sdtype", "explosao"}, {"visual", "bala_canhao"}, {"raio_proj", 8}})};
     t.cor = {70, 90, 60};
     t.heroi = true;
     t.xp_escala = 1.71;
     t.titulo = "Tanque Blindado";
+    const J metralhadora = A("hitscan", {{"cad", 0.1}, {"dano", 2}, {"pierce", 1}, {"visual", "bala"}});
     t.niveis = {
-        {2, {{"alcance", 8}}},
-        {3, {{"moab", 3}}},
-        {4, {{"pierce", 1}}},
-        {5, {{"cad", 0.9}}},
-        {6, {{"dano", 1}}},
-        {7, {{"alcance", 10}}},
-        {8, {{"pierce", 2}, {"camo", true}}},
-        {9, {{"cad", 0.9}}},
-        {11, {{"dano", 1}}},
-        {12, {{"pierce", 2}}},
-        {13, {{"alcance", 10}}},
-        {14, {{"cad", 0.85}, {"moab", 10}}},
-        {15, {{"dano", 2}}},
-        {16, {{"pierce", 3}}},
-        {17, {{"cad", 0.85}}},
-        {18, {{"dano", 2}}},
-        {19, {{"pierce", 4}}},
-        {20, {{"dano", 4}, {"cad", 0.8}, {"moab", 30}}},
+        {2, {{"spierce", 3}}},
+        {4, {{"alcance", 40}}},
+        {5, {{"novo", metralhadora}}},
+        {6, {{"camo", true}}},
+        {7, J::array({{{"pierce", 1}, {"sdano", 3}}, {{"a", "hitscan"}, {"dano", 2}}})},
+        {8, {{"cad", 0.8}}},
+        {9, {{"pierce", 1}}},
+        {11, {{"spierce", 5}}},
+        {12, J::array({{{"sdano", 3}}, {{"a", "hitscan"}, {"dano", 2}}})},
+        {13, {{"h3", {{"buffs", {{"moab", 21}, {"cer", 21}, {"dano", 3}, {"dtype_normal", true}}}}}, {"h10", {{"valor", 4800}}}}},
+        {14, J::array({{{"sdano", 3}}, {{"a", "hitscan"}, {"dano", 2}}})},
+        // +4 (metralhadora +2) em chumbo, fortificado, camo e atordoado: aqui so em fortificado (aprox.)
+        {15, J::array({{{"fort", 4}}, {{"a", "hitscan"}, {"fort", 2}}})},
+        {17, {{"cad", 0.75}, {"h3", {{"buffs", {{"moab", 33}, {"cer", 33}, {"dano", 6}, {"dtype_normal", true}}}}}, {"h10", {{"valor", 9600}}}}},
+        {18, J::array({{{"sdano", 3}}, {{"a", "hitscan"}, {"dano", 4}, {"fort", 2}}})},
+        {19, {{"pierce", 2}}},
+        {20, J::array({J{{"sdano", 10}, {"h3", J{{"dur", 17.5}}}, {"h10", J{{"valor", 19200}, {"recarga", 30}}}}, J{{"a", "hitscan"}, {"dano", 4}}})},
     };
-    t.hab3 = H("Projéteis Perfurantes", "turbo", 40, {{"dur", 8}, {"valor", 0.4}});
-    t.hab10 = H("Barragem M.O.A.B.", "dano_forte", 60, {{"valor", 500}, {"n", 5}, {"moab_so", true}});
+    // Armor Piercing Shells dura 9 s e ganha 0,5 s por nivel (aqui so no 20)
+    t.hab3 = H("Projéteis Perfurantes", "turbo_area", 30, {{"dur", 9}, {"filtro", "churchill"}, {"buffs", {{"moab", 9}, {"cer", 9}, {"dtype_normal", true}}}});
+    // MOAB Barrage: 16 tiros de 200 em ate 10 dirigiveis
+    t.hab10 = H("Barragem M.O.A.B.", "dano_forte", 60, {{"valor", 3200}, {"n", 10}, {"moab_so", true}});
     return t;
 }
 
 static DefTorre h_benjamin() {
     DefTorre t("benjamin", "Benjamin", 1200, "u", 100);
-    t.ataques = {A("renda", {{"valor", 60}, {"visual", "moeda"}})};
+    t.ataques = {A("renda", {{"valor", 90}, {"visual", "moeda"}})};
     t.cor = {60, 60, 80};
     t.heroi = true;
     t.xp_escala = 1.5;
     t.titulo = "Hacker";
+    // renda por rodada: $90, $140 (2 a 7), $250 (8 a 10), $1.000 (11 a 14), $2.500 (15 e 16), $5.000 (17 a 20)
     t.niveis = {
-        {2, {{"valor", 40}}},
-        {3, {{"valor", 50}}},
-        {4, {{"valor", 60}}},
-        {5, {{"valor", 70}}},
-        {6, {{"valor", 80}}},
-        {7, {{"valor", 90}}},
-        {8, {{"valor", 100}}},
-        {9, {{"valor", 110}}},
-        {10, {{"valor", 120}}},
-        {11, {{"valor", 130}}},
-        {12, {{"valor", 140}}},
-        {13, {{"valor", 150}}},
-        {14, {{"valor", 160}}},
-        {15, {{"valor", 170}}},
-        {16, {{"valor", 180}}},
-        {17, {{"valor", 190}}},
-        {18, {{"valor", 200}}},
-        {19, {{"valor", 210}}},
-        {20, {{"valor", 220}}},
+        {2, {{"valor", 50}}},
+        {8, {{"valor", 110}}},
+        {11, {{"valor", 750}}},
+        {13, {{"h3", {{"n", 6}, {"dur", 8}, {"buffs", {{"dano", 2}}}}}}},
+        {15, {{"valor", 1500}}},
+        {17, {{"valor", 2500}}},
+        {19, {{"h3", {{"dur", 9}, {"buffs", {{"dano", 3}}}}}}},
     };
-    t.hab3 = H("Sifão de Fundos", "dinheiro", 30, {{"valor", 250}});
-    t.hab10 = H("Invasão Bancária", "dinheiro", 60, {{"valor", 1500}});
+    t.hab3 = H("Biohack", "turbo_area", 30, {{"dur", 6}, {"n", 4}, {"sem_si", true}, {"buffs", {{"dano", 1}}}});
+    // Syphon Funding rebaixa os bloons novos e dobra o dinheiro deles; aqui vira dinheiro direto (aprox.)
+    t.hab10 = H("Sifão de Fundos", "dinheiro", 65, {{"valor", 1500}});
     return t;
 }
 
 static DefTorre h_ezili() {
-    DefTorre t("ezili", "Ezili", 550, "u", 150);
-    t.ataques = {A("projetil", {{"cad", 1.0}, {"dano", 1}, {"pierce", 2}, {"vel", 700}, {"dist", 240}, {"dtype", "normal"}, {"queima", J::array({1, 3})}, {"visual", "maldicao"}})};
+    DefTorre t("ezili", "Ezili", 550, "u", 160);
+    t.ataques = {A("projetil", {{"cad", 1.2}, {"dano", 1}, {"pierce", 1}, {"vel", 1400}, {"dist", 240}, {"busca", true}, {"dtype", "normal"}, {"queima", J::array({0.8, 2.6})}, {"splash", 20}, {"sdano", 1}, {"spierce", 5}, {"sdtype", "normal"}, {"visual", "maldicao"}})};
     t.cor = {110, 40, 90};
     t.heroi = true;
     t.xp_escala = 1.425;
     t.titulo = "Sacerdotisa Vodu";
     t.niveis = {
-        {2, {{"alcance", 8}}},
-        {4, {{"pierce", 1}, {"retira_regen", true}}},
-        {5, {{"cad", 0.9}}},
-        {6, {{"dano", 1}}},
-        {7, {{"alcance", 10}}},
-        {8, {{"pierce", 2}}},
-        {9, {{"cad", 0.9}}},
-        {11, {{"dano", 1}}},
-        {12, {{"pierce", 2}, {"queima", J::array({5, 4})}, {"moab", 5}}},
-        {13, {{"alcance", 10}}},
-        {14, {{"cad", 0.85}}},
-        {15, {{"dano", 2}}},
-        {16, {{"pierce", 3}}},
-        {17, {{"cad", 0.85}}},
-        {18, {{"dano", 2}}},
-        {19, {{"pierce", 4}}},
-        {20, {{"dano", 4}, {"cad", 0.8}}},
+        {2, {{"alcance", 12}}},
+        {5, {{"cad", 0.8333}}},
+        {6, {{"moab", 19}}},
+        {8, {{"queima", J::array({1.111, 5.5})}}},
+        {9, {{"retira_camo", true}, {"retira_regen", true}}},
+        {11, {{"alcance", 16}}},
+        {12, {{"moab", 10}, {"h3", {{"recarga", 40}}}}},
+        {13, {{"splash", 7.5}, {"spierce", 10}}},
+        {14, {{"queima", J::array({2, 4.05})}, {"h3", {{"recarga", 30}}}}},
+        {15, {{"queima", J::array({2, 6.05})}}},
+        {17, {{"splash", 5}, {"spierce", 10}}},
+        {18, {{"cad", 0.8}}},
+        {19, {{"queima", J::array({6, 6.05})}}},
+        {20, {{"moab", 20}, {"h10", {{"pct", 1.25}, {"recarga", 40}}}}},
     };
-    t.hab3 = H("Para-Coração", "lentidao", 30, {{"dur", 8}, {"valor", 0.7}});
-    t.hab10 = H("Maldição M.O.A.B.", "dano_forte", 50, {{"valor", 1500}, {"n", 3}, {"moab_so", true}});
+    t.hab3 = H("Para-Coração", "sem_regen", 45, J::object());
+    // MOAB Hex: 4% da vida maxima + 1 por segundo por 25 s
+    t.hab10 = H("Maldição M.O.A.B.", "dano_forte", 60, {{"valor", 25}, {"pct", 1.0}, {"n", 1}, {"moab_so", true}});
     return t;
 }
 
 static DefTorre h_pat() {
-    DefTorre t("pat", "Pat Fusty", 800, "u", 80);
-    t.ataques = {A("aura", {{"cad", 1.5}, {"dano", 2}, {"pierce", 10}, {"dtype", "normal"}, {"visual", "impacto"}})};
+    DefTorre t("pat", "Pat Fusty", 800, "u", 108);
+    t.ataques = {A("morteiro", {{"cad", 1.1}, {"dano", 3}, {"pierce", 1}, {"cer", 2}, {"dtype", "normal"}, {"splash", 20}, {"sdano", 2}, {"spierce", 10}, {"sdtype", "normal"}, {"visual", "impacto"}})};
     t.cor = {150, 110, 70};
     t.heroi = true;
     t.xp_escala = 1.425;
     t.titulo = "Macaco Gigante";
     t.niveis = {
-        {2, {{"alcance", 8}}},
-        {4, {{"pierce", 1}}},
-        {5, {{"cad", 0.9}}},
-        {6, {{"dano", 1}}},
-        {7, {{"alcance", 10}, {"atordoa", 0.5}}},
-        {8, {{"pierce", 2}}},
-        {9, {{"cad", 0.9}}},
-        {11, {{"dano", 1}}},
-        {12, {{"pierce", 2}}},
-        {13, {{"alcance", 10}, {"moab", 10}}},
-        {14, {{"cad", 0.85}}},
-        {15, {{"dano", 2}}},
-        {16, {{"pierce", 3}}},
-        {17, {{"cad", 0.85}}},
-        {18, {{"dano", 2}}},
-        {19, {{"pierce", 4}}},
-        {20, {{"dano", 4}, {"cad", 0.8}}},
+        {2, {{"splash", 12.5}}},
+        {4, {{"cad", 0.8182}}},
+        {6, {{"splash", 17.5}, {"atordoa", 0.3}}},
+        {7, {{"dano", 1}, {"sdano", 1}, {"spierce", 10}}},
+        {8, {{"cad", 0.8333}}},
+        {9, {{"alcance", 12}, {"h3", {{"buffs", {{"dano", 2}}}}}}},
+        {11, {{"dano", 1}, {"sdano", 1}}},
+        {12, {{"cad", 0.8667}}},
+        {13, {{"atordoa", 0.5}}},
+        {14, {{"h3", {{"dur", 10}, {"buffs", {{"dano", 3}}}}}}},
+        {15, {{"spierce", 10}}},
+        {16, {{"cer", 5}}},
+        {17, {{"cad", 0.8462}}},
+        {18, {{"spierce", 10}}},
+        {19, {{"dano", 5}, {"sdano", 5}}},
+        {20, {{"h10", {{"n", 4}}}}},
     };
-    t.hab3 = H("Rugido de Incentivo", "turbo_area", 45, {{"dur", 10}, {"valor", 0.7}});
-    t.hab10 = H("Grande Aperto", "dano_forte", 60, {{"valor", 5000}, {"n", 1}, {"moab_so", true}});
+    t.hab3 = H("Rugido de Incentivo", "turbo_area", 45, {{"dur", 8}, {"buffs", {{"dano", 1}}}});
+    t.hab10 = H("Grande Aperto", "dano_forte", 20, {{"valor", 9999999}, {"n", 1}, {"moab_so", true}});
     return t;
 }
 
 static DefTorre h_adora() {
     DefTorre t("adora", "Adora", 1000, "u", 170);
-    t.ataques = {A("projetil", {{"cad", 0.8}, {"dano", 2}, {"pierce", 4}, {"vel", 900}, {"dist", 280}, {"busca", true}, {"dtype", "energia"}, {"visual", "luz"}})};
+    t.ataques = {A("projetil", {{"cad", 1.0}, {"dano", 1}, {"pierce", 5}, {"vel", 900}, {"dist", 320}, {"busca", true}, {"dtype", "energia"}, {"visual", "luz"}})};
     t.cor = {230, 200, 90};
     t.heroi = true;
     t.xp_escala = 1.71;
     t.titulo = "Sacerdotisa do Sol";
     t.niveis = {
-        {2, {{"alcance", 8}}},
-        {4, {{"pierce", 1}}},
-        {5, {{"cad", 0.9}, {"dtype", "normal"}}},
-        {6, {{"dano", 1}}},
-        {7, {{"alcance", 10}}},
-        {8, {{"pierce", 2}}},
-        {9, {{"cad", 0.9}}},
-        {10, {{"n", 2}, {"spread", 20}}},
-        {11, {{"dano", 1}}},
-        {12, {{"pierce", 2}}},
-        {13, {{"alcance", 10}}},
-        {14, {{"cad", 0.85}}},
-        {15, {{"dano", 2}}},
-        {16, {{"pierce", 3}, {"moab", 8}}},
-        {17, {{"cad", 0.85}}},
-        {18, {{"dano", 2}}},
-        {19, {{"pierce", 4}}},
-        {20, {{"dano", 4}, {"cad", 0.8}}},
+        {2, {{"alcance", 16}}},
+        {4, {{"n", 1}, {"spread", 30}}},
+        {5, {{"pierce", 3}}},
+        {6, {{"n", 1}, {"spread", 30}}},
+        {8, {{"n", 1}, {"spread", 30}}},
+        {9, {{"alcance", 20}, {"fort", 1}}},
+        {11, {{"cad", 0.85}}},
+        {12, {{"n", 1}, {"spread", 30}}},
+        {13, {{"pierce", 3}, {"fort", 1}}},
+        {14, {{"n", 1}, {"spread", 30}}},
+        {15, {{"dano", 1}}},
+        {16, {{"h3", {{"dur", 15}, {"buffs", {{"alcance_pct", 1.0}, {"pierce_pct", 1.0}, {"dtype_normal", true}, {"dano", 2}}}}}}},
+        {17, {{"cad", 0.8235}}},
+        {18, {{"n", 2}, {"spread", 60}}},
+        {19, {{"alcance", 20}, {"fort", 1}}},
+        {20, {{"h10", {{"dur", 15}}}}},
     };
-    t.hab3 = H("Braço Longo da Luz", "turbo", 40, {{"dur", 10}, {"valor", 0.4}});
-    t.hab10 = H("Bola de Luz", "invocar", 60, {{"dur", 15}, {"base", "fenix"}});
+    t.hab3 = H("Braço Longo da Luz", "turbo_area", 45, {{"dur", 10}, {"filtro", "adora"}, {"buffs", {{"alcance_pct", 1.0}, {"pierce_pct", 1.0}, {"dtype_normal", true}}}});
+    // Ball of Light vira a Fenix invocada (aprox.)
+    t.hab10 = H("Bola de Luz", "invocar", 60, {{"dur", 12}, {"base", "fenix"}});
     return t;
 }
 
 static DefTorre h_brickell() {
-    DefTorre t("brickell", "Almirante Brickell", 900, "u", 180);
-    t.ataques = {A("projetil", {{"cad", 0.4}, {"dano", 1}, {"pierce", 3}, {"vel", 900}, {"dist", 260}, {"visual", "bala"}})};
+    DefTorre t("brickell", "Almirante Brickell", 900, "u", 200);
+    t.ataques = {A("projetil", {{"cad", 0.8}, {"dano", 3}, {"pierce", 3}, {"vel", 1400}, {"dist", 260}, {"visual", "bala"}})};
     t.agua = true;
     t.cor = {40, 70, 130};
     t.heroi = true;
     t.xp_escala = 1.425;
     t.titulo = "Comandante Naval";
+    // minas na trilha a cada 3 s (no BTD6 ficam na agua perto da trilha)
+    const J minas = A("pilha", {{"cad", 3.0}, {"dano", 1}, {"pilha_pierce", 20}, {"pilha_vida", 120}, {"visual", "armadilha"}});
     t.niveis = {
-        {2, {{"alcance", 8}}},
-        {4, {{"pierce", 1}}},
-        {5, {{"cad", 0.9}}},
-        {6, {{"dano", 1}, {"dtype", "normal"}}},
-        {7, {{"alcance", 10}}},
-        {8, {{"pierce", 2}}},
-        {9, {{"cad", 0.9}}},
-        {11, {{"dano", 1}}},
-        {12, {{"pierce", 2}}},
-        {13, {{"alcance", 10}, {"buffs", {{"cad", 0.85}}}}},
-        {14, {{"cad", 0.85}}},
-        {15, {{"dano", 2}}},
-        {16, {{"pierce", 3}}},
-        {17, {{"cad", 0.85}}},
-        {18, {{"dano", 2}}},
-        {19, {{"pierce", 4}}},
-        {20, {{"dano", 4}, {"cad", 0.8}}},
+        {2, J::array({{{"cad", 0.8125}}, {{"a", "pilha"}, {"cad", 0.9333}}})},
+        {4, {{"a", "pilha"}, {"pilha_pierce", 8}}},
+        {5, {{"h3", {{"buffs", {{"pierce", 1}, {"dtype_normal", true}}}}}}},
+        {6, J::array({{{"dano", 3}}, {{"a", "pilha"}, {"dano", 1}}})},
+        {7, {{"alcance", 32}, {"camo", true}}},
+        {8, {{"novo", A("buff", {{"visual", "buff_brickell"}, {"buffs", {{"pierce", 1}, {"escopo", "agua"}}}})}, {"h3", {{"buffs", {{"pierce", 1}, {"dtype_normal", true}, {"camo", true}}}}}}},
+        {9, {{"a", "pilha"}, {"dano", 5}}},
+        {11, {{"a", "pilha"}, {"cad", 0.8929}}},
+        {12, J::array({{{"dano", 6}, {"cad", 0.5385}}, {{"a", "pilha"}, {"dano", 5}}})},
+        {13, {{"h10", {{"recarga", 50}}}}},
+        {14, {{"h3", {{"dur", 10}}}}},
+        {15, J::array({{{"dano", 6}}, {{"a", "pilha"}, {"dtype", "normal"}, {"retira_camo", true}}})},
+        {16, {{"alcance", 16}}},
+        {17, J::array({{{"dano", 22}}, {{"a", "pilha"}, {"dano", 10}}})},
+        {18, {{"h10", {{"recarga", 40}}}}},
+        {19, {{"h3", {{"global_", true}}}}},
+        {20, {{"h10", {{"valor", 11000}, {"sdano", 11000}}}}},
     };
-    t.hab3 = H("Táticas Navais", "turbo_area", 45, {{"dur", 10}, {"valor", 0.5}, {"global_", true}});
-    t.hab10 = H("Mega Mina", "spikes_local", 60, {{"valor", 40}, {"dano", 1500}, {"dur", 30}});
+    t.hab3 = H("Táticas Navais", "turbo_area", 50, {{"dur", 8}, {"valor", 0.5}, {"filtro", "submarino,bucaneiro,brickell"}});
+    t.hab10 = H("Mega Mina", "dano_forte", 60, {{"valor", 4000}, {"n", 1}, {"moab_so", true}, {"splash", 300}, {"sdano", 4000}, {"atordoa", 5}});
     return t;
 }
 
 static DefTorre h_etienne() {
-    DefTorre t("etienne", "Etienne", 650, "u", 9999);
-    t.ataques = {A("projetil", {{"cad", 0.5}, {"dano", 1}, {"pierce", 3}, {"vel", 800}, {"dist", 900}, {"busca", true}, {"global_", true}, {"visual", "drone"}})};
-    t.camo = true;
+    DefTorre t("etienne", "Etienne", 650, "u", 220);
+    // os drones atiram de perto dos bloons; aqui os dardos saem dele, teleguiados
+    t.ataques = {A("projetil", {{"cad", 0.7}, {"dano", 1}, {"pierce", 2}, {"vel", 800}, {"dist", 400}, {"busca", true}, {"visual", "drone"}})};
     t.cor = {80, 110, 150};
     t.heroi = true;
     t.xp_escala = 1.0;
     t.titulo = "Especialista em Drones";
     t.niveis = {
-        {2, {{"alcance", 8}}},
+        {2, {{"alcance", 20}, {"novo", A("buff", {{"visual", "buff_etienne"}, {"buffs", {{"alcance_pct", 0.1}}}})}}},
         {4, {{"pierce", 1}}},
-        {5, {{"cad", 0.9}}},
-        {6, {{"dano", 1}}},
-        {7, {{"alcance", 10}}},
-        {8, {{"pierce", 2}, {"n", 1}}},
-        {9, {{"cad", 0.9}}},
-        {11, {{"dano", 1}}},
-        {12, {{"pierce", 2}}},
-        {13, {{"alcance", 10}}},
-        {14, {{"cad", 0.85}}},
-        {15, {{"dano", 2}, {"n", 1}, {"moab", 6}}},
-        {16, {{"pierce", 3}}},
-        {17, {{"cad", 0.85}}},
-        {18, {{"dano", 2}}},
-        {19, {{"pierce", 4}}},
-        {20, {{"dano", 4}, {"cad", 0.8}}},
+        {5, {{"cad", 0.7857}, {"camo", true}}},
+        {6, {{"h3", {{"recarga", 55}}}}},
+        {7, {{"n", 1}, {"spread", 20}}},
+        // UAV: camo para todas as torres do mapa
+        {8, {{"novo", A("buff", {{"visual", "buff_uav"}, {"buffs", {{"camo", true}, {"global_", true}}}})}}},
+        {9, {{"dano", 1}}},
+        {11, {{"n", 1}, {"spread", 10}}},
+        {12, {{"pierce", 3}}},
+        {13, {{"h10", {{"recarga", 75}}}}},
+        {14, {{"dano", 1}}},
+        {15, {{"h10", {{"dur", 20}}}}},
+        {16, J::array({J{{"pierce", 3}, {"alcance", 80}, {"h3", J{{"recarga", 50}}}}, J{{"a", "buff_etienne"}, {"buffs", J{{"alcance_pct", 0.1}}}}})},
+        {18, {{"dano", 1}}},
+        {19, {{"n", 1}, {"spread", 10}}},
     };
-    t.hab3 = H("Enxame de Drones", "turbo", 45, {{"dur", 15}, {"valor", 0.3}});
-    t.hab10 = H("UCAV", "invocar", 60, {{"dur", 20}, {"base", "fenix"}});
+    // Drone Swarm: 4 drones a mais por 18,5 s, aqui como turbo (aprox.)
+    t.hab3 = H("Enxame de Drones", "turbo", 80, {{"dur", 18.5}, {"valor", 0.5}});
+    t.hab10 = H("UCAV", "invocar", 90, {{"dur", 12}, {"base", "fenix"}});
     return t;
 }
 
 static DefTorre h_sauda() {
-    DefTorre t("sauda", "Sauda", 600, "u", 70);
-    t.ataques = {A("aura", {{"cad", 0.6}, {"dano", 2}, {"pierce", 8}, {"dtype", "normal"}, {"cer", 2}, {"visual", "espadas"}})};
+    DefTorre t("sauda", "Sauda", 600, "u", 92);
+    // golpe vale 2x contra fortificado, ceramica e dirigivel
+    t.ataques = {A("aura", {{"cad", 0.45}, {"dano", 1}, {"pierce", 3}, {"cer", 1}, {"moab", 1}, {"fort", 1}, {"visual", "espadas"}})};
     t.cor = {200, 120, 60};
     t.heroi = true;
     t.xp_escala = 1.425;
     t.titulo = "Espadachim";
     t.niveis = {
-        {2, {{"alcance", 8}}},
-        {4, {{"pierce", 1}}},
-        {5, {{"cad", 0.9}}},
-        {6, {{"dano", 1}}},
-        {7, {{"alcance", 10}}},
-        {8, {{"pierce", 2}}},
-        {9, {{"cad", 0.9}, {"camo", true}}},
-        {11, {{"dano", 1}}},
-        {12, {{"pierce", 2}}},
-        {13, {{"alcance", 10}}},
-        {14, {{"cad", 0.85}, {"cer", 10}, {"moab", 10}}},
-        {15, {{"dano", 2}}},
-        {16, {{"pierce", 3}}},
-        {17, {{"cad", 0.85}}},
-        {18, {{"dano", 2}}},
-        {19, {{"pierce", 4}}},
-        {20, {{"dano", 4}, {"cad", 0.8}}},
+        {2, {{"pierce", 1}}},
+        {4, {{"dano", 1}, {"cer", 1}, {"moab", 1}, {"fort", 1}}},
+        {5, {{"cad", 0.8}}},
+        {6, {{"pierce", 2}, {"alcance", 12}}},
+        {8, {{"cad", 0.75}}},
+        {9, {{"dano", 1}, {"cer", 1}, {"moab", 1}, {"fort", 1}, {"queima", J::array({0.5, 4.05})}}},
+        {12, {{"h3", {{"valor", 40}, {"moab_mais", 140}, {"sdano", 40}}}}},
+        {13, {{"dtype", "normal"}}},
+        {14, {{"cad", 0.6667}}},
+        {15, {{"pierce", 2}, {"alcance", 12}, {"h3", {{"valor", 80}, {"sdano", 80}}}}},
+        {16, {{"h10", {{"valor", 240}}}}},
+        {17, {{"dano", 1}, {"cer", 1}, {"moab", 1}, {"fort", 1}, {"queima", J::array({5, 6})}}},
+        {18, {{"cad", 0.5556}}},
+        {20, {{"h3", {{"valor", 350}, {"sdano", 350}}}, {"h10", {{"valor", 600}}}}},
     };
-    t.hab3 = H("Espada Saltitante", "dano_forte", 20, {{"valor", 100}, {"n", 8}});
+    t.hab3 = H("Espada Saltitante", "dano_forte", 30, {{"valor", 20}, {"moab_mais", 60}, {"n", 1}, {"splash", 37.5}, {"sdano", 20}});
+    // Sword Charge varre a trilha (60 de dano, 2 passadas de 120 no 16, 3 de 200 no 20)
     t.hab10 = H("Investida da Espada", "dano_global", 45, {{"valor", 60}});
     return t;
 }
 
 static DefTorre h_psi() {
     DefTorre t("psi", "Psi", 1000, "u", 9999);
-    t.ataques = {A("hitscan", {{"cad", 1.4}, {"dano", 3}, {"pierce", 1}, {"dtype", "normal"}, {"global_", true}, {"visual", "psi"}})};
+    // a vibracao psionica destroi o bloon sem filhos depois de um tempo; aqui vira dano alto (aprox.)
+    t.ataques = {A("hitscan", {{"cad", 1.0}, {"dano", 5}, {"pierce", 1}, {"dtype", "energia"}, {"global_", true}, {"visual", "psi"}})};
     t.camo = true;
     t.cor = {160, 90, 200};
     t.heroi = true;
     t.xp_escala = 1.5;
     t.titulo = "Macaco Psíquico";
+    const J mente = A("hitscan", {{"cad", 1.0}, {"dano", 5}, {"pierce", 1}, {"dtype", "energia"}, {"global_", true}, {"visual", "psi"}});
     t.niveis = {
-        {2, {{"alcance", 8}}},
-        {4, {{"pierce", 1}}},
-        {5, {{"cad", 0.9}}},
-        {6, {{"dano", 1}, {"moab", 5}}},
-        {7, {{"alcance", 10}}},
-        {8, {{"pierce", 2}}},
-        {9, {{"cad", 0.9}}},
-        {11, {{"dano", 1}}},
-        {12, {{"pierce", 2}}},
-        {13, {{"alcance", 10}}},
-        {14, {{"cad", 0.85}, {"moab", 20}}},
-        {15, {{"dano", 2}}},
-        {16, {{"pierce", 3}}},
-        {17, {{"cad", 0.85}}},
-        {18, {{"dano", 2}}},
-        {19, {{"pierce", 4}}},
-        {20, {{"dano", 4}, {"cad", 0.8}}},
+        {2, {{"a", "todos"}, {"dano", 2}}},
+        {5, {{"a", "todos"}, {"cad", 0.85}}},
+        {9, {{"novo", mente}}},
+        {11, {{"a", "todos"}, {"dtype", "normal"}}},
+        {13, {{"a", "todos"}, {"dano", 5}}},
+        {14, {{"a", "todos"}, {"moab", 200}}},
+        {16, {{"a", "todos"}, {"dano", 4}, {"moab", 500}}},
+        {17, {{"novo", mente}}},
+        {20, {{"a", "todos"}, {"moab", 1000}}},
     };
-    t.hab3 = H("Explosão Psíquica", "dano_forte", 25, {{"valor", 300}, {"n", 3}});
-    t.hab10 = H("Grito Psiônico", "dano_global", 60, {{"valor", 150}, {"atordoa", 4}});
+    // Psychic Blast: atordoa uma camada por 6 s (1,5 s em dirigivel)
+    t.hab3 = H("Explosão Psíquica", "dano_global", 45, {{"valor", 0}, {"atordoa", 6}});
+    t.hab10 = H("Grito Psiônico", "dano_global", 60, {{"valor", 20}, {"atordoa", 2}});
     return t;
 }
 
 static DefTorre h_geraldo() {
-    DefTorre t("geraldo", "Geraldo", 750, "u", 150);
-    t.ataques = {A("projetil", {{"cad", 0.8}, {"dano", 1}, {"pierce", 2}, {"vel", 900}, {"dist", 260}, {"visual", "bala"}})};
+    DefTorre t("geraldo", "Geraldo", 750, "u", 160);
+    t.ataques = {A("projetil", {{"cad", 1.1}, {"dano", 1}, {"pierce", 1}, {"vel", 2000}, {"dist", 260}, {"dtype", "energia"}, {"splash", 25}, {"sdano", 1}, {"spierce", 4}, {"sdtype", "energia"}, {"visual", "relampago"}})};
     t.cor = {120, 70, 40};
     t.heroi = true;
     t.xp_escala = 1.0;
     t.titulo = "Comerciante Místico";
     t.niveis = {
-        {2, {{"alcance", 8}}},
-        {4, {{"pierce", 1}}},
-        {5, {{"cad", 0.9}, {"dtype", "normal"}}},
-        {6, {{"dano", 1}}},
-        {7, {{"alcance", 10}}},
-        {8, {{"pierce", 2}}},
-        {9, {{"cad", 0.9}}},
-        {11, {{"dano", 1}, {"camo", true}}},
-        {12, {{"pierce", 2}}},
-        {13, {{"alcance", 10}}},
-        {14, {{"cad", 0.85}}},
-        {15, {{"dano", 2}}},
-        {16, {{"pierce", 3}}},
-        {17, {{"cad", 0.85}}},
-        {18, {{"dano", 2}}},
-        {19, {{"pierce", 4}}},
-        {20, {{"dano", 4}, {"cad", 0.8}}},
+        {3, {{"alcance", 20}}},
+        {5, {{"cad", 0.9091}}},
+        {7, {{"dano", 1}, {"sdano", 1}, {"spierce", 5}}},
+        {9, {{"splash", 7.5}}},
+        {11, {{"spierce", 10}}},
+        {17, {{"dano", 1}, {"sdano", 1}}},
+        {19, {{"cad", 0.8}, {"alcance", 12}, {"splash", 12.5}, {"spierce", 5}, {"dano", 1}, {"sdano", 1}}},
+        {20, {{"dano", 5}, {"sdano", 5}}},
     };
+    // o Geraldo do BTD6 nao tem habilidades, e sim uma loja; a Torreta e o Espinho de Laminas sao itens da loja (aprox.)
     t.hab3 = H("Torreta Atiradora", "invocar", 40, {{"dur", 25}, {"base", "sentinela"}});
     t.hab10 = H("Armadilha de Lâminas", "spikes_local", 50, {{"valor", 400}, {"dano", 4}, {"dur", 20}});
     return t;
@@ -1210,124 +1198,102 @@ static DefTorre h_geraldo() {
 
 static DefTorre h_corvus() {
     DefTorre t("corvus", "Corvus", 1325, "u", 170);
-    t.ataques = {A("projetil", {{"cad", 0.6}, {"dano", 2}, {"pierce", 4}, {"vel", 800}, {"dist", 280}, {"busca", true}, {"dtype", "energia"}, {"visual", "espirito"}})};
+    // o espirito e uma sub-torre voadora; aqui e um projetil teleguiado. Recarga aprox.
+    t.ataques = {A("projetil", {{"cad", 0.6}, {"dano", 1}, {"pierce", 4}, {"vel", 800}, {"dist", 280}, {"busca", true}, {"dtype", "energia"}, {"visual", "espirito"}})};
     t.cor = {40, 40, 80};
     t.heroi = true;
     t.xp_escala = 1.425;
     t.titulo = "Guardião das Almas";
     t.niveis = {
-        {2, {{"alcance", 8}}},
-        {4, {{"pierce", 1}, {"camo", true}}},
-        {5, {{"cad", 0.9}}},
+        {2, {{"pierce", 2}}},
+        {4, {{"dano", 1}}},
         {6, {{"dano", 1}}},
-        {7, {{"alcance", 10}}},
-        {8, {{"pierce", 2}}},
-        {9, {{"cad", 0.9}}},
-        {11, {{"dano", 1}}},
-        {12, {{"pierce", 2}, {"moab", 10}}},
-        {13, {{"alcance", 10}}},
-        {14, {{"cad", 0.85}}},
-        {15, {{"dano", 2}}},
-        {16, {{"pierce", 3}}},
-        {17, {{"cad", 0.85}}},
-        {18, {{"dano", 2}}},
-        {19, {{"pierce", 4}}},
-        {20, {{"dano", 4}, {"cad", 0.8}}},
+        {9, {{"dano", 2}, {"moab", 1}}},
+        {11, {{"h3", {{"valor", 30}, {"cer_mais", 10}, {"recarga", 36}}}}},
+        {14, {{"dano", 5}, {"moab", 4}}},
+        {16, {{"dano", 10}}},
+        {20, {{"dano", 20}, {"moab", 5}, {"h3", {{"recarga", 31.5}}}}},
     };
-    t.hab3 = H("Lança Espiritual", "dano_forte", 25, {{"valor", 200}, {"n", 2}});
-    t.hab10 = H("Colheita de Almas", "dano_global", 60, {{"valor", 80}});
+    t.hab3 = H("Colheita de Almas", "dano_forte", 40, {{"valor", 20}, {"n", 20}});
+    // Dark Ritual: 1 de dano a cada 0,2 s por 10 s em ate 100 bloons; aqui um golpe unico (aprox.)
+    t.hab10 = H("Ritual Sombrio", "dano_global", 90, {{"valor", 50}});
     return t;
 }
 
 static DefTorre h_rosalia() {
-    DefTorre t("rosalia", "Rosalia", 875, "u", 170);
-    t.ataques = {A("projetil", {{"cad", 0.8}, {"dano", 2}, {"pierce", 3}, {"vel", 1000}, {"dist", 300}, {"dtype", "energia"}, {"visual", "laser"}})};
+    DefTorre t("rosalia", "Rosalia", 875, "u", 160);
+    // so o laser (a granada e uma troca manual de arma no BTD6); o tiro reforcado a cada 10 vira critico
+    t.ataques = {A("projetil", {{"cad", 1.0}, {"dano", 3}, {"pierce", 3}, {"vel", 1000}, {"dist", 320}, {"dtype", "energia"}, {"visual", "laser"}})};
     t.cor = {200, 90, 120};
     t.heroi = true;
     t.xp_escala = 1.425;
     t.titulo = "Engenheira com Jetpack";
     t.niveis = {
-        {2, {{"alcance", 8}}},
-        {4, {{"pierce", 1}}},
-        {5, {{"cad", 0.9}}},
-        {6, {{"dano", 1}, {"dtype", "normal"}}},
-        {7, {{"alcance", 10}}},
-        {8, {{"pierce", 2}}},
-        {9, {{"cad", 0.9}}},
-        {11, {{"dano", 1}}},
-        {12, {{"pierce", 2}}},
-        {13, {{"alcance", 10}, {"splash", 25}, {"sdano", 2}, {"spierce", 8}}},
-        {14, {{"cad", 0.85}}},
-        {15, {{"dano", 2}}},
-        {16, {{"pierce", 3}}},
-        {17, {{"cad", 0.85}}},
-        {18, {{"dano", 2}}},
-        {19, {{"pierce", 4}}},
-        {20, {{"dano", 4}, {"cad", 0.8}}},
+        {5, {{"dano", 2}, {"pierce", 3}, {"crit_cada", 10}, {"crit_dano", 25}}},
+        {8, {{"moab", 5}}},
+        {9, {{"h3", {{"sdano", 150}}}}},
+        {12, {{"dano", 5}, {"moab", 5}}},
+        {13, {{"pierce", 4}, {"dtype", "normal"}}},
+        {14, {{"h3", {{"valor", 10}, {"sdano", 300}, {"moab_mais", 5}}}}},
+        {15, {{"moab", 20}}},
+        {16, {{"h3", {{"recarga", 30}}}, {"h10", {{"recarga", 60}}}}},
+        {19, {{"dano", 5}, {"moab", 15}}},
+        {20, {{"h3", {{"sdano", 900}}}, {"h10", {{"valor", 4000}, {"sdano", 4000}}}}},
     };
-    t.hab3 = H("Propulsores", "turbo", 40, {{"dur", 10}, {"valor", 0.4}});
-    t.hab10 = H("Tempestade de Foguetes", "dano_global", 60, {{"valor", 50}});
+    // Scatter Missile: 20 misseis de 5 em volta do alvo; aqui a soma numa explosao
+    t.hab3 = H("Míssil de Dispersão", "dano_forte", 45, {{"valor", 5}, {"n", 1}, {"splash", 45}, {"sdano", 100}, {"atordoa", 1}});
+    t.hab10 = H("Carga Cinética", "dano_forte", 75, {{"valor", 1500}, {"n", 1}, {"moab_so", true}, {"splash", 125}, {"sdano", 1500}});
     return t;
 }
 
-static DefTorre h_jericho() {
-    DefTorre t("jericho", "Jericho", 750, "u", 160);
-    t.ataques = {A("projetil", {{"cad", 0.8}, {"dano", 1}, {"pierce", 2}, {"vel", 950}, {"dist", 260}, {"visual", "bala"}})};
+static DefTorre h_dan() {
+    DefTorre t("dan", "Dan D'Monke", 650, "u", 120);
+    t.ataques = {A("projetil", {{"cad", 0.5}, {"dano", 1}, {"pierce", 4}, {"vel", 2000}, {"dist", 150}, {"raio_proj", 6}, {"visual", "espadas"}})};
     t.cor = {110, 80, 50};
     t.heroi = true;
-    t.titulo = "Bandoleiro (exclusivo do Battles)";
+    t.xp_escala = 1.425;
+    t.titulo = "Macaco da Corte";
     t.niveis = {
-        {2, {{"alcance", 8}}},
-        {4, {{"pierce", 1}}},
-        {5, {{"cad", 0.9}}},
-        {6, {{"dano", 1}, {"dtype", "normal"}}},
-        {7, {{"alcance", 10}}},
-        {8, {{"pierce", 2}}},
-        {9, {{"cad", 0.9}}},
-        {11, {{"dano", 1}}},
-        {12, {{"pierce", 2}, {"camo", true}}},
-        {13, {{"alcance", 10}}},
-        {14, {{"cad", 0.85}}},
-        {15, {{"dano", 2}}},
-        {16, {{"pierce", 3}}},
-        {17, {{"cad", 0.85}}},
-        {18, {{"dano", 2}}},
-        {19, {{"pierce", 4}}},
-        {20, {{"dano", 4}, {"cad", 0.8}}},
+        {2, {{"pierce", 2}}},
+        {4, {{"dano", 1}}},
+        {6, {{"dano", 1}}},
+        {11, {{"alcance", 18}, {"pierce", 2}}},
+        {15, {{"pierce", 2}}},
+        {16, {{"dano", 1}}},
+        {17, {{"h3", {{"dur", 15}}}, {"h10", {{"recarga", 45}}}}},
+        {19, {{"dano", 2}}},
     };
-    t.hab3 = H("Proteger a Missão", "turbo", 30, {{"dur", 8}, {"valor", 0.5}});
-    t.hab10 = H("Salteador", "roubo", 60, {{"valor", 600}});
+    // Transformation: troca de forma e ganha x0,75 de recarga por 9 s (o raio e a outra forma nao entram)
+    t.hab3 = H("Transformação", "turbo", 20, {{"dur", 9}, {"valor", 0.75}});
+    // Rabble Rouser: x1,5 de dano e x1,2 de recarga por 10 s; o dano vira +1 (aprox.)
+    t.hab10 = H("Agitador", "turbo_area", 60, {{"dur", 10}, {"valor", 1.2}, {"buffs", {{"dano", 1}}}});
     return t;
 }
 
 static DefTorre h_silas() {
-    DefTorre t("silas", "Silas", 850, "u", 140);
-    t.ataques = {A("projetil", {{"cad", 0.9}, {"dano", 1}, {"pierce", 3}, {"vel", 800}, {"dist", 240}, {"dtype", "gelo"}, {"lento", J::array({0.6, 1.5})}, {"visual", "gelo_bola"}})};
+    DefTorre t("silas", "Silas", 850, "u", 220);
+    // o orbe congela e desacelera; o dano vem da explosao (1, depois 5, 10 e 20)
+    t.ataques = {A("projetil", {{"cad", 1.4}, {"dano", 1}, {"pierce", 10}, {"vel", 700}, {"dist", 400}, {"busca", true}, {"dtype", "gelo"}, {"lento", J::array({0.5, 3})}, {"congela", 2.5}, {"visual", "gelo_bola"}})};
+    t.camo = true;
     t.cor = {120, 190, 230};
     t.heroi = true;
     t.xp_escala = 1.5;
     t.titulo = "Mago do Gelo";
+    // Arctic Wind: 15% de lentidao em volta dele
+    const J vento = A("aura", {{"cad", 0.5}, {"dano", 0}, {"pierce", 999}, {"raio_aura", 120}, {"lento", J::array({0.85, 0.6})}, {"visual", "nenhum"}});
     t.niveis = {
-        {2, {{"alcance", 8}}},
-        {4, {{"pierce", 1}}},
-        {5, {{"cad", 0.9}, {"dtype", "normal"}}},
-        {6, {{"dano", 1}}},
-        {7, {{"alcance", 10}}},
-        {8, {{"pierce", 2}}},
-        {9, {{"cad", 0.9}}},
-        {11, {{"dano", 1}}},
-        {12, {{"pierce", 2}, {"congela", 0.8}}},
-        {13, {{"alcance", 10}}},
-        {14, {{"cad", 0.85}}},
-        {15, {{"dano", 2}}},
-        {16, {{"pierce", 3}}},
-        {17, {{"cad", 0.85}}},
-        {18, {{"dano", 2}}},
-        {19, {{"pierce", 4}}},
-        {20, {{"dano", 4}, {"cad", 0.8}}},
+        {2, {{"novo", vento}}},
+        {9, {{"h3", {{"buffs", {{"dano", 15}, {"dtype_normal", true}}}}}}},
+        {11, J::array({{{"moab_lento", true}}, {{"a", "aura"}, {"lento", J::array({0.8, 0.6})}, {"moab_lento", true}}})},
+        {12, {{"dano", 4}}},
+        {15, {{"h3", {{"dur", 12}, {"buffs", {{"dano", 25}, {"dtype_normal", true}}}}}}},
+        {16, {{"dano", 5}}},
+        {18, J::array({{{"dano", 10}}, {{"a", "aura"}, {"lento", J::array({0.7, 0.6})}}})},
+        {20, {{"h3", {{"buffs", {{"dano", 50}, {"dtype_normal", true}}}}}}},
     };
-    t.hab3 = H("Raio Congelante", "dano_forte", 25, {{"valor", 60}, {"n", 4}, {"congela", 3}});
-    t.hab10 = H("Tempestade Glacial", "congelar_global", 60, {{"dur", 6}, {"moab", true}});
+    // Frostbite: dano extra por segundo de congelamento restante; aqui +10 de dano por 8 s (aprox.)
+    t.hab3 = H("Queimadura de Gelo", "turbo_area", 30, {{"dur", 8}, {"filtro", "silas"}, {"buffs", {{"dano", 10}, {"dtype_normal", true}}}});
+    t.hab10 = H("Sepultura Gelada", "congelar_global", 90, {{"dur", 6}, {"moab", true}});
     return t;
 }
 
@@ -1378,13 +1344,16 @@ std::vector<DefTorre> criar_auxiliares() {
 }
 
 std::vector<DefTorre> criar_herois() {
-    return {h_quincy(), h_gwendolin(), h_striker(), h_obyn(), h_churchill(), h_benjamin(), h_ezili(), h_pat(), h_adora(), h_brickell(), h_etienne(), h_sauda(), h_psi(), h_geraldo(), h_corvus(), h_rosalia(), h_jericho(), h_silas()};
+    return {h_quincy(), h_gwendolin(), h_striker(), h_obyn(), h_churchill(), h_benjamin(), h_ezili(), h_pat(), h_adora(), h_brickell(), h_etienne(), h_sauda(), h_psi(), h_geraldo(), h_corvus(), h_rosalia(), h_dan(), h_silas()};
 }
 
 const std::map<std::string, std::string>& regen_proximo() { return REGEN_PROXIMO_DADOS; }
 
-// XP acumulado necessario para chegar a cada nivel (indice = nivel): 180 * (n - 1)^1.9
-const std::vector<int> XP_NIVEL = {0, 0, 180, 671, 1451, 2507, 3831, 5417, 7260, 9357, 11703, 14297, 17136, 20217, 23537, 27096, 30891, 34922, 39185, 43680, 48406};
+// XP acumulado para chegar a cada nivel (indice = nivel), antes da escala do heroi. Soma da tabela do BTD6
+// (Blooncyclopedia, "Module:BTD6 hero xp"): 180, 460, 1000, 1860, 3280, 5180, 8320, 9380, 13620, 16380,
+// 14400, 16650, 14940, 16380, 17820, 19260, 20700, 16470, 17280.
+const std::vector<int> XP_NIVEL = {0,     0,     180,   640,    1640,   3500,   6780,   11960,  20280,  29660, 43280,
+                                   59660, 74060, 90710, 105650, 122030, 139850, 159110, 179810, 196280, 213560};
 
 // ================================================================ MAPAS
 std::vector<DefMapa> criar_mapas() {
