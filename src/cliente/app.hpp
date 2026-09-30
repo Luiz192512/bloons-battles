@@ -3,6 +3,8 @@
 
 #include <memory>
 #include <random>
+#include <string>
+#include <vector>
 
 #include "cliente/controle.hpp"
 #include "cliente/ui.hpp"
@@ -33,8 +35,8 @@ public:
 private:
     struct B {
         float x, y;
-        const TipoBloon* tipo;
-        float vel, fase;
+        std::string tipo;
+        float vel, fase, tam;
     };
     std::vector<B> bloons_;
     std::mt19937 rng_{5};
@@ -42,7 +44,7 @@ private:
 
 class App {
 public:
-    App();
+    explicit App(const std::vector<std::string>& args = {});
     ~App();
     void rodar();
 
@@ -59,6 +61,11 @@ private:
     std::unique_ptr<Cena> cena_, proxima_;
     bool rodando_ = true;
     bool mostrar_fps_ = false;
+    // --captura arquivo.png [segundos] [quadros] [intervalo]
+    std::string captura_;
+    double captura_t_ = 3, captura_int_ = 0.1, relogio_ = 0;
+    int captura_n_ = 1, capturadas_ = 0;
+    bool captura_f12_ = false;
 };
 
 }  // namespace bl

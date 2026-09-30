@@ -281,6 +281,22 @@ TESTE(sim_envio_vai_para_o_oponente_e_aumenta_eco) {
     CHECA_IGUAL(p.aplicar(1, "Sbad"), ERRO_BLOQUEADO);  // ainda nao liberado
 }
 
+TESTE(sim_recarga_de_envio_e_so_leitura) {
+    // a interface mostra a espera de 0,6 s entre envios iguais; ler o valor nao pode mudar a partida
+    Partida p("batalha", "prado", 1);
+    for (int i = 0; i < static_cast<int>(3.5 / DT); ++i) p.passo();
+    CHECA_IGUAL(p.recarga_envio(1, "r8"), 0.0);
+    CHECA_IGUAL(p.aplicar(1, "Sr8"), OK);
+    const std::uint32_t antes = p.hash();
+    const double r = p.recarga_envio(1, "r8");
+    CHECA(r > 0.5 && r <= 0.6);
+    CHECA_IGUAL(p.recarga_envio(2, "r8"), 0.0);  // cada jogador tem a sua
+    CHECA_IGUAL(p.hash(), antes);
+    CHECA_IGUAL(p.aplicar(1, "Sr8"), ERRO_BLOQUEADO);
+    for (int i = 0; i < static_cast<int>(0.7 / DT); ++i) p.passo();
+    CHECA_IGUAL(p.recarga_envio(1, "r8"), 0.0);
+}
+
 TESTE(sim_todas_as_torres_atacam_sem_travar) {
     // Coloca cada torre com os tres upgrades mais caros permitidos e roda bloons fortes.
     for (auto& t : torres()) {

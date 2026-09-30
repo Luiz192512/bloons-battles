@@ -19,6 +19,8 @@ public:
     void atualizar(double dt) override;
     void desenhar() override;
     void sair() override;
+    void selecionar(int torre_id) { selecionada_ = torre_id; }  // usado pela demo
+    void abrir_pausa() { pausar(true); }
 
 private:
     using Acao = std::function<void()>;
@@ -29,6 +31,15 @@ private:
     struct Dica {
         Vector2 pos;
         std::string titulo, desc;
+        double preco = -1;      // upgrade: pilula de preco + atalho "para comprar"
+        bool pode = true;
+        std::string tecla;
+        Rectangle ancora{};     // se tiver largura, a dica aparece ao lado deste retangulo
+    };
+    struct AvisoOp {
+        bool recebendo;
+        std::string txt;
+        double t;
     };
     struct Hab {
         TorreP t;
@@ -60,6 +71,8 @@ private:
     void painel_upgrade(const TorreP& t, Vector2 mouse);
     void linha_upgrade(const TorreP& t, int pth, float x, float y, float w, Vector2 mouse);
     void painel_heroi(const Torre& t, float x, float y, float w);
+    void cabecalho_upgrade(const Torre& t, float x, float y, float w);
+    void rodape_upgrade(const Torre& t, float x, float y, float w, Vector2 mouse);
     void habilidades(Vector2 mouse);
     void painel_envios(Vector2 mouse);
     void mini_oponente();
@@ -88,7 +101,10 @@ private:
     std::vector<std::pair<ui::Botao, Acao>> botoes_menu_;
     Rectangle botao_play_;
     Rectangle rect_mini_;
-    std::vector<std::pair<std::string, double>> avisos_op_;
+    std::vector<AvisoOp> avisos_op_;
+    // depuracao das animacoes (F9 disparo, Shift+F9 habilidade na torre selecionada)
+    int depura_ = 0;
+    double depura_t_ = 0;
     std::pair<double, double> eco_texto_{0, 0};
 };
 

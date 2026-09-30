@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 
+#include "cliente/anim.hpp"
 #include "jogo/sim.hpp"
 #include "raylib.h"
 
@@ -27,9 +28,12 @@ public:
     void desenhar_mini(Rectangle r);
 
     std::vector<Evento> avisos;  // fim_rodada, eco, envio
+    // Animacoes de disparo/habilidade: so leem a pista (nao mexem na simulacao).
+    anim::Animador& animador() { return animador_; }
 
 private:
     void desenhar_torre(const Torre& t, bool sel);
+    void desenhar_habilidades_em_uso();
     void desenhar_bloons();
     void desenhar_efeitos();
 
@@ -41,6 +45,7 @@ private:
     Cor flash_cor_{};
     double flash_t_ = 0;
     std::mt19937 rng_{1};
+    anim::Animador animador_;
 };
 
 }  // namespace bl
