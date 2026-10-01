@@ -124,15 +124,7 @@ def _catapulta(m, madeira, viga, pneu, cubo, raio_bola, bola, espinho, braco, ch
 
 def _capacete(m, cor, barra, topo=None, crista=None):
     m.tirar("pelagem")
-    objs = [pecas.casca(m, "capacete", cor, pecas.piso_capacete)]
-    objs.append(pecas.barra_casca(m, "capacete_barra", barra, pecas.piso_capacete))
-    if topo:
-        objs.append(pecas.cone(m, "capacete_ponta", (0, 0.0, 0.985), (0, 0.1, 1), 0.050, 0.150, topo, seg=6))
-    if crista:
-        for k in range(4):
-            y = -0.150 + k * 0.105
-            objs.append(pecas.cone(m, f"capacete_crista_{k}", (0, y, 0.972 - 0.06 * abs(k - 1.3) ** 1.5), (0, 0.35, 1), 0.052, 0.170 - 0.02 * abs(k - 1.5), crista, seg=4))
-    m.por("chapeu", objs)
+    m.por("chapeu", pecas.capacete(m, cor, barra, topo, crista))
 
 
 def espinhopulta(m):

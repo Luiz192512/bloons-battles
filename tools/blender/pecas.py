@@ -50,30 +50,30 @@ def faixa(m, nome, centro, rx, ry, tubo, cor, g0=0, g1=360, n=12, inclina=0.0, t
     return m.obj(nome, poli.membro(pts, [tubo] * len(pts), cor=cor), nivel=1)
 
 
-def toro(m, nome, centro, raio, tubo, cor, normal=(0, 0, 1), seg=14, lados=6):
+def toro(m, nome, centro, raio, tubo, cor, normal=(0, 0, 1), seg=14, lados=6, matriz=None):
     """Anel rigido (aro de oculos, halo, argola)."""
     perfil = [(raio + tubo * math.cos(2 * math.pi * k / lados), tubo * math.sin(2 * math.pi * k / lados)) for k in range(lados + 1)]
     bm = poli.torno(perfil, seg=seg, cor=cor)
-    return m.obj(nome, poli.orientar(bm, normal, centro), nivel=0)
+    return m.obj(nome, poli.orientar(bm, normal, centro), nivel=0, matriz=matriz)
 
 
-def esfera(m, nome, centro, raios, cor, cortes=1, nivel=1):
+def esfera(m, nome, centro, raios, cor, cortes=1, nivel=1, matriz=None):
     if not isinstance(raios, (tuple, list)):
         raios = (raios, raios, raios)
     bm = poli.gaiola(raios, cortes=cortes, cor=cor)
     poli.mover(bm, centro)
-    return m.obj(nome, bm, nivel=nivel)
+    return m.obj(nome, bm, nivel=nivel, matriz=matriz)
 
 
-def cone(m, nome, base, direcao, raio, comp, cor, seg=6, fechado=False):
+def cone(m, nome, base, direcao, raio, comp, cor, seg=6, fechado=False, matriz=None):
     """Ponta viva: espinho, pena, chifre."""
     perfil = ([(0, 0)] if fechado else []) + [(raio, 0), (0, comp)]
-    return m.obj(nome, poli.orientar(poli.torno(perfil, seg=seg, cor=cor), direcao, base), nivel=0, vivo=True)
+    return m.obj(nome, poli.orientar(poli.torno(perfil, seg=seg, cor=cor), direcao, base), nivel=0, vivo=True, matriz=matriz)
 
 
-def cilindro(m, nome, base, direcao, perfil, cor="cinza_escuro", cores=None, seg=12):
+def cilindro(m, nome, base, direcao, perfil, cor="cinza_escuro", cores=None, seg=12, matriz=None):
     """Peca torneada (perfil = [(raio, altura)]) apontada para a direcao dada."""
-    return m.obj(nome, poli.orientar(poli.torno(perfil, seg=seg, cor=cor, cores=cores), direcao, base), nivel=0, vivo=True)
+    return m.obj(nome, poli.orientar(poli.torno(perfil, seg=seg, cor=cor, cores=cores), direcao, base), nivel=0, vivo=True, matriz=matriz)
 
 
 def bloco(m, nome, tam, pos, cor, chanfro=0.012, seg=1, matriz=None):
@@ -317,4 +317,151 @@ def besta(m, pos, direcao=(0, -1, 0), escala=1.0, madeira="marrom", arco_cor="ma
         lun = poli.torno([(0, 0), (0.030, 0.004), (0.030, 0.050), (0.022, 0.056), (0.022, 0.150), (0.034, 0.156), (0.034, 0.210), (0, 0.200)],
                          seg=10, cores=[detalhe, detalhe, "tinta", "tinta", detalhe, detalhe, "ciano"])
         objs.append(m.obj(nome + "_luneta", poli.orientar(lun, (0, -1, 0), (0, 0.06, 0.092)), nivel=0, vivo=True, matriz=mat))
+    return objs
+
+
+# ---------------------------------------------------------------- mais pecas de cabeca
+def capacete(m, cor, barra, topo=None, crista=None, nome="capacete"):
+    """Capacete redondo com barra; topo = cor de uma ponta no alto; crista = cor de uma fileira de laminas."""
+    objs = [casca(m, nome, cor, piso_capacete)]
+    objs.append(barra_casca(m, nome + "_barra", barra, piso_capacete))
+    if topo:
+        objs.append(cone(m, nome + "_ponta", (0, 0.0, 0.985), (0, 0.1, 1), 0.050, 0.150, topo, seg=6))
+    if crista:
+        for k in range(4):
+            y = -0.150 + k * 0.105
+            objs.append(cone(m, f"{nome}_crista_{k}", (0, y, 0.972 - 0.06 * abs(k - 1.3) ** 1.5), (0, 0.35, 1), 0.052, 0.170 - 0.02 * abs(k - 1.5), crista, seg=4))
+    return objs
+
+
+def chapeu_aba(m, cor, fita=None, aba=0.37, copa=0.15, raio=0.235, z=0.880, tomba=0.10, nome="chapeu"):
+    """Chapeu de aba larga com copa baixa, um pouco tombado para tras."""
+    perfil = [(0, 0), (aba, 0.004), (aba, 0.026), (raio + 0.012, 0.034), (raio, 0.070), (raio * 0.92, copa), (raio * 0.60, copa + 0.030), (0, copa + 0.034)]
+    cores = [cor, cor, cor, fita or cor, cor, cor, cor]
+    return [cilindro(m, nome, (0, 0.010 + tomba * 0.12, z - tomba * 0.03), (0, tomba, 1), perfil, cores=cores, seg=14)]
+
+
+def chapeu_cone(m, cor, fita=None, aba=0.36, altura=0.42, raio=0.225, z=0.885, nome="chapeu"):
+    """Chapeu pontudo de aba (mago, bruxo), com a ponta caida para tras."""
+    objs = [cilindro(m, nome + "_aba", (0, 0.010, z), (0, 0.08, 1), [(0, 0), (aba, 0.004), (aba, 0.024), (raio, 0.034), (raio, 0.075), (0, 0.075)],
+                     cores=[cor, cor, cor, fita or cor, cor], seg=14)]
+    objs.append(tubo(m, nome + "_copa", [(0, 0.015, z + 0.060), (0, 0.060, z + altura * 0.55), (0, 0.190, z + altura)], [raio * 0.80, raio * 0.42, 0.004], cor))
+    return objs
+
+
+def coroa(m, cor="ouro", joia="vermelho", raio=0.200, z=0.915, pontas=5, nome="coroa"):
+    """Coroa: aro com pontas e uma joia na frente."""
+    objs = [cilindro(m, nome, (0, 0, z), (0, 0, 1), [(raio * 0.94, 0), (raio, 0.004), (raio * 1.04, 0.070), (raio * 0.92, 0.070), (raio * 0.90, 0.004)], cor=cor, seg=12)]
+    for k in range(pontas):
+        a = 2 * math.pi * (k + 0.5) / pontas - math.pi / 2
+        objs.append(cone(m, f"{nome}_ponta_{k}", (raio * 0.98 * math.cos(a), raio * 0.98 * math.sin(a), z + 0.060), (0.2 * math.cos(a), 0.2 * math.sin(a), 1), 0.045, 0.110, cor, seg=4))
+    objs.append(esfera(m, nome + "_joia", (0, -raio * 1.02, z + 0.038), 0.030, joia, cortes=0))
+    return objs
+
+
+def viseira(m, cor="ciano", aro="cinza_escuro", nome="viseira"):
+    """Viseira inteirica na frente dos olhos."""
+    objs = [tubo(m, nome, arco((0, -0.030, 0.795), 0.215, 0.215, 215, 325, n=6), 0.050, cor)]
+    objs.append(tubo(m, nome + "_tira", arco((0, 0.0, 0.795), 0.272, 0.240, -30, 210, n=8), 0.016, aro))
+    return objs
+
+
+def monoculo(m, cor="ciano", aro="cinza", lado=1, nome="monoculo"):
+    """Olho mecanico: lente acesa com aro, sobre um dos olhos."""
+    x, y, z = OLHOS[0 if lado > 0 else 1]
+    objs = [cilindro(m, nome, (x + 0.004 * lado, y - 0.030, z), (0.10 * lado, -1, 0), [(0, 0), (0.085, 0.002), (0.085, 0.030), (0.060, 0.034), (0, 0.040)],
+                     cores=[aro, aro, aro, cor], seg=10)]
+    objs.append(tubo(m, nome + "_tira", arco((0, 0.0, 0.800), 0.272, 0.240, -20, 200, n=8), 0.013, aro))
+    return objs
+
+
+# ---------------------------------------------------------------- mais pecas de corpo
+BRACO_DIR = [macaco_poli.OMBRO, (0.245, -0.040, 0.405), (0.275, -0.125, 0.412)]
+BRACO_ESQ = [(-0.150, 0.0, 0.475), (-0.235, -0.010, 0.375), (-0.262, -0.035, 0.265)]
+
+
+def manga(m, lado, cor, luva=None, anel=None, ombreira=None, nome="manga"):
+    """Manga (ou braco de metal) sobre o braco: lado 1 = direito (o do ataque), -1 = esquerdo."""
+    pts = BRACO_DIR if lado > 0 else BRACO_ESQ
+    mao = MAO if lado > 0 else MAO_ESQ
+    nome = f"{nome}_{'d' if lado > 0 else 'e'}"
+    objs = [tubo(m, nome, pts, [0.072, 0.064, 0.060], cor)]
+    if luva:
+        objs.append(esfera(m, nome + "_luva", mao, 0.078, luva))
+    if anel:
+        a, b = Vector(pts[1]), Vector(pts[2])
+        objs.append(toro(m, nome + "_anel", a + (b - a) * 0.45, 0.064, 0.016, anel, normal=b - a, seg=10, lados=4))
+    if ombreira:
+        objs.append(esfera(m, nome + "_ombreira", Vector(pts[0]) + Vector((0.035 * lado, 0, 0.030)), (0.095, 0.085, 0.075), ombreira))
+    return objs
+
+
+def colete(m, cor, barra=None, emblema=None, z0=0.255, z1=0.520, folga=1.0, nome="colete"):
+    """Colete (ou peitoral) em volta do tronco: barril cortado em cima e embaixo."""
+    bm = poli.gaiola((0.200 * folga, 0.182 * folga, 0.230), cortes=2, cor=cor)
+    for v in bm.verts:
+        v.co.z = min(max(v.co.z, z0 - 0.385), z1 - 0.385)
+    poli.mover(bm, (0, -0.005, 0.385))
+    objs = [m.obj(nome, bm, nivel=1)]
+    if barra:
+        objs.append(faixa(m, nome + "_barra", (0, -0.008, z0 + 0.030), 0.196 * folga, 0.180 * folga, 0.022, barra, n=12))
+    if emblema:
+        objs.append(esfera(m, nome + "_emblema", (0, -0.176 * folga, 0.420), (0.050, 0.024, 0.050), emblema, cortes=0))
+    return objs
+
+
+def saia(m, cor, barra=None, z0=0.050, z1=0.330, largura=0.300, nome="saia"):
+    """Barra de tunica ou manto: cone aberto da cintura ate perto do chao."""
+    perfil = [(0.150, z1), (0.190, z1 - 0.030), (largura * 0.85, (z0 + z1) / 2), (largura, z0 + 0.030), (largura * 0.96, z0), (0, z0)]
+    cores = [cor, cor, cor, barra or cor, cor]
+    bm = poli.torno(perfil, seg=12, cores=cores)
+    for v in bm.verts:
+        v.co.y *= 0.90
+    return [m.obj(nome, bm, nivel=0)]
+
+
+def mochila(m, cor, detalhe="cinza_escuro", luz=None, tam=1.0, nome="mochila"):
+    """Mochila nas costas com dois bocais para baixo; luz = cor do brilho dos bocais."""
+    c = Vector((0, 0.215, 0.410))
+    objs = [bloco(m, nome, (0.250 * tam, 0.130 * tam, 0.240 * tam), c, cor, chanfro=0.030, seg=2)]
+    for sx in (-1, 1):
+        b = c + Vector((0.075 * tam * sx, 0.030 * tam, -0.110 * tam))
+        objs.append(cilindro(m, f"{nome}_bocal_{sx}", b, (0, 0.25, -1), [(0, 0), (0.040 * tam, 0.002), (0.058 * tam, 0.090 * tam), (0.040 * tam, 0.092 * tam), (0, 0.060 * tam)],
+                             cores=[detalhe, detalhe, detalhe, luz or detalhe], seg=8))
+        if luz:
+            objs.append(cone(m, f"{nome}_jato_{sx}", b + Vector((0, 0.022, -0.085)) * tam, (0, 0.30, -1), 0.040 * tam, 0.150 * tam, luz, seg=5))
+    return objs
+
+
+def tanque(m, cor, tampa="cinza", lado=0, raio=0.085, altura=0.300, nome="tanque"):
+    """Tanque cilindrico nas costas (cola, pocao, combustivel)."""
+    base = (0.090 * lado, 0.215, 0.290)
+    perfil = [(0, 0), (raio * 0.8, 0.004), (raio, 0.030), (raio, altura - 0.040), (raio * 0.75, altura), (raio * 0.40, altura + 0.010), (raio * 0.40, altura + 0.050), (0, altura + 0.050)]
+    return [cilindro(m, nome, base, (0, 0.12, 1), perfil, cores=[cor, cor, cor, cor, tampa, tampa, tampa], seg=10)]
+
+
+# ---------------------------------------------------------------- bumerangues e laminas
+def bumerangue(m, nome, pos, direcao=(0, -1, 0), escala=1.0, cor="bege", pontas="laranja", gume=None):
+    """Bumerangue em V, deitado, com as pontas pintadas; gume = cor de um fio de metal na borda de fora."""
+    mat = em(pos, direcao, escala) @ Matrix.Diagonal((1, 1, 0.5, 1))
+    v = [(-0.170, 0.075, 0), (-0.090, -0.035, 0), (0, -0.095, 0), (0.090, -0.035, 0), (0.170, 0.075, 0)]
+    objs = [tubo(m, nome, v, [0.026, 0.040, 0.046, 0.040, 0.026], cor, matriz=mat)]
+    for k, p in enumerate((v[0], v[-1])):
+        objs.append(esfera(m, f"{nome}_ponta_{k}", p, (0.050, 0.050, 0.060), pontas, cortes=0, matriz=mat))
+    if gume:
+        fio = [(x * 1.04, y - 0.034, 0) for x, y, _z in v]
+        objs.append(tubo(m, nome + "_gume", fio, [0.010, 0.018, 0.020, 0.018, 0.010], gume, matriz=mat))
+    return objs
+
+
+def glaive(m, nome, pos, raio=0.130, normal=(0, 0, 1), lamina="aco", miolo="vermelho", laminas=6):
+    """Glaive: aro de metal com laminas em redemoinho e miolo colorido."""
+    mat = em(pos, normal, de=(0, 0, 1))
+    objs = [toro(m, nome, (0, 0, 0), raio, raio * 0.17, lamina, seg=12, lados=4, matriz=mat)]
+    objs.append(esfera(m, nome + "_miolo", (0, 0, 0), (raio * 0.45, raio * 0.45, raio * 0.22), miolo, cortes=0, matriz=mat))
+    objs.append(tubo(m, nome + "_raio", [(-raio, 0, 0), (raio, 0, 0)], raio * 0.10, lamina, nivel=0, matriz=mat))
+    for k in range(laminas):
+        a = 2 * math.pi * k / laminas
+        objs.append(cone(m, f"{nome}_lamina_{k}", (raio * math.cos(a), raio * math.sin(a), 0), (math.cos(a + 0.9), math.sin(a + 0.9), 0),
+                         raio * 0.24, raio * 0.70, lamina, seg=4, matriz=mat))
     return objs

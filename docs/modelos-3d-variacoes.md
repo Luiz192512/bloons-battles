@@ -39,10 +39,11 @@ python tools/blender/conferir_variacoes.py dardo
 | Torre | Variações geradas | Máx. de triângulos | Malhas | Tamanho total | Pendências |
 |---|---|---|---|---|---|
 | dardo | 64 de 64 | 8.929 (2-0-5) | 6 | 12,7 MB | 0-0-1 e 3-1-0 mudam pouco a 48 px; o capuz é largo para cobrir as orelhas |
+| bumerangue | 64 de 64 | 8.876 (5-2-0) | 5 | 10,8 MB | 1-0-0 muda pouco (só o gume e as pontas de aço); o bumerangue lê como um arco; a mochila do 0-4-0 some na vista do jogo |
 | bomba | 1 de 64 (só a base) | 1.984 | 2 | 0,07 MB | upgrades entram na Parte B |
 | bucaneiro | 1 de 64 (só a base) | 8.868 | 5 | 0,23 MB | upgrades entram na Parte B; a base já usa 8.868 triângulos, sobra pouco para peças |
 
-As outras 19 torres ainda não foram começadas.
+As outras torres ainda não foram começadas.
 
 Tamanho no repositório: o dardo ocupa 12,7 MB (de 139 a 250 KB por variação), abaixo do limite
 de 30 MB por torre. Projetando para as 22 torres, o total fica entre 250 e 330 MB de `.glb`.
@@ -103,3 +104,32 @@ O que ainda não ficou bom (para o ajuste de design):
 - 3-0-0 e 3-1-0 se distinguem só pelas listras vermelhas na carreta, que são pequenas a 48 px.
 - O capuz precisa ser largo para caber as orelhas, e a cabeça fica grande na vista do jogo.
 - A capa, vista de lado, ainda é fina; as pregas aparecem melhor de costas e de cima.
+
+## Bumerangue (Macaco Bumerangue)
+
+Base: macaco padrão de crista, cinto laranja (`tronco`) e um bumerangue de madeira na mão
+(`mao_ataque`). A arma lê os três tiers: o caminho 1 dá o gume e a glaive, o caminho 3 dá o
+tamanho, a brasa e o kylie. Por isso os tiers 1 e 2 desses caminhos não ocupam encaixe e valem
+em qualquer combinação.
+
+| Caminho | Tier | Upgrade (nome no clone) | Encaixe | Peça | O que comunica |
+|---|---|---|---|---|---|
+| 1 | 1 | Bumerangues Melhorados | mao_ataque (parâmetro) | gume e pontas de aço no bumerangue | fura mais |
+| 1 | 2 | Glaives | mao_ataque (parâmetro) | o bumerangue vira uma glaive: aro de lâminas com miolo vermelho | lâmina giratória |
+| 1 | 3 | Ricochete de Glaive | mao_ataque, chapeu | glaive maior, de oito lâminas; elmo de aço com crista de lâminas | ricocheteia |
+| 1 | 4 | M.O.A.R. Glaives | mao_livre, costas | segunda glaive na mão esquerda e uma grande nas costas | muito mais glaives |
+| 1 | 5 | Senhor das Glaives | torreta, chapeu, costas | três glaives douradas em órbita (malha `torreta`, gira no jogo); elmo dourado; capa vermelha | glaives orbitando |
+| 2 | 1 | Arremesso Rápido | chapeu (alternativas: tronco, mao_livre) | faixa laranja na testa; ou cachecol laranja; ou munhequeira | velocidade |
+| 2 | 2 | Bumerangues Velozes | pes | tênis laranja | mais velocidade |
+| 2 | 3 | Bumerangue Biônico | extra (malha braco), rosto | braço direito mecânico com anel ciano; olho mecânico ciano | braço robótico |
+| 2 | 4 | Turbo Carga | costas, mao_livre | mochila turbina de jato ciano; braço esquerdo mecânico | habilidade turbo |
+| 2 | 5 | Carga Permanente | tronco, chapeu, costas | peitoral e capacete de metal com luz ciano; turbina maior de jato laranja | turbo permanente |
+| 3 | 1 | Bumerangues de Longo Alcance | mao_ataque (parâmetro) | arma 35% maior | alcança mais longe |
+| 3 | 2 | Bumerangues Incandescentes | mao_ataque (parâmetro) | arma em brasa: laranja de pontas amarelas | estoura chumbo |
+| 3 | 3 | Bumerangue Kylie | mao_ataque, chapeu | kylie vermelho de faixas brancas, de cabo reto e cabeça virada; chapéu de aba marrom | linha reta |
+| 3 | 4 | Prensa de M.O.A.B. | mao_ataque, tronco | kylie maior com peso de aço; colete escuro | empurra dirigíveis |
+| 3 | 5 | Dominação M.O.A.B. | mao_ataque, chapeu, tronco, costas | kylie duplo com pesos dourados; chapéu e colete pretos com ouro; capa vermelha | domina dirigíveis |
+
+Composições resolvidas: em **2-0-5** o kylie ganha dentes de serra de aço (o caminho 1 afia a arma
+que estiver na mão); em **0-1-4** a faixa da testa não cabe (chapéu) nem o cachecol (colete), e o
+tier vira munhequeira; em **5-0-2** as glaives ficam em brasa.

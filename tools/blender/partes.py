@@ -6,6 +6,7 @@ Uma torre e um modulo em tools/blender/torres/<chave>.py com:
     CAMINHOS     lista de 3 dicionarios {tier: peca}
     ENQUADRE     (alvo, tamanho) das folhas de revisao
 A peca dos tiers 1 e 2 e um acessorio: uma lista de alternativas [(encaixe, funcao), ...].
+Um acessorio (None, None) nao ocupa encaixe: o tier so muda a arma ou outra peca que le m.tier.
 A peca dos tiers 3 a 5 e um conjunto: uma funcao que troca traje, arma e silhueta.
 
 Regras de composicao (montar):
@@ -183,6 +184,10 @@ def _aplicar(m, peca, cruzado):
         peca(m)
         return None
     for encaixe, f in peca:
+        if encaixe is None:   # o tier so muda um parametro que as pecas da torre leem em m.tier
+            if f:
+                f(m)
+            return None
         if not cruzado or encaixe not in m.ocupados:
             f(m)
             return encaixe
