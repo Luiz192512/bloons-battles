@@ -20,6 +20,8 @@ PALETA = {
     # cores das variacoes (entram depois das do piloto, que nao mudam)
     "aco": (168, 180, 198), "roxo": (132, 78, 196), "ciano": (90, 226, 240), "laranja": (245, 130, 40),
     "verde_escuro": (48, 120, 60), "rosa": (240, 120, 170),
+    # Macaco de Gelo, a unica excecao de paleta: tons tirados de docs/design/capturas/btd6/real_ice_*.jpg
+    "pelo_gelo": (130, 200, 236), "pele_gelo": (240, 250, 253), "pelo_gelo_escuro": (50, 157, 202),
 }
 INDICE = {nome: i for i, nome in enumerate(PALETA)}
 CORES = list(PALETA.values())

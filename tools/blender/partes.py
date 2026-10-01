@@ -123,7 +123,7 @@ class Montagem:
         g = grupo or GRUPO[encaixe]
         p = (encaixe in DO_MACACO) if preso is None else preso
         self.encaixes[encaixe] += [(g, o, p) for o in self._lista(objs)]
-        if self._principal:
+        if self._principal and encaixe != "extra":   # extra aceita varias pecas: nunca fica ocupado
             self.ocupados.add(encaixe)
 
     def por(self, encaixe, objs, grupo=None, preso=None):
@@ -143,7 +143,7 @@ class Montagem:
             if me.users == 0:
                 bpy.data.meshes.remove(me)
         self.encaixes[encaixe] = fica
-        if self._principal:
+        if self._principal and encaixe != "extra":   # extra aceita varias pecas: nunca fica ocupado
             self.ocupados.add(encaixe)
 
     def ocupar(self, *encaixes):

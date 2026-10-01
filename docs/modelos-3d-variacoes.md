@@ -42,6 +42,7 @@ python tools/blender/conferir_variacoes.py dardo
 | bumerangue | 64 de 64 | 8.876 (5-2-0) | 5 | 10,8 MB | 1-0-0 muda pouco (só o gume e as pontas de aço); o bumerangue lê como um arco; a mochila do 0-4-0 some na vista do jogo |
 | bomba | 64 de 64 | 6.152 (2-0-5) | 2 | 6,0 MB | 1-0-0 muda pouco (cano 10% mais grosso); 4-0-0 e 5-0-0 se parecem de cima (o 5 é preto com cinta vermelha) |
 | tachinha | 64 de 64 | 3.381 (2-0-5) | 2 | 5,3 MB | 0-0-1 e 0-0-2 (10 e 12 bicos) quase não se distinguem de 0-0-0 a 48 px; a engrenagem do topo lê como uma flor; 0-5-0 fica confuso de tantas lâminas |
+| gelo | 64 de 64 | 8.468 (0-5-2) | 6 | 10,9 MB | os pingentes das costas (2-0-0) aparecem pouco de cima; azul claro, branco e ciano se misturam a 48 px; o tanque do canhão some atrás do corpo |
 | bucaneiro | 1 de 64 (só a base) | 8.868 | 5 | 0,23 MB | upgrades entram na Parte B; a base já usa 8.868 triângulos, sobra pouco para peças |
 
 As outras torres ainda não foram começadas.
@@ -186,3 +187,28 @@ compridos e número de bicos valem em qualquer combinação.
 | 3 | 3 | Pulverizador de Tachinhas | torreta | dezesseis bicos num tambor mais alto | pulveriza |
 | 3 | 4 | Sobrecarga | torreta | duas bobinas ciano em volta do tambor e antena | sobrecarga |
 | 3 | 5 | Zona das Tachinhas | torreta, base | tambor dourado de tampa vermelha, duas fileiras de dezesseis bicos; prato maior de aro dourado | zona coberta |
+
+## Gelo (Macaco de Gelo)
+
+Base: o macaco padrão na única paleta diferente. As cores foram tiradas do print
+`real_ice_0-0-0.jpg` e registradas em `PALETA` (`poli.py`): `pelo_gelo` (130, 200, 236),
+`pele_gelo` (240, 250, 253) e `pelo_gelo_escuro` (50, 157, 202), esta última para o topete.
+Topete, cachecol branco (`tronco`) e um cristal de gelo na mão (`mao_ataque`).
+
+| Caminho | Tier | Upgrade (nome no clone) | Encaixe | Peça | O que comunica |
+|---|---|---|---|---|---|
+| 1 | 1 | Permafrost | extra | anel de gelo ciano no chão, com pontas brancas | o frio fica no chão |
+| 1 | 2 | Estalo Frio | costas (alternativa: extra) | três pingentes de gelo saindo das costas; ou pingentes fincados no chão ao lado | gelo mais forte |
+| 1 | 3 | Estilhaços de Gelo | mao_ataque, tronco | dois cristais menores junto do cristal da mão; ombreiras de cristal | estilhaços |
+| 1 | 4 | Fragilização | chapeu, tronco | coroa de cristais ciano; colete ciano | fragiliza |
+| 1 | 5 | Super Frágil | chapeu, costas, torreta | coroa branca maior; capa branca; quatro cristais grandes em órbita (malha `torreta`) | super frágil |
+| 2 | 1 | Congelamento Melhor | mao_livre | segundo cristal, azul, na mão esquerda | congela mais |
+| 2 | 2 | Congelamento Profundo | pes | botas azuis de sola branca | congela fundo |
+| 2 | 3 | Vento Ártico | chapeu, extra | gorro azul de barra branca e pompom; anel largo de vento no chão | aura de vento |
+| 2 | 4 | Nevasca | costas, chapeu | capa branca de borda azul; floco de neve branco sobre a cabeça | nevasca |
+| 2 | 5 | Zero Absoluto | costas, chapeu, extra | capa azul; floco ciano maior; oito pontas de gelo em volta, no chão | zero absoluto |
+| 3 | 1 | Raio Maior | mao_ataque (alternativa: extra) | cristal da mão 45% maior; com a mão ocupada, cristal grande fincado no chão | raio maior |
+| 3 | 2 | Recongelar | rosto | viseira ciano | recongela |
+| 3 | 3 | Canhão Criogênico | mao_ataque, costas | canhão azul de boca ciano com mangueira; tanque ciano nas costas | canhão de gelo |
+| 3 | 4 | Pingentes | mao_ataque, costas, chapeu | canhão maior com pingente na boca; dois tanques; capacete azul | atira pingentes |
+| 3 | 5 | Empalar com Pingentes | mao_ataque, chapeu, tronco | canhão preto e dourado com pingente grande; capacete e colete pretos com ouro | empala dirigíveis |
