@@ -672,7 +672,8 @@ void CenaJogo::cabecalho_upgrade(const Torre& t, float x, float y, float w) {
 void CenaJogo::rodape_upgrade(const Torre& t, float x, float y, float w, Vector2 mouse) {
     // prioridade de alvo com seta e atalho Tab
     const float wv = t.temporaria ? 0.0f : 150.0f;
-    const Rectangle ra{x, y, w - wv - (wv ? 8 : 0), 44};
+    const float wm = t.chave == "bumerangue" ? 52.0f : 0.0f;  // espaco do botao de mao
+    const Rectangle ra{x, y, w - wv - (wv ? 8 : 0) - wm, 44};
     ui::ret(ra, ui::TINTA, 12);
     ui::ret(ui::inflar(ra, -6, -6), rgb(36, 82, 24), 9);
     ui::ret({ra.x + 3, ra.y + 3, ra.width - 6, ra.height - 10}, ui::PAINEL_VERDE_ESC, 9);
@@ -706,6 +707,19 @@ void CenaJogo::rodape_upgrade(const Torre& t, float x, float y, float w, Vector2
                                       comando("M" + std::to_string(id) + ":" + std::to_string((tt->modo + 1) % 4));
                               }});
         if (ui::dentro(ra, mouse)) dicas_.push_back({mouse, "Prioridade de alvo", "Clique ou Tab para trocar."});
+    }
+    if (wm > 0) {
+        // mao do arremesso: inverte o lado do arco do bumerangue
+        const Rectangle rm{ra.x + ra.width + 8, y, 44, 44};
+        ui::ret(rm, ui::TINTA, 12);
+        ui::ret(ui::inflar(rm, -6, -6), rgb(36, 82, 24), 9);
+        ui::ret({rm.x + 3, rm.y + 3, rm.width - 6, rm.height - 10}, ui::PAINEL_VERDE_ESC, 9);
+        ui::texto("MÃO", rm.x + 22, rm.y + 12, 10, rgb(207, 239, 191), 0, Ancora::CENTER, ui::Peso::TEXTO);
+        ui::texto(t.mao ? "Esq" : "Dir", rm.x + 22, rm.y + 28, 13, ui::BRANCO, 3, Ancora::CENTER);
+        const int mao = t.mao ? 0 : 1;
+        botoes_up_.push_back({rm, [this, id, mao] { comando("O" + std::to_string(id) + ":" + std::to_string(mao)); }});
+        if (ui::dentro(rm, mouse))
+            dicas_.push_back({mouse, "Mão do arremesso", "Troca o lado para onde o bumerangue faz a curva."});
     }
     if (t.temporaria) return;
     // vender em vermelho (convencao de sair/vender)

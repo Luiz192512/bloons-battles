@@ -106,6 +106,7 @@ struct Torre {
     // ponto escolhido pelo jogador (comando A): cursor da Dartling, alvo fixo do Morteiro
     double mx = 0.0, my = 0.0;
     bool tem_mira = false;
+    int mao = 0;  // Bumerangue (comando O): 0 arremessa com a direita, 1 com a esquerda (inverte o arco)
     double ang = -90.0;
     double turbo = 1.0, turbo_t = 0.0;
     double temporaria;
@@ -181,6 +182,7 @@ public:
     char vender(int tid);
     char mudar_modo(int tid, int modo);
     char mirar(int tid, double x, double y);
+    char opcao(int tid, int valor);
     char usar_habilidade(int tid, int idx);
 
     // bloons

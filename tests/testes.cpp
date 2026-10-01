@@ -400,6 +400,39 @@ TESTE(b03_tiro_critico_avisa_o_cliente) {
     CHECA_IGUAL(conta(), 1);
 }
 
+TESTE(b29_bumerangue_troca_de_mao) {
+    // o mesmo arremesso curva para lados opostos conforme a mao
+    auto lado = [](int mao) {
+        Partida p = solo();
+        Pista& pi = p.pista(1);
+        pi.dinheiro = 1e6;
+        CHECA_IGUAL(p.aplicar(1, "Tbumerangue@300,240"), OK);
+        CHECA_IGUAL(p.aplicar(1, "O1:" + std::to_string(mao)), OK);
+        CHECA_IGUAL(p.aplicar(1, "O1:2"), ERRO_INVALIDO);
+        BloonP b = pi.criar_bloon("chumbo", 500);  // chumbo nao estoura: o bumerangue segue o arco
+        b->atord_t = 60;
+        p.passo();
+        const Torre& t = *pi.torres.at(1);
+        const double dx = b->x - t.x, dy = b->y - t.y;
+        for (int i = 0; i < 40; ++i) {
+            p.passo();
+            if (!pi.projeteis.empty()) {
+                const Projetil& pr = *pi.projeteis.front();
+                const double cruz = dx * (pr.y - t.y) - dy * (pr.x - t.x);
+                if (std::abs(cruz) > 500) return cruz > 0 ? 1 : -1;
+            }
+        }
+        return 0;
+    };
+    const int direita = lado(0), esquerda = lado(1);
+    CHECA(direita != 0);
+    CHECA_IGUAL(esquerda, -direita);
+    Partida p = solo();
+    p.pista(1).dinheiro = 1e6;
+    CHECA_IGUAL(p.aplicar(1, "Tdardo@300,240"), OK);
+    CHECA_IGUAL(p.aplicar(1, "O1:1"), ERRO_INVALIDO);  // so o Bumerangue tem mao
+}
+
 TESTE(btd6_criticos_a_cada_n_tiros) {
     Partida p = solo();
     Pista& pi = p.pista(1);

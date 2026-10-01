@@ -388,6 +388,13 @@ char Pista::mirar(int tid, double x, double y) {
     return OK;
 }
 
+char Pista::opcao(int tid, int valor) {
+    TorreP t = torre(tid);
+    if (!t || t->chave != "bumerangue" || valor < 0 || valor > 1) return ERRO_INVALIDO;
+    t->mao = valor;
+    return OK;
+}
+
 char Pista::usar_habilidade(int tid, int idx) {
     TorreP t = torre(tid);
     if (!t || idx < 0 || idx >= static_cast<int>(t->st.habs.size()) || t->hab_rec[idx] > 0) return ERRO_INVALIDO;
@@ -1178,8 +1185,8 @@ void Pista::mover_bumerangue(Projetil& p) {
         if (p.dist <= p.at->dist * 0.5) {
             p.voltando = true;
         } else {
-            // curva suave para a direita
-            double ang = std::atan2(p.vy, p.vx) + 2.2 * DT;
+            // curva suave para o lado da mao que arremessou
+            double ang = std::atan2(p.vy, p.vx) + (p.torre->mao ? -2.2 : 2.2) * DT;
             p.vx = std::cos(ang) * p.vel;
             p.vy = std::sin(ang) * p.vel;
         }
@@ -1456,6 +1463,9 @@ char Partida::aplicar(int jogador, const std::string& cmd) {
             size_t k = xy.find(',');
             if (k == std::string::npos) throw std::invalid_argument("comando");
             erro = pista.mirar(std::stoi(tid), std::stoi(xy.substr(0, k)), std::stoi(xy.substr(k + 1)));
+        } else if (c == 'O') {
+            auto [tid, v] = dividir(':');
+            erro = pista.opcao(std::stoi(tid), std::stoi(v));
         } else if (c == 'B') {
             auto [tid, i] = dividir(':');
             erro = pista.usar_habilidade(std::stoi(tid), std::stoi(i));
