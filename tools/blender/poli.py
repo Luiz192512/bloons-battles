@@ -201,3 +201,187 @@ def tronco_gaiola():
             f.material_index = INDICE["pele"]
     mover(bm, (0, 0, 0.38))
     return bm
+
+
+# ---------------------------------------------------------------- malha continua (bloco, fusao, retopologia)
+from mathutils import Matrix  # noqa: E402
+
+
+def bloco_esfera(bm, centro, raios):
+    """Volume de bloco (so entra na fusao; nao vira peca final)."""
+    if not isinstance(raios, (tuple, list)):
+        raios = (raios, raios, raios)
+    mat = Matrix.Translation(Vector(centro)) @ Matrix.Diagonal((raios[0], raios[1], raios[2], 1.0))
+    bmesh.ops.create_uvsphere(bm, u_segments=24, v_segments=14, radius=1.0, matrix=mat)
+
+
+def bloco_tubo(bm, pontos, raios):
+    """Tubo de bloco ao longo dos pontos, com juntas redondas."""
+    pts = [Vector(p) for p in pontos]
+    for p, r in zip(pts, raios):
+        bloco_esfera(bm, p, r)
+    for i in range(len(pts) - 1):
+        eixo = pts[i + 1] - pts[i]
+        rot = Vector((0, 0, 1)).rotation_difference(eixo.normalized()).to_matrix().to_4x4()
+        mat = Matrix.Translation((pts[i] + pts[i + 1]) / 2) @ rot
+        bmesh.ops.create_cone(bm, cap_ends=True, segments=20, radius1=raios[i], radius2=raios[i + 1],
+                              depth=eixo.length, matrix=mat)
+
+
+def remalhar(nome, bm, c, faces, voxel=0.012, suave=6, simetria=True):
+    """Funde os volumes numa casca so (voxel), alisa as juncoes e refaz a topologia em quads."""
+    me = bpy.data.meshes.new(nome + "_bloco")
+    bm.to_mesh(me)
+    bm.free()
+    o = bpy.data.objects.new(nome, me)
+    c.collection.objects.link(o)
+    m = o.modifiers.new("vox", "REMESH")
+    m.mode = "VOXEL"
+    m.voxel_size = voxel
+    s = o.modifiers.new("alisar", "SMOOTH")
+    s.factor = 0.5
+    s.iterations = suave
+    dg = bpy.context.evaluated_depsgraph_get()
+    me2 = bpy.data.meshes.new_from_object(o.evaluated_get(dg))
+    o.modifiers.clear()
+    o.data = me2
+    bpy.data.meshes.remove(me)
+    for ob in bpy.context.view_layer.objects:
+        ob.select_set(False)
+    o.select_set(True)
+    bpy.context.view_layer.objects.active = o
+    bpy.ops.object.quadriflow_remesh(mode="FACES", target_faces=faces, use_mesh_symmetry=simetria,
+                                     use_preserve_sharp=False, use_preserve_boundary=False, smooth_normals=True)
+    o.data.name = nome
+    for p in o.data.polygons:
+        p.use_smooth = True
+    o.data.materials.clear()
+    o.data.materials.append(material())
+    return o
+
+
+def _cortar(bm, f):
+    """Abre arestas ao longo do contorno f(p) = 0, para a borda da cor seguir uma linha limpa."""
+    val = {v: f(v.co) for v in bm.verts}
+    novos = set()
+    for e in bm.edges[:]:
+        a, b = e.verts
+        fa, fb = val[a], val[b]
+        if fa * fb < 0 and min(abs(fa), abs(fb)) > 1e-4:
+            _, nv = bmesh.utils.edge_split(e, a, fa / (fa - fb))
+            val[nv] = 0.0
+            novos.add(nv)
+    for face in bm.faces[:]:
+        marc = [v for v in face.verts if v in novos]
+        if len(marc) == 2 and not any(marc[1] in e.verts for e in marc[0].link_edges):
+            try:
+                bmesh.utils.face_split(face, marc[0], marc[1])
+            except ValueError:
+                pass
+
+
+def colorir(o, regioes, base="pelo"):
+    """Pinta por regiao. regioes = [(cor, f)], com f(p) < 0 dentro da mancha; vale a primeira que
+    contem a face. A malha e cortada no contorno de cada mancha, entao a borda sai nitida."""
+    me = o.data
+    bm = bmesh.new()
+    bm.from_mesh(me)
+    for _, f in regioes:
+        _cortar(bm, f)
+    bm.faces.ensure_lookup_table()
+    cores = []
+    for face in bm.faces:
+        p = face.calc_center_median()
+        cores.append(next((cor for cor, f in regioes if f(p) < 0), base))
+        face.smooth = True
+    bm.to_mesh(me)
+    bm.free()
+    attr = me.color_attributes.get("Col")
+    if attr:
+        me.color_attributes.remove(attr)
+    attr = me.color_attributes.new("Col", "BYTE_COLOR", "CORNER")
+    for poly, cor in zip(me.polygons, cores):
+        r, g, b = PALETA[cor]
+        for li in poly.loop_indices:
+            attr.data[li].color_srgb = (r / 255, g / 255, b / 255, 1.0)
+    me.color_attributes.active_color = attr
+
+
+def membro(pontos, raios, cor="pelo"):
+    """Tubo de quads de secao quadrada (vira redondo na subdivisao). Raio perto de zero = ponta."""
+    bm = bmesh.new()
+    pts = [Vector(p) for p in pontos]
+    n = len(pts)
+    ref = Vector((1, 0, 0))
+    aneis = []
+    for i, p in enumerate(pts):
+        t = (pts[min(i + 1, n - 1)] - pts[max(i - 1, 0)]).normalized()
+        a = ref - t * ref.dot(t)
+        if a.length < 1e-5:
+            a = t.orthogonal()
+        a.normalize()
+        b = t.cross(a)
+        ref = a
+        aneis.append([bm.verts.new(p + (a * ca + b * cb) * raios[i]) for ca, cb in ((1, 1), (-1, 1), (-1, -1), (1, -1))])
+    for i in range(n - 1):
+        for k in range(4):
+            bm.faces.new((aneis[i][k], aneis[i][(k + 1) % 4], aneis[i + 1][(k + 1) % 4], aneis[i + 1][k]))
+    bm.faces.new(aneis[0][::-1])
+    bm.faces.new(aneis[-1])
+    for f in bm.faces:
+        f.material_index = INDICE[cor]
+    return bm
+
+
+# ---------------------------------------------------------------- renders de revisao
+def preparar_render(c, fundo=(0.12, 0.40, 0.05)):
+    def pegar(nome, criar):
+        o = c.objects.get(nome)
+        if not o:
+            o = bpy.data.objects.new(nome, criar())
+            c.collection.objects.link(o)
+        return o
+
+    cam = pegar("bb_cam_" + c.name, lambda: bpy.data.cameras.new("bb_cam"))
+    cam.data.type = "ORTHO"
+    c.camera = cam
+    sol = pegar("bb_sol_" + c.name, lambda: bpy.data.lights.new("bb_sol", "SUN"))
+    sol.data.energy = 3.0
+    sol.data.angle = math.radians(20)
+    sol.rotation_euler = (math.radians(50), 0, math.radians(30))
+    w = bpy.data.worlds.get("bb_mundo") or bpy.data.worlds.new("bb_mundo")
+    w.use_nodes = True
+    nt = w.node_tree
+    bg = nt.nodes["Background"]
+    if not nt.nodes.get("bb_mix"):
+        lp = nt.nodes.new("ShaderNodeLightPath")
+        mix = nt.nodes.new("ShaderNodeMixRGB")
+        mix.name = "bb_mix"
+        mix.inputs[1].default_value = (0.75, 0.75, 0.75, 1)
+        nt.links.new(lp.outputs["Is Camera Ray"], mix.inputs[0])
+        nt.links.new(mix.outputs[0], bg.inputs[0])
+    nt.nodes["bb_mix"].inputs[2].default_value = (*fundo, 1)
+    bg.inputs[1].default_value = 1.0
+    c.world = w
+    c.render.engine = "BLENDER_EEVEE"
+    c.view_settings.view_transform = "Standard"
+    c.render.image_settings.file_format = "PNG"
+    return cam
+
+
+VISTAS = {"frente": (0, -1, 0.12), "lado": (1, -0.02, 0.12), "tres_quartos": (0.6, -1, 0.35),
+          "costas": (-0.5, 1, 0.3), "jogo": (0, -0.70, 1.0)}
+
+
+def render(c, caminho, vista, alvo=(0, 0, 0.5), largura=1.5, altura=1.5, px=600):
+    """Render ortografico. px = pixels por unidade (48 = tamanho da torre no mapa)."""
+    cam = preparar_render(c)
+    a = Vector(alvo)
+    cam.location = a + Vector(VISTAS[vista]).normalized() * 8
+    cam.rotation_euler = (a - cam.location).to_track_quat("-Z", "Y").to_euler()
+    cam.data.ortho_scale = max(largura, altura)
+    c.render.resolution_x = int(largura * px)
+    c.render.resolution_y = int(altura * px)
+    c.render.resolution_percentage = 100
+    c.render.filepath = caminho
+    bpy.ops.render.render(write_still=True)
