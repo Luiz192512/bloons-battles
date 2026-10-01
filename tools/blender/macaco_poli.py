@@ -13,7 +13,7 @@ OMBRO = (0.150, 0.0, 0.475)
 MAO = (0.285, -0.150, 0.415)
 
 
-def _corpo(c):
+def _corpo(c, pelo="pelo", pele="pele"):
     bm = bmesh.new()
     # tronco em pera: peito mais estreito, barriga mais larga e para a frente
     poli.bloco_esfera(bm, (0, 0.005, 0.335), (0.175, 0.150, 0.165))
@@ -28,24 +28,24 @@ def _corpo(c):
     poli.bloco_esfera(bm, (-0.268, -0.045, 0.225), (0.058, 0.066, 0.068))
     o = poli.remalhar("corpo", bm, c, faces=720, voxel=0.011, suave=8)
     poli.colorir(o, [
-        ("pele", lambda p: max(p.z - 0.088, p.y - 0.10)),                                   # pes
-        ("pele", lambda p: max(p.z - 0.268, p.x + 0.20)),                                   # mao esquerda
-        ("pele", lambda p: max((p.x / 0.110) ** 2 + ((p.z - 0.330) / 0.130) ** 2 - 1, (p.y + 0.02) * 8)),   # barriga
-    ])
+        (pele, lambda p: max(p.z - 0.088, p.y - 0.10)),                                   # pes
+        (pele, lambda p: max(p.z - 0.268, p.x + 0.20)),                                   # mao esquerda
+        (pele, lambda p: max((p.x / 0.110) ** 2 + ((p.z - 0.330) / 0.130) ** 2 - 1, (p.y + 0.02) * 8)),   # barriga
+    ], base=pelo)
     return o
 
 
-def _braco(c):
+def _braco(c, pelo="pelo", pele="pele"):
     bm = bmesh.new()
     cotovelo = (0.245, -0.040, 0.405)
     poli.bloco_tubo(bm, [OMBRO, cotovelo, (0.275, -0.125, 0.412)], [0.058, 0.048, 0.044])
     poli.bloco_esfera(bm, MAO, (0.062, 0.066, 0.062))
     o = poli.remalhar("braco", bm, c, faces=190, voxel=0.010, suave=6, simetria=False)
-    poli.colorir(o, [("pele", lambda p: p.y + 0.105)])
+    poli.colorir(o, [(pele, lambda p: p.y + 0.105)], base=pelo)
     return o
 
 
-def _cabeca(c):
+def _cabeca(c, pelo="pelo", pele="pele"):
     bm = bmesh.new()
     poli.bloco_esfera(bm, (0, 0.0, 0.735), (0.262, 0.232, 0.222))            # cranio largo
     poli.bloco_esfera(bm, (0, -0.150, 0.655), (0.150, 0.110, 0.098))         # focinho
@@ -64,7 +64,7 @@ def _cabeca(c):
         foc = (p.x / 0.190) ** 2 + ((p.z - 0.655) / 0.110) ** 2 - 1
         return max(min(olhos, foc), (p.y + 0.060) * 8)
 
-    poli.colorir(o, [("pele", orelha), ("pele", mascara)])
+    poli.colorir(o, [(pele, orelha), (pele, mascara)], base=pelo)
     return o
 
 
@@ -93,9 +93,9 @@ def _rosto(c):
     return pecas
 
 
-def _pelagem(c, estilo):
+def _pelagem(c, estilo, cor="pelo_escuro"):
     """Pelo por cima do corpo padrao: redondo na base, pontudo na ponta."""
-    cor, pecas = "pelo_escuro", []
+    pecas = []
 
     def mecha(nome, pts, raios):
         pecas.append(poli.objeto(nome, poli.membro(pts, raios, cor=cor), c, nivel=1))
@@ -120,22 +120,26 @@ def _pelagem(c, estilo):
     return pecas
 
 
-def _cauda(c):
+def _cauda(c, pelo="pelo"):
     centro, r = (0, 0.290, 0.300), 0.150
     pts = [(0, 0.115, 0.255)]
     for g in (200, 250, 300, 350, 40, 90, 130):
         a = math.radians(g)
         pts.append((0, centro[1] + r * math.cos(a), centro[2] + r * math.sin(a)))
     raios = [0.034, 0.032, 0.030, 0.028, 0.025, 0.022, 0.018, 0.004]
-    return poli.objeto("cauda", poli.membro(pts, raios), c, nivel=1)
+    return poli.objeto("cauda", poli.membro(pts, raios, cor=pelo), c, nivel=1)
 
 
-def construir(c, pelagem="topete"):
-    """Monta o macaco na cena dada e devolve as quatro malhas moveis e os pivos."""
-    corpo = _corpo(c)
-    braco = _braco(c)
-    cauda = _cauda(c)
-    cabeca = poli.juntar("cabeca", [_cabeca(c)] + _rosto(c) + _pelagem(c, pelagem), c)
+PIVOS = {"corpo": (0, 0, 0.30), "cauda": (0, 0.115, 0.255), "cabeca": (0, 0, 0.56), "braco": OMBRO}
+
+
+def construir(c, pelagem="topete", pelo="pelo", pele="pele", pelo_escuro="pelo_escuro"):
+    """Monta o macaco na cena dada e devolve as quatro malhas moveis e os pivos.
+
+    pelo, pele e pelo_escuro sao nomes de cor da PALETA; so o Macaco de Gelo troca o padrao."""
+    corpo = _corpo(c, pelo, pele)
+    braco = _braco(c, pelo, pele)
+    cauda = _cauda(c, pelo)
+    cabeca = poli.juntar("cabeca", [_cabeca(c, pelo, pele)] + _rosto(c) + _pelagem(c, pelagem, pelo_escuro), c)
     partes = {"corpo": corpo, "cauda": cauda, "cabeca": cabeca, "braco": braco}
-    pivos = {"corpo": (0, 0, 0.30), "cauda": (0, 0.115, 0.255), "cabeca": (0, 0, 0.56), "braco": OMBRO}
-    return partes, pivos
+    return partes, dict(PIVOS)

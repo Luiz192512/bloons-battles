@@ -1,0 +1,98 @@
+# Variações de upgrade dos modelos 3D, montadas por partes
+
+Relatório da tarefa `prompts/modelar-todas-variacoes-por-partes.md`. Cada torre tem 64 variações
+(um caminho até 5, outro até 2, o terceiro em 0), e nenhuma é modelada à mão: todas saem do
+montador `tools/blender/partes.py`, que compõe as peças declaradas em
+`tools/blender/torres/<chave>.py`.
+
+## Como gerar e conferir
+
+```
+"C:\Program Files\Blender Foundation\Blender 5.2\blender.exe" --background --python tools/blender/gerar_variacoes.py -- dardo
+python tools/blender/conferir_variacoes.py dardo
+```
+
+- Sem combinação depois da chave, gera as 64, a folha de contato
+  (`docs/design/capturas/modelos/<chave>_variacoes.png`, 8x8, vista do jogo) e a mesma folha no
+  tamanho do mapa (`<chave>_variacoes_48.png`, 48 px por unidade).
+- Com combinações (`-- dardo 3-2-0 0-0-5`), gera só essas e as vistas de revisão em
+  `dist/modelos/<chave>/` (fora do git).
+- O `conferir_variacoes.py` lê os `.glb` e imprime a linha de estado da torre; sai com erro se
+  alguma variação passar de 10.000 triângulos ou de 6 malhas, ficar sem cor ou se o `.json` não
+  bater com a ordem das malhas.
+
+## Regras de composição
+
+- Encaixes: `pelagem`, `chapeu`, `rosto` (malha `cabeca`); `tronco`, `costas`, `mao_livre`,
+  `pes` (malha `corpo`); `mao_ataque` (malha `braco`); `base`, `torreta`, `extra`.
+- O caminho principal é o de tier mais alto (em empate, o de menor índice). Os tiers dele são
+  aplicados em ordem, do 1 até o atingido.
+- Os tiers 1 e 2 de cada caminho são acessórios, com uma lista de encaixes alternativos. Os
+  tiers 3 a 5 são conjuntos (traje, arma, silhueta).
+- O caminho cruzado só chega aos tiers 1 e 2. Cada tier entra no primeiro encaixe da lista que
+  o principal não ocupou.
+- As peças podem ler os tiers para se ajustar. Isso é regra da torre, não caso solto: no dardo,
+  toda ponta de dardo ou de virote fica de aço quando o caminho 1 tem tier.
+
+## Estado
+
+| Torre | Variações geradas | Máx. de triângulos | Malhas | Tamanho total | Pendências |
+|---|---|---|---|---|---|
+| dardo | 64 de 64 | 8.927 (2-5-0) | 6 | 12,5 MB | braço da catapulta pouco legível de cima; capa reta como uma tábua; capuz lê como touca |
+| bomba | 1 de 64 (só a base) | 1.984 | 2 | 0,07 MB | upgrades entram na Parte B |
+| bucaneiro | 1 de 64 (só a base) | 8.868 | 5 | 0,23 MB | upgrades entram na Parte B; a base já usa 8.868 triângulos, sobra pouco para peças |
+
+As outras 19 torres ainda não foram começadas.
+
+Tamanho no repositório: o dardo ocupa 12,5 MB (de 139 a 247 KB por variação), abaixo do limite
+de 30 MB por torre. Projetando para as 22 torres, o total fica entre 250 e 330 MB de `.glb`.
+
+Migração do piloto: a variante 0-0-0 de dardo, bomba e bucaneiro sai do montador com a mesma
+contagem de triângulos e o mesmo tamanho de arquivo do piloto. Nas folhas de revisão, bomba e
+bucaneiro saíram idênticas pixel a pixel; no dardo a maior diferença é de 4 em 255 em poucos
+pixels (arredondamento de posição do dardo na mão).
+
+## Dardo (Macaco Dardo)
+
+Base: macaco padrão de topete, lenço azul (`tronco`) e um dardo na mão (`mao_ataque`).
+
+| Caminho | Tier | Upgrade (nome no clone) | Encaixe | Peça | O que comunica |
+|---|---|---|---|---|---|
+| 1 | 1 | Tiros Afiados | mao_livre | um dardo de aço de reserva na mão esquerda; a ponta do dardo da mão do ataque vira aço claro | dardo que fura mais |
+| 1 | 2 | Tiros Super Afiados | mao_livre | feixe de três dardos de aço e bracelete de espinhos | ainda mais perfuração |
+| 1 | 3 | Espinhopulta | base, torreta, chapeu | catapulta de madeira com quatro rodas (base) e braço com colher e bola de espinhos (torreta); o macaco vai para trás da máquina, sem dardo; capacete de couro | lança bolas de espinhos |
+| 1 | 4 | Juggernaut | base, torreta, chapeu | a mesma catapulta com chapas de aço, bola maior e escura; capacete de aço com ponta | bola gigante que fura chumbo |
+| 1 | 5 | Ultra-Juggernaut | base, torreta, chapeu | catapulta de aço escuro com ouro, bola enorme preta de espinhos dourados e faixa vermelha; capacete dourado com crista vermelha | a bola que se divide |
+| 2 | 1 | Tiros Rápidos | pes (alternativa: extra) | tênis vermelhos de sola branca; na catapulta, listras vermelhas na carreta | velocidade |
+| 2 | 2 | Tiros Muito Rápidos | chapeu (alternativa: tronco) | faixa vermelha na testa com pontas ao vento; com o chapéu ocupado, cachecol vermelho no lugar do lenço | mais velocidade |
+| 2 | 3 | Tiro Triplo | mao_ataque, tronco | leque de três dardos na mão; bandoleira amarela com dardos | três dardos por tiro |
+| 2 | 4 | Fã-Clube Super Macaco | costas, tronco | capa azul de borda amarela, aberta ao vento; estrela dourada no peito | fã de herói, habilidade |
+| 2 | 5 | Fã-Clube Macaco Plasma | costas, tronco, extra | capa roxa maior de borda ciano; estrela ciano; aro de energia sobre a cabeça; pontas dos dardos em ciano | plasma |
+| 3 | 1 | Dardos de Longo Alcance | mao_ataque (alternativas: costas, mao_livre) | dardo de haste comprida e penas maiores; com a mão ocupada, vai atravessado nas costas | alcança mais longe |
+| 3 | 2 | Visão Aprimorada | rosto | óculos redondos de aro dourado | enxerga camo |
+| 3 | 3 | Besta | mao_ataque, chapeu | besta curta de madeira; capuz roxo | tiro forte |
+| 3 | 4 | Atirador Afiado | mao_ataque, chapeu, costas | besta maior com luneta; capuz com barra e pena amarelas; aljava | precisão, crítico |
+| 3 | 5 | Mestre da Besta | mao_ataque, chapeu, costas | besta grande preta e dourada de arco duplo; capuz preto com ouro; aljava dourada e capa curta preta | o melhor atirador |
+
+Composições resolvidas:
+
+- **3-2-0**: principal é o caminho 1 no tier 3 (catapulta: ocupa base, torreta, chapeu e pes). Do
+  caminho 2 entram as listras vermelhas na carreta (tier 1, porque os pés ficam escondidos) e o
+  cachecol vermelho (tier 2, porque o capacete ocupa o chapéu).
+- **0-2-5**: principal é o caminho 3 no tier 5 (besta, capuz, aljava e capa). Do caminho 2
+  entram os tênis e o cachecol vermelho (o capuz ocupa o chapéu).
+- **5-0-1**: o dardo comprido não cabe na mão (a catapulta tirou a arma) e vai nas costas.
+- **1-1-0**: empate, vale o caminho 1 como principal: dardo de reserva na mão esquerda, mais os
+  tênis do caminho 2.
+
+O que não ficou bom (para o ajuste de design):
+
+- A catapulta lê como "máquina de cerco" pela moldura e pela bola, mas o braço e a colher quase
+  não aparecem na vista do jogo, e a mão direita do macaco fica solta, sem segurar nada.
+- A capa é uma folha quase plana, deitada para aparecer de cima; de lado parece uma tábua.
+- O capuz deixa as orelhas de fora e não desce no rosto: lê mais como touca com pompom.
+- 0-0-1 muda pouco em relação a 0-0-0 a 48 px (só o dardo mais comprido).
+- 3-0-0 e 3-1-0 se distinguem só pelas listras vermelhas na carreta, que são pequenas a 48 px.
+- A ponta de aço é quase branca e grande; chama mais atenção do que o upgrade merece.
+- Nos tiers 4 e 5 do caminho 2, a faixa da testa, a bandoleira, a estrela e a capa se somam e o
+  macaco fica carregado de detalhes.

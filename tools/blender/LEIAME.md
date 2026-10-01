@@ -54,7 +54,7 @@ poligonal: `poli.py` (ferramentas), `macaco_poli.py` (o macaco padrão) e `torre
 torres). Gere uma torre por execução, sem interface, com o Blender 5.2:
 
 ```
-"C:\Program Files\Blender Foundation\Blender 5.2lender.exe" --background --python tools/blender/gerar_poli.py -- dardo
+"C:\Program Files\Blender Foundation\Blender 5.2\blender.exe" --background --python tools/blender/gerar_poli.py -- dardo
 ```
 
 Saídas: `assets/modelos/<chave>.glb` e `.json`, a fonte em `assets/modelos/fonte/<chave>.blend`
@@ -77,3 +77,39 @@ Orçamento em triângulos, medido no `.glb`: **teto de 10.000 por torre** (decis
 
 A exportação pelo Blender aberto (conector) com troca de contexto derrubou o Blender 5.2; por
 isso a geração roda sem interface.
+
+## Variações de upgrade (montadas por partes)
+
+Cada torre tem 64 variações (um caminho até 5, outro até 2, o terceiro em 0). Nenhuma é modelada
+à mão: o montador `partes.py` compõe as peças que a torre declara em `torres/<chave>.py`.
+
+```
+"C:\Program Files\Blender Foundation\Blender 5.2\blender.exe" --background --python tools/blender/gerar_variacoes.py -- dardo
+python tools/blender/conferir_variacoes.py dardo
+```
+
+Saídas: `assets/modelos/<chave>/<a>-<b>-<c>.glb` e `.json`, e as folhas de contato
+`docs/design/capturas/modelos/<chave>_variacoes.png` (8x8, vista do jogo) e
+`<chave>_variacoes_48.png` (no tamanho do mapa). Com combinações depois da chave
+(`-- dardo 3-2-0`), gera só essas e as vistas de revisão em `dist/modelos/<chave>/`.
+
+| Arquivo | O que faz |
+|---|---|
+| `partes.py` | o montador: encaixes, regras de composição, exportação e medição do `.glb` |
+| `pecas.py` | peças reaproveitadas (faixa, capa, casca de cabeça, óculos, tênis, dardo, besta...) |
+| `torres/<chave>.py` | a torre: `base(m)`, `CAMINHOS` (peça de cada tier) e `ENQUADRE` |
+| `gerar_variacoes.py` | gera as variações e as folhas de contato, sem interface |
+| `conferir_variacoes.py` | confere triângulos, malhas, cor e `.json` de cada variação |
+
+Torre nova no montador:
+
+1. Escreva a tabela de peças em `docs/modelos-3d-variacoes.md` (o que cada tier acrescenta e em
+   qual encaixe).
+2. Em `torres/<chave>.py`, `base(m)` monta a variante 0-0-0 (`m.macaco(...)` para as torres com
+   macaco, `m.por(encaixe, pecas)` para cada peça).
+3. Em `CAMINHOS`, os tiers 1 e 2 são acessórios, `[(encaixe, funcao), ...]` em ordem de
+   preferência; os tiers 3 a 5 são conjuntos, uma função que troca traje, arma e silhueta.
+4. O caminho cruzado só entra com os tiers 1 e 2, no primeiro encaixe que o principal não ocupou.
+   Se a peça do principal esconder um encaixe sem usá-lo, declare com `m.ocupar(encaixe)`.
+
+As regras completas e o estado de cada torre estão em `docs/modelos-3d-variacoes.md`.

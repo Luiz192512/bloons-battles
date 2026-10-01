@@ -6,3 +6,5 @@ screenshot*.png
 .vs/
 out/
 CMakeUserPresets.json
+__pycache__/
+dist/
