@@ -432,7 +432,7 @@ static DefTorre t_dartling() {
             U("Choque Laser", 900, "Choque: 1 de dano extra depois de 1 s.", {{"queima", J::array({1, 1})}}),
             U("Canhão Laser", 3000, "Laser: 2 de dano, pierce 6, +2 em M.O.A.B.", {{"dtype", "energia"}, {"dano", 1}, {"pierce", 5}, {"moab", 2}, {"visual", "laser"}}),
             U("Acelerador de Plasma", 11750, "Raio contínuo: pierce 50, +10 em M.O.A.B.", {{"subst", A("hitscan", {{"cad", 0.2}, {"dano", 2}, {"pierce", 50}, {"moab", 10}, {"dtype", "normal"}, {"global_", true}, {"visual", "raio_plasma"}, {"linha", true}, {"queima", J::array({1, 5})}})}}),
-            U("Raio da Perdição", 75000, "Raio de 30 de dano, pierce 999.", {{"dano", 28}, {"pierce", 949}, {"queima", J::array({20, 30})}}),
+            U("Raio da Perdição", 75000, "Raio contínuo de 30 de dano, pierce 999, que atravessa o mapa.", {{"dano", 28}, {"pierce", 949}, {"queima", J::array({20, 30})}, {"visual", "raio_perdicao"}}),
         },
         {
             U("Mira Avançada", 250, "Detecta camo.", {{"camo", true}}),

@@ -23,6 +23,7 @@ Color cor_efeito(const std::string& vis, Color padrao) {
         {"impacto", rgb(150, 110, 70)},     {"espadas", rgb(230, 230, 240)},  {"vento", rgb(240, 250, 255)},
         {"orbita_glaive", rgb(220, 220, 235)}, {"relampago", rgb(140, 220, 255)},
         {"raio_plasma", rgb(255, 90, 220)}, {"bala", rgb(255, 240, 150)},     {"psi", rgb(200, 120, 255)},
+        {"raio_perdicao", rgb(235, 40, 40)},
     };
     auto it = m.find(vis);
     return it == m.end() ? padrao : it->second;
@@ -55,7 +56,9 @@ void RenderPista::consumir_eventos() {
             efeitos_.push_back({"explosao", e, 0, 0.45});
             if (sons_) som::tocar("explosao", 90);
         } else if (tipo == "raio") {
-            efeitos_.push_back({"raio", e, 0, 0.09});
+            // os raios da Dartling duram mais que o intervalo entre tiros (0,2 s): na tela o feixe nao pisca
+            const bool continuo = e.s == "raio_plasma" || e.s == "raio_perdicao";
+            efeitos_.push_back({"raio", e, 0, continuo ? 0.24 : 0.09});
         } else if (tipo == "aura") {
             efeitos_.push_back({"aura", e, 0, 0.3});
         } else if (tipo == "dinheiro") {
@@ -257,7 +260,19 @@ void RenderPista::desenhar_efeitos() {
                 for (size_t i = 1; i < pts.size(); ++i) DrawLineEx(pts[i - 1], pts[i], 3, c);
                 for (size_t i = 1; i < pts.size(); ++i) DrawLineEx(pts[i - 1], pts[i], 1, WHITE);
             } else {
-                DrawLineEx({x, y}, {x2, y2}, vis == "raio_plasma" ? 6.0f : 2.0f, c);
+                if (vis == "raio_plasma" || vis == "raio_perdicao") {
+                    // feixe com borda escura, cor e miolo claro; o Raio da Perdicao e o mais grosso, com brilho na base
+                    const float w = vis == "raio_perdicao" ? 18.0f : 8.0f;
+                    DrawLineEx({x, y}, {x2, y2}, w + 4, ui::com_alfa(ui::TINTA, 120));
+                    DrawLineEx({x, y}, {x2, y2}, w, c);
+                    DrawLineEx({x, y}, {x2, y2}, w * 0.4f, rgb(255, 245, 235));
+                    if (vis == "raio_perdicao") {
+                        DrawCircleV({x, y}, w * 1.1f, ui::com_alfa(c, 170));
+                        DrawCircleV({x, y}, w * 0.6f, rgb(255, 245, 235));
+                    }
+                } else {
+                    DrawLineEx({x, y}, {x2, y2}, 2.0f, c);
+                }
             }
         } else if (f.tipo == "aura") {
             const float raio = static_cast<float>(d.v);
