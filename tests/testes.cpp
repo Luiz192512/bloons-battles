@@ -326,6 +326,27 @@ TESTE(b28_projetil_antecipa_o_alvo_na_borda_do_alcance) {
     CHECA(!rosa->vivo);
 }
 
+TESTE(b01_dartling_atira_no_ponto_mirado) {
+    Partida p = solo();
+    Pista& pi = p.pista(1);
+    pi.dinheiro = 1e6;
+    CHECA_IGUAL(p.aplicar(1, "Tdartling@700,300"), OK);
+    CHECA_IGUAL(p.aplicar(1, "Tdardo@300,240"), OK);
+    CHECA_IGUAL(p.aplicar(1, "A2@100,100"), ERRO_INVALIDO);  // so a Dartling mira num ponto
+    CHECA_IGUAL(p.aplicar(1, "A1@5000,100"), ERRO_INVALIDO);
+    CHECA_IGUAL(p.aplicar(1, "V2"), OK);
+    // mira para longe do bloon: ele passa ileso; mira nele: estoura
+    CHECA_IGUAL(p.aplicar(1, "A1@1000,700"), OK);
+    BloonP b = pi.criar_bloon("vermelho", 50);
+    for (int i = 0; i < 30; ++i) p.passo();
+    CHECA(b->vivo);
+    for (int i = 0; i < 90 && b->vivo; ++i) {
+        p.aplicar(1, "A1@" + std::to_string(static_cast<int>(b->x) + 10) + "," + std::to_string(static_cast<int>(b->y)));
+        p.passo();
+    }
+    CHECA(!b->vivo);
+}
+
 TESTE(btd6_criticos_a_cada_n_tiros) {
     Partida p = solo();
     Pista& pi = p.pista(1);

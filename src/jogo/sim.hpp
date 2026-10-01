@@ -103,6 +103,9 @@ struct Torre {
     int pops = 0;
     double investido;
     int modo = 0;
+    // ponto escolhido pelo jogador (comando A): cursor da Dartling, alvo fixo do Morteiro
+    double mx = 0.0, my = 0.0;
+    bool tem_mira = false;
     double ang = -90.0;
     double turbo = 1.0, turbo_t = 0.0;
     double temporaria;
@@ -177,6 +180,7 @@ public:
     char upar(int tid, int p);
     char vender(int tid);
     char mudar_modo(int tid, int modo);
+    char mirar(int tid, double x, double y);
     char usar_habilidade(int tid, int idx);
 
     // bloons
@@ -253,6 +257,7 @@ private:
     AtaqueP ataque_efetivo(const Torre& t, const AtaqueP& at) const;
     void disparar(const TorreP& t, const AtaqueP& at, double ang, Bloon* alvo = nullptr);
     void aura(const TorreP& t, const AtaqueP& at, double raio);
+    void raio_em_linha(Torre& t, const Ataque& at, double ax, double ay);
     void hitscan(const TorreP& t, const AtaqueP& at, Bloon& alvo);
     void cadeia(const TorreP& t, const AtaqueP& at, Bloon& alvo);
     Bloon* mais_proximo(double x, double y, double r, const std::unordered_set<int>& excluir, bool camo);

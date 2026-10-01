@@ -377,6 +377,16 @@ char Pista::mudar_modo(int tid, int m) {
     return OK;
 }
 
+char Pista::mirar(int tid, double x, double y) {
+    TorreP t = torre(tid);
+    if (!t || !(t->chave == "dartling")) return ERRO_INVALIDO;
+    if (!(x >= 0 && x <= LARGURA_MAPA && y >= 0 && y <= ALTURA_MAPA)) return ERRO_INVALIDO;
+    t->mx = x;
+    t->my = y;
+    t->tem_mira = true;
+    return OK;
+}
+
 char Pista::usar_habilidade(int tid, int idx) {
     TorreP t = torre(tid);
     if (!t || idx < 0 || idx >= static_cast<int>(t->st.habs.size()) || t->hab_rec[idx] > 0) return ERRO_INVALIDO;
@@ -876,16 +886,23 @@ void Pista::passo_torre(const TorreP& tp) {
             }
             continue;
         }
-        Bloon* a = alvo(t, at, alcance);
-        if (!a) continue;
+        // Dartling com ponto mirado (cursor do jogador): atira nessa direcao, haja ou nao bloon nela
+        const bool no_ponto = t.tem_mira && t.chave == "dartling" &&
+                              (tipo == TipoAtaque::PROJETIL || tipo == TipoAtaque::HITSCAN) && !at.busca;
+        Bloon* a = no_ponto ? nullptr : alvo(t, at, alcance);
+        if (no_ponto ? bloons.empty() : !a) continue;
         t.recargas[i] = cad;
         const AtaqueP atc = critico(t, i, atp);
         // projetil reto mira onde o bloon vai estar; teleguiado, bumerangue e o resto miram o bloon
-        const bool antecipa = tipo == TipoAtaque::PROJETIL && !at.busca && !at.boom;
-        const Posicao mira = antecipa ? mira_antecipada(t, *atc, *a) : Posicao{a->x, a->y, 0};
+        const bool antecipa = !no_ponto && tipo == TipoAtaque::PROJETIL && !at.busca && !at.boom;
+        const Posicao mira = no_ponto   ? Posicao{t.mx, t.my, 0}
+                             : antecipa ? mira_antecipada(t, *atc, *a)
+                                        : Posicao{a->x, a->y, 0};
         const double ang = graus(std::atan2(mira.y - t.y, mira.x - t.x));
         if (i == 0 && t.dfn->mov == Mov::FIXO) t.ang = ang;
-        if (tipo == TipoAtaque::HITSCAN) {
+        if (no_ponto && tipo == TipoAtaque::HITSCAN) {
+            raio_em_linha(t, *ataque_efetivo(t, atc), t.mx, t.my);
+        } else if (tipo == TipoAtaque::HITSCAN) {
             hitscan(tp, atc, *a);
         } else if (tipo == TipoAtaque::CADEIA) {
             cadeia(tp, atc, *a);
@@ -904,7 +921,8 @@ void Pista::passo_torre(const TorreP& tp) {
             const int n = static_cast<int>(at.n);
             const double spread = at.spread;
             if (n <= 1) {
-                disparar(tp, atc, ang, a);
+                // um projetil so com espalhamento (Dartling): desvio sorteado dentro do leque
+                disparar(tp, atc, spread > 0 ? ang + rng.uniform(-spread / 2, spread / 2) : ang, a);
             } else if (spread >= 360) {
                 for (int k = 0; k < n; ++k) disparar(tp, atc, ang + k * 360.0 / n, a);
             } else {
@@ -984,30 +1002,36 @@ void Pista::aura(const TorreP& tp, const AtaqueP& at0, double raio) {
     if (acertou && at.visual != "nenhum") evento({"aura", t.x, t.y, raio, 0, 0, at.visual});
 }
 
+// raio que sai da torre na direcao de (ax, ay) e atravessa o mapa, ferindo o que estiver na linha
+void Pista::raio_em_linha(Torre& t, const Ataque& at, double ax, double ay) {
+    double dx = ax - t.x, dy = ay - t.y;
+    double L = std::hypot(dx, dy);
+    if (L == 0) L = 1.0, dx = 1.0;
+    const double ux = dx / L, uy = dy / L;
+    evento({"raio", t.x, t.y, 0, t.x + ux * 1600, t.y + uy * 1600, at.visual});
+    std::vector<std::pair<double, BloonP>> atingidos;
+    for (auto& b : bloons) {
+        if (!b->vivo) continue;
+        double px = b->x - t.x, py = b->y - t.y;
+        double proj = px * ux + py * uy;
+        if (proj < 0) continue;
+        if (std::abs(px * uy - py * ux) <= 18 + b->tipo->raio * 0.5) atingidos.push_back({proj, b});
+    }
+    std::stable_sort(atingidos.begin(), atingidos.end(),
+                     [](const auto& a, const auto& b) { return a.first < b.first; });
+    const size_t n = std::min(atingidos.size(), static_cast<size_t>(std::max(0.0, at.pierce)));
+    for (size_t i = 0; i < n; ++i) aplicar_dano(*atingidos[i].second, at.dano, at, &t);
+}
+
 void Pista::hitscan(const TorreP& tp, const AtaqueP& at0, Bloon& alvo_) {
     Torre& t = *tp;
     AtaqueP atp = ataque_efetivo(t, at0);
     const Ataque& at = *atp;
-    evento({"raio", t.x, t.y, 0, alvo_.x, alvo_.y, at.visual});
     if (at.linha) {
-        double dx = alvo_.x - t.x, dy = alvo_.y - t.y;
-        double L = std::hypot(dx, dy);
-        if (L == 0) L = 1.0;
-        double ux = dx / L, uy = dy / L;
-        std::vector<std::pair<double, BloonP>> atingidos;
-        for (auto& b : bloons) {
-            if (!b->vivo) continue;
-            double px = b->x - t.x, py = b->y - t.y;
-            double proj = px * ux + py * uy;
-            if (proj < 0) continue;
-            if (std::abs(px * uy - py * ux) <= 18 + b->tipo->raio * 0.5) atingidos.push_back({proj, b});
-        }
-        std::stable_sort(atingidos.begin(), atingidos.end(),
-                         [](const auto& a, const auto& b) { return a.first < b.first; });
-        const size_t n = std::min(atingidos.size(), static_cast<size_t>(std::max(0.0, at.pierce)));
-        for (size_t i = 0; i < n; ++i) aplicar_dano(*atingidos[i].second, at.dano, at, &t);
+        raio_em_linha(t, at, alvo_.x, alvo_.y);
         return;
     }
+    evento({"raio", t.x, t.y, 0, alvo_.x, alvo_.y, at.visual});
     const double x = alvo_.x, y = alvo_.y;
     aplicar_dano(alvo_, at.dano, at, &t);
     if (at.splash) explosao(x, y, at.splash, at.sdano, at.spierce, at, &t, at.sdtype);
@@ -1422,6 +1446,11 @@ char Partida::aplicar(int jogador, const std::string& cmd) {
         } else if (c == 'M') {
             auto [tid, m] = dividir(':');
             erro = pista.mudar_modo(std::stoi(tid), std::stoi(m));
+        } else if (c == 'A') {
+            auto [tid, xy] = dividir('@');
+            size_t k = xy.find(',');
+            if (k == std::string::npos) throw std::invalid_argument("comando");
+            erro = pista.mirar(std::stoi(tid), std::stoi(xy.substr(0, k)), std::stoi(xy.substr(k + 1)));
         } else if (c == 'B') {
             auto [tid, i] = dividir(':');
             erro = pista.usar_habilidade(std::stoi(tid), std::stoi(i));

@@ -183,7 +183,9 @@ void CenaJogo::tecla(int k) {
         return;
     }
     if (k == KEY_TAB && selecionada_) {
-        if (TorreP t = pista().torre(selecionada_))
+        if (TorreP t = pista().torre(selecionada_); t && t->chave == "dartling")
+            alternar_mira(t->id);
+        else if (t)
             comando("M" + std::to_string(t->id) + ":" + std::to_string((t->modo + 1) % 4));
         return;
     }
@@ -285,6 +287,11 @@ void CenaJogo::vender() {
     if (comando("V" + std::to_string(t->id))) selecionada_ = 0;
 }
 
+void CenaJogo::alternar_mira(int id) {
+    if (!mira_travada_.erase(id)) mira_travada_.insert(id);
+    mira_enviada_ = {-1, -1};  // ao destravar, manda o cursor de novo mesmo parado
+}
+
 void CenaJogo::alternar_auto() { ctl_->partida->automatico = !ctl_->partida->automatico; }
 
 void CenaJogo::reiniciar() {
@@ -305,6 +312,20 @@ void CenaJogo::enviar(const Envio& env) {
 
 // ============================================================== atualizar
 void CenaJogo::atualizar(double dt) {
+    // cursor para as Dartlings em modo Normal; a simulacao so conhece o ponto que chega por comando
+    mira_espera_ -= dt;
+    const Vector2 cur = ui::mouse();
+    if (mira_espera_ <= 0 && !menu_pausa_ && !ctl_->terminou() && cur.x >= 0 && cur.x < PAINEL_X && cur.y >= 0 &&
+        cur.y <= ALTURA_MAPA && (std::fabs(cur.x - mira_enviada_.x) > 6 || std::fabs(cur.y - mira_enviada_.y) > 6)) {
+        bool enviou = false;
+        for (auto& [id, t] : pista().torres) {
+            if (t->chave != "dartling" || mira_travada_.count(id)) continue;
+            ctl_->enviar("A" + std::to_string(id) + "@" + std::to_string(static_cast<int>(cur.x)) + "," +
+                         std::to_string(static_cast<int>(cur.y)));
+            enviou = true;
+        }
+        if (enviou) mira_espera_ = 0.1, mira_enviada_ = cur;
+    }
     ctl_->atualizar(dt);
     render_.consumir_eventos();
     render_.atualizar(dt);
@@ -639,14 +660,24 @@ void CenaJogo::rodape_upgrade(const Torre& t, float x, float y, float w, Vector2
     const Rectangle kt = ui::tecla("Tab", ra.x + ra.width - 42, ra.y + 13, 9);
     seta({kt.x - 14, ra.y + 22}, 10, true, rgb(155, 230, 110));
     const float cx = (ra.x + 28 + kt.x - 24) / 2;
-    ui::texto("ALVO", cx, ra.y + 12, 10, rgb(207, 239, 191), 0, Ancora::CENTER, ui::Peso::TEXTO);
-    ui::texto(NOMES_MODO[t.modo], cx, ra.y + 28, 13, ui::BRANCO, 3, Ancora::CENTER);
     const int id = t.id;
-    botoes_up_.push_back({ra, [this, id] {
-                              if (TorreP tt = pista().torre(id))
-                                  comando("M" + std::to_string(id) + ":" + std::to_string((tt->modo + 1) % 4));
-                          }});
-    if (ui::dentro(ra, mouse)) dicas_.push_back({mouse, "Prioridade de alvo", "Clique ou Tab para trocar."});
+    if (t.chave == "dartling") {
+        // a Dartling nao escolhe bloon: aponta para o cursor (Normal) ou fica onde o jogador travou
+        const bool travada = mira_travada_.count(id) > 0;
+        ui::texto("MIRA", cx, ra.y + 12, 10, rgb(207, 239, 191), 0, Ancora::CENTER, ui::Peso::TEXTO);
+        ui::texto(travada ? "Travada" : "No cursor", cx, ra.y + 28, 13, ui::BRANCO, 3, Ancora::CENTER);
+        botoes_up_.push_back({ra, [this, id] { alternar_mira(id); }});
+        if (ui::dentro(ra, mouse))
+            dicas_.push_back({mouse, "Mira da Dartling", "Segue o cursor. Clique ou Tab para travar onde está."});
+    } else {
+        ui::texto("ALVO", cx, ra.y + 12, 10, rgb(207, 239, 191), 0, Ancora::CENTER, ui::Peso::TEXTO);
+        ui::texto(NOMES_MODO[t.modo], cx, ra.y + 28, 13, ui::BRANCO, 3, Ancora::CENTER);
+        botoes_up_.push_back({ra, [this, id] {
+                                  if (TorreP tt = pista().torre(id))
+                                      comando("M" + std::to_string(id) + ":" + std::to_string((tt->modo + 1) % 4));
+                              }});
+        if (ui::dentro(ra, mouse)) dicas_.push_back({mouse, "Prioridade de alvo", "Clique ou Tab para trocar."});
+    }
     if (t.temporaria) return;
     // vender em vermelho (convencao de sair/vender)
     const Rectangle rv{x + w - wv, y, wv, 44};

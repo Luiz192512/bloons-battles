@@ -3,6 +3,7 @@
 
 #include <functional>
 #include <memory>
+#include <set>
 #include <string>
 #include <utility>
 #include <vector>
@@ -58,6 +59,7 @@ private:
     void vender();
     void pausar(bool v);
     void alternar_auto();
+    void alternar_mira(int id);
     void reiniciar();
     void desistir();
     void enviar(const Envio& env);
@@ -89,6 +91,10 @@ private:
     std::unique_ptr<RenderPista> render_op_;
     int selecionada_ = 0;
     std::string colocando_;
+    // Dartling: segue o cursor (comando A, no maximo 10 por segundo) ate o jogador travar a mira
+    std::set<int> mira_travada_;
+    double mira_espera_ = 0;
+    Vector2 mira_enviada_{-1, -1};
     std::pair<std::string, double> msg_{"", 0}, banner_{"", 0};
     bool menu_pausa_ = false;
     bool mostrar_log_;
