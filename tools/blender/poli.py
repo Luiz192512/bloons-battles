@@ -24,6 +24,9 @@ CORES = list(PALETA.values())
 
 def cena(nome):
     """Cena propria, para nao mexer no que ja esta aberto no Blender."""
+    if bpy.context.window is None:  # sem interface: usa a cena que ja existe
+        bpy.context.scene.name = nome
+        return bpy.context.scene
     c = bpy.data.scenes.get(nome) or bpy.data.scenes.new(nome)
     bpy.context.window.scene = c
     return c
@@ -97,7 +100,7 @@ def material():
     return m
 
 
-def objeto(nome, bm, c, nivel=1, pos=(0, 0, 0)):
+def objeto(nome, bm, c, nivel=1, pos=(0, 0, 0), vivo=False):
     """Fecha a gaiola: recalcula normais, subdivide 'nivel' vezes e grava a cor por vertice."""
     bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
     if nivel:
@@ -124,6 +127,8 @@ def objeto(nome, bm, c, nivel=1, pos=(0, 0, 0)):
             attr.data[li].color_srgb = (r / 255, g / 255, b / 255, 1.0)
         poly.use_smooth = True
         poly.material_index = 0
+    if vivo:  # pecas duras: quinas acima de 35 graus ficam vivas
+        me.set_sharp_from_angle(angle=math.radians(35))
     me.materials.clear()
     me.materials.append(material())
     o = bpy.data.objects.new(nome, me)
@@ -145,6 +150,10 @@ def juntar(nome, objs, c):
     bm.free()
     for p in me.polygons:
         p.use_smooth = True
+    col = me.color_attributes.get("Col")
+    if col:  # sem cor ativa, a exportacao deixa a cor de fora
+        me.color_attributes.active_color = col
+        me.color_attributes.render_color_index = me.color_attributes.find("Col")
     me.materials.append(material())
     for o in objs:
         bpy.data.objects.remove(o, do_unlink=True)
@@ -385,3 +394,94 @@ def render(c, caminho, vista, alvo=(0, 0, 0.5), largura=1.5, altura=1.5, px=600)
     c.render.resolution_percentage = 100
     c.render.filepath = caminho
     bpy.ops.render.render(write_still=True)
+
+
+# ---------------------------------------------------------------- pecas duras (maquinas, barcos, armas)
+def caixa(tam, cor, chanfro=0.02, seg=2):
+    """Caixa com as quinas chanfradas."""
+    bm = bmesh.new()
+    bmesh.ops.create_cube(bm, size=1.0)
+    for v in bm.verts:
+        v.co = Vector((v.co.x * tam[0], v.co.y * tam[1], v.co.z * tam[2]))
+    bmesh.ops.bevel(bm, geom=bm.edges[:], offset=chanfro, segments=seg, profile=0.5, affect="EDGES")
+    for f in bm.faces:
+        f.material_index = INDICE[cor]
+    return bm
+
+
+def torno(perfil, seg=20, cores=None, cor="cinza_escuro"):
+    """Peca de revolucao em quads: perfil = [(raio, altura)] ao longo de Z. Raio 0 nas pontas fecha
+    a peca (ponta viva). cores = uma cor por trecho do perfil."""
+    bm = bmesh.new()
+    aneis = []
+    for r, h in perfil:
+        if r < 1e-6:
+            aneis.append([bm.verts.new((0, 0, h))])
+        else:
+            aneis.append([bm.verts.new((r * math.cos(2 * math.pi * k / seg), r * math.sin(2 * math.pi * k / seg), h))
+                          for k in range(seg)])
+    for i in range(len(perfil) - 1):
+        a, b = aneis[i], aneis[i + 1]
+        ci = INDICE[cores[i] if cores else cor]
+        if len(a) == 1 and len(b) == 1:
+            continue
+        for k in range(seg):
+            k2 = (k + 1) % seg
+            if len(a) == 1:
+                f = bm.faces.new((a[0], b[k], b[k2]))
+            elif len(b) == 1:
+                f = bm.faces.new((a[k], a[k2], b[0]))
+            else:
+                f = bm.faces.new((a[k], a[k2], b[k2], b[k]))
+            f.material_index = ci
+    return bm
+
+
+def orientar(bm, direcao, origem=(0, 0, 0)):
+    """Leva o eixo Z da peca para a direcao dada e a base para a origem."""
+    rot = Vector((0, 0, 1)).rotation_difference(Vector(direcao).normalized()).to_matrix().to_4x4()
+    bmesh.ops.transform(bm, matrix=Matrix.Translation(Vector(origem)) @ rot, verts=bm.verts[:])
+    return bm
+
+
+# ---------------------------------------------------------------- exportacao
+ORDEM = ["base", "corpo", "cauda", "cabeca", "torreta", "braco"]
+
+
+def exportar(c, chave, partes, pivos, raiz):
+    """Grava assets/modelos/<chave>.glb e .json (grupo e pivo de cada malha) e a fonte .blend."""
+    import json
+    import os
+
+    import comum
+
+    objs = []
+    for g in ORDEM:
+        if g in partes:
+            o = partes[g]
+            o.name = o.data.name = f"{chave}_{len(objs)}_{g}"
+            objs.append(o)
+    bpy.context.view_layer.update()
+    for ob in c.objects:
+        ob.select_set(ob in objs)
+    bpy.context.view_layer.objects.active = objs[0]
+    pasta = os.path.join(raiz, "assets", "modelos")
+    os.makedirs(os.path.join(pasta, "fonte"), exist_ok=True)
+    glb = os.path.join(pasta, chave + ".glb")
+    base = dict(filepath=glb, export_format="GLB", export_yup=True, export_apply=True, use_selection=True)
+    for extra in (dict(export_vertex_color="ACTIVE", export_all_vertex_colors=False), dict(export_colors=True), dict()):
+        try:
+            # exporta so o que esta selecionado; rode pelo gerar_poli.py (sem interface, uma cena so)
+            bpy.ops.export_scene.gltf(**base, **extra)
+            break
+        except TypeError:
+            continue
+    info = []
+    for nome in comum.malhas_do_glb(glb):
+        g = nome.rsplit("_", 1)[-1].split(".")[0]
+        info.append({"grupo": g, "pivo": comum.para_gltf(pivos.get(g, (0, 0, 0)))})
+    with open(os.path.join(pasta, chave + ".json"), "w", encoding="utf-8") as f:
+        json.dump({"malhas": info}, f, indent=1)
+    # so a cena do modelo vai para a fonte; o arquivo aberto no Blender nao e salvo nem alterado
+    bpy.data.libraries.write(os.path.join(pasta, "fonte", chave + ".blend"), {c}, fake_user=True)
+    return {"malhas": [i["grupo"] for i in info], "bytes": os.path.getsize(glb)}

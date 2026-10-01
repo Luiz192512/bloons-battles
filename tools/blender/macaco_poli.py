@@ -53,7 +53,7 @@ def _cabeca(c):
         poli.bloco_esfera(bm, (0.105 * sx, -0.120, 0.660), (0.090, 0.085, 0.080))   # bochechas
         poli.bloco_esfera(bm, (0.082 * sx, -0.150, 0.800), (0.075, 0.060, 0.070))   # arco das sobrancelhas
         poli.bloco_esfera(bm, (0.292 * sx, 0.020, 0.760), (0.108, 0.052, 0.116))    # orelha em disco
-    o = poli.remalhar("cabeca", bm, c, faces=1000, voxel=0.010, suave=6)
+    o = poli.remalhar("cabeca", bm, c, faces=800, voxel=0.010, suave=6)
 
     def orelha(p):
         return max(((abs(p.x) - 0.305) / 0.068) ** 2 + ((p.z - 0.760) / 0.078) ** 2 - 1, (p.y - 0.020) * 8, (0.235 - abs(p.x)) * 8)

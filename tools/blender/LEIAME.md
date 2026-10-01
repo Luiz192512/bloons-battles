@@ -46,3 +46,34 @@ Sem nomes depois do `--`, gera as três torres do piloto. Saídas por torre:
 2. Grupos animáveis: `base` (parado), `corpo`, `cauda`, `cabeca`, `torreta` (gira e recua) e
    `braco` (o braço do ataque, com a arma).
 3. Rode o `gerar.py` com a chave nova e confira a prévia.
+
+## Modelagem poligonal (fluxo atual)
+
+Os modelos por primitivas (`gerar.py`, `comum.py`, `macaco.py`) foram substituídos por malha
+poligonal: `poli.py` (ferramentas), `macaco_poli.py` (o macaco padrão) e `torres_poli.py` (as
+torres). Gere uma torre por execução, sem interface, com o Blender 5.2:
+
+```
+"C:\Program Files\Blender Foundation\Blender 5.2lender.exe" --background --python tools/blender/gerar_poli.py -- dardo
+```
+
+Saídas: `assets/modelos/<chave>.glb` e `.json`, a fonte em `assets/modelos/fonte/<chave>.blend`
+e as folhas de revisão em `docs/design/capturas/modelos/<chave>_*.png`.
+
+Como cada parte é feita:
+- Corpo, cabeça e braço do macaco: bloco de volumes fundido numa casca só, retopologia em quads
+  (QuadriFlow) e cores cortadas na malha pelo contorno de cada mancha.
+- Peças duras (cano, rodas, luneta, pontas): perfil torneado em quads (`torno`) ou caixa
+  chanfrada (`caixa`), com quinas vivas.
+- Roupas, pelagem e cauda: tubos de quads com subdivisão (`membro`) e gaiolas (`gaiola`).
+
+Orçamento em triângulos, medido no `.glb` (decisão do dono: densidade alta):
+
+| Classe | Orçamento | Piloto |
+|---|---|---|
+| Macaco com roupa e arma | até 6.000 | dardo: 5.760 |
+| Máquina ou estrutura pequena | até 2.500 | bomba: 1.984 |
+| Barco com macaco | até 8.000 | bucaneiro: 7.908 |
+
+A exportação pelo Blender aberto (conector) com troca de contexto derrubou o Blender 5.2; por
+isso a geração roda sem interface.
