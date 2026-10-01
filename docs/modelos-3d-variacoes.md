@@ -43,9 +43,10 @@ python tools/blender/conferir_variacoes.py dardo
 | bomba | 64 de 64 | 6.152 (2-0-5) | 2 | 6,0 MB | 1-0-0 muda pouco (cano 10% mais grosso); 4-0-0 e 5-0-0 se parecem de cima (o 5 é preto com cinta vermelha) |
 | tachinha | 64 de 64 | 3.381 (2-0-5) | 2 | 5,3 MB | 0-0-1 e 0-0-2 (10 e 12 bicos) quase não se distinguem de 0-0-0 a 48 px; a engrenagem do topo lê como uma flor; 0-5-0 fica confuso de tantas lâminas |
 | gelo | 64 de 64 | 8.468 (0-5-2) | 6 | 10,9 MB | os pingentes das costas (2-0-0) aparecem pouco de cima; azul claro, branco e ciano se misturam a 48 px; o tanque do canhão some atrás do corpo |
+| cola | 64 de 64 | 7.898 (0-2-5) | 5 | 11,0 MB | 0-1-0 (gota maior) quase não se vê a 48 px; 0-3-0 e 0-4-0 se parecem de cima (o tanque fica atrás do corpo); 3-0-0 difere de 2-0-0 só pela máscara e pela pistola maior |
 | bucaneiro | 1 de 64 (só a base) | 8.868 | 5 | 0,23 MB | upgrades entram na Parte B; a base já usa 8.868 triângulos, sobra pouco para peças |
 
-As outras torres ainda não foram começadas.
+Primárias concluídas (dardo, bumerangue, bomba, tachinha, gelo, cola). Militares, Mágicas e Suporte ainda não foram começadas.
 
 Tamanho no repositório: o dardo ocupa 12,7 MB (de 139 a 250 KB por variação), abaixo do limite
 de 30 MB por torre. Projetando para as 22 torres, o total fica entre 250 e 330 MB de `.glb`.
@@ -212,3 +213,28 @@ Topete, cachecol branco (`tronco`) e um cristal de gelo na mão (`mao_ataque`).
 | 3 | 3 | Canhão Criogênico | mao_ataque, costas | canhão azul de boca ciano com mangueira; tanque ciano nas costas | canhão de gelo |
 | 3 | 4 | Pingentes | mao_ataque, costas, chapeu | canhão maior com pingente na boca; dois tanques; capacete azul | atira pingentes |
 | 3 | 5 | Empalar com Pingentes | mao_ataque, chapeu, tronco | canhão preto e dourado com pingente grande; capacete e colete pretos com ouro | empala dirigíveis |
+
+## Cola (Atirador de Cola)
+
+Base: macaco padrão de pelo liso, capacete amarelo de barra laranja com uma lâmpada na frente
+(`chapeu`, `extra`), pistola de cola com mangueira (`mao_ataque`) e tanque nas costas (`costas`).
+A cor da cola e o tamanho da gota saem dos tiers e valem em toda peça que tem cola (lâmpada,
+faixa da pistola, gota, tanque, poça, balde): amarelo, laranja (1), verde (2 e 3), roxo (4), rosa (5).
+
+| Caminho | Tier | Upgrade (nome no clone) | Encaixe | Peça | O que comunica |
+|---|---|---|---|---|---|
+| 1 | 1 | Cola Encharcada | cor da cola (parâmetro) | cola laranja | cola que atravessa |
+| 1 | 2 | Cola Corrosiva | cor da cola (parâmetro) | cola verde | corrói |
+| 1 | 3 | Dissolvedor de Bloons | mao_ataque, costas, rosto | pistola maior; dois tanques; máscara de gás | dissolve |
+| 1 | 4 | Liquefator de Bloons | costas, tronco, chapeu | cola roxa; tanques maiores; avental e capacete brancos | liquefaz |
+| 1 | 5 | Solucionador de Bloons | mao_ataque, mao_livre, costas, tronco, chapeu, rosto | cola rosa; duas pistolas pretas; três tanques; traje, capacete e máscara pretos | dois globos por tiro |
+| 2 | 1 | Globos Maiores | gota (parâmetro) | gota 45% maior na ponta da arma | globo maior |
+| 2 | 2 | Respingo de Cola | extra | poça de cola no chão, com respingos em volta | respinga |
+| 2 | 3 | Mangueira de Cola | mao_ataque, costas | mangueira grossa de bocal largo; tanque maior | jato contínuo |
+| 2 | 4 | Ataque de Cola | mao_ataque, costas | mangueira maior; tanque grande de tampa vermelha com aro | habilidade |
+| 2 | 5 | Tempestade de Cola | mao_ataque, costas, extra | tanque enorme; aspersor dourado sobre a cabeça, com gotas em volta | tempestade |
+| 3 | 1 | Cola Mais Grudenta | tronco (alternativa: extra) | cinto atravessado com tubos de cola; ou latas no chão | dura mais |
+| 3 | 2 | Cola Mais Forte | mao_livre (alternativa: extra) | balde de cola na mão esquerda; ou balde no chão | mais lento |
+| 3 | 3 | Cola de M.O.A.B. | mao_ataque, chapeu | lançador de cola no ombro, com globo na boca; capacete laranja | cola dirigível |
+| 3 | 4 | Cola Implacável | mao_ataque, chapeu, tronco | lançador maior de anéis vermelhos; capacete vermelho de ponta; colete | atordoa |
+| 3 | 5 | Super Cola | mao_ataque, chapeu, costas | lançador preto e dourado; capacete preto; dois tanques dourados | para tudo |
