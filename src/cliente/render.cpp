@@ -194,7 +194,17 @@ void RenderPista::desenhar_torre(const Torre& t, bool sel) {
     };
     if (sel) anel_chao(ui::AMARELO, 6);
     if (t.turbo < 1.0) anel_chao(rgb(255, 170, 40), sel ? 14.0f : 6.0f);
-    arte::torre_mapa(t.chave, arte::visual(t), x, y, tam, &q);
+    if (t.disfarce == "super" || t.disfarce == "plasma") {
+        // Fa-Clube: o Dardo vira Super Macaco; no Plasma, com um anel roxo (arte propria ainda nao existe)
+        if (t.disfarce == "plasma") anel_chao(rgb(190, 90, 255), 10);
+        arte::torre_mapa("super", {}, x, y, tam * 1.1f, &q);
+    } else if (t.disfarce == "monstro") {
+        // Transformacao: desenho provisorio, a propria torre maior com um anel roxo
+        anel_chao(rgb(150, 60, 220), 10);
+        arte::torre_mapa(t.chave, arte::visual(t), x, y, tam * 1.3f, &q);
+    } else {
+        arte::torre_mapa(t.chave, arte::visual(t), x, y, tam, &q);
+    }
     if (t.dfn->heroi) ui::tecla_centro(std::to_string(t.nivel), x + tam * 0.3f, pe - 4);
 }
 

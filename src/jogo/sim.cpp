@@ -531,6 +531,10 @@ void Pista::executar_habilidade(const TorreP& tp, const J& h) {
     if (tipo == "turbo") {
         t.turbo = h["valor"].get<double>();
         t.turbo_t = h["dur"].get<double>();
+        if (h.contains("disfarce")) {
+            t.disfarce = h["disfarce"].get<std::string>();
+            t.disfarce_t = t.turbo_t;
+        }
     } else if (tipo == "espiral") {
         // laminas do ataque principal, sem limite de alcance, saindo em bracos que giram
         if (!t.ats.empty()) {
@@ -567,6 +571,10 @@ void Pista::executar_habilidade(const TorreP& tp, const J& h) {
             alvos.resize(std::min(alvos.size(), static_cast<size_t>(h["n"].get<int>())));
         }
         for (Torre* o : alvos) {
+            if (h.contains("disfarce")) {
+                o->disfarce = h["disfarce"].get<std::string>();
+                o->disfarce_t = h["dur"].get<double>();
+            }
             if (h.contains("valor")) {
                 o->turbo = std::min(o->turbo, h["valor"].get<double>());
                 o->turbo_t = std::max(o->turbo_t, h["dur"].get<double>());
@@ -977,6 +985,10 @@ void Pista::passo_torre(const TorreP& tp) {
     if (t.turbo_t > 0) {
         t.turbo_t -= DT;
         if (t.turbo_t <= 0) t.turbo = 1.0;
+    }
+    if (t.disfarce_t > 0) {
+        t.disfarce_t -= DT;
+        if (t.disfarce_t <= 0) t.disfarce.clear();
     }
     if (t.espiral_t > 0 && t.espiral_at) {
         t.espiral_t -= DT;

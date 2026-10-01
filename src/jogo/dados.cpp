@@ -53,8 +53,8 @@ static DefTorre t_dardo() {
             U("Tiros Rápidos", 100, "Atira mais rápido.", {{"cad", 0.85}}),
             U("Tiros Muito Rápidos", 190, "Atira ainda mais rápido.", {{"cad", 0.788}}),
             U("Tiro Triplo", 450, "Atira 3 dardos por vez, mais rápido.", {{"n", 2}, {"spread", 30}, {"cad", 0.75}}),
-            U("Fã-Clube Super Macaco", 7200, "Atira 2x mais rápido. Habilidade: até 10 dardos viram Super Macacos por 15 s.", {{"cad", 0.5}, {"hab", H("Fã-Clube Super Macaco", "turbo_area", 50, {{"dur", 15}, {"valor", 0.19}, {"filtro", "dardo"}})}}),
-            U("Fã-Clube Macaco Plasma", 45000, "Habilidade: até 20 dardos viram Macacos Plasma por 15 s.", {{"dano", 1}, {"pierce", 3}, {"dtype", "normal"}, {"hab", H("Fã-Clube Macaco Plasma", "turbo_area", 50, {{"dur", 15}, {"valor", 0.095}, {"filtro", "dardo"}})}}),
+            U("Fã-Clube Super Macaco", 7200, "Atira 2x mais rápido. Habilidade: até 10 dardos viram Super Macacos por 15 s.", {{"cad", 0.5}, {"hab", H("Fã-Clube Super Macaco", "turbo_area", 50, {{"dur", 15}, {"valor", 0.19}, {"filtro", "dardo"}, {"n", 10}, {"disfarce", "super"}})}}),
+            U("Fã-Clube Macaco Plasma", 45000, "Habilidade: até 20 dardos viram Macacos Plasma por 15 s.", {{"dano", 1}, {"pierce", 3}, {"dtype", "normal"}, {"hab", H("Fã-Clube Macaco Plasma", "turbo_area", 50, {{"dur", 15}, {"valor", 0.095}, {"filtro", "dardo"}, {"n", 20}, {"disfarce", "plasma"}})}}),
         },
         {
             U("Dardos de Longo Alcance", 90, "+8 de alcance.", {{"alcance", 32}, {"dist", 60}}),
@@ -568,8 +568,8 @@ static DefTorre t_alquimista() {
             U("Ácido Forte", 250, "Ácido mais rápido.", {{"queima", J::array({0.667, 4.5})}}),
             U("Poções Perecíveis", 475, "+4 de dano em M.O.A.B.", {{"moab", 4}}),
             U("Mistura Instável", 2800, "Poção instável que explode dirigíveis.", {{"novo", A("projetil", {{"cad", 6.0}, {"dano", 20}, {"pierce", 3}, {"vel", 700}, {"dist", 400}, {"busca", true}, {"so_moab", true}, {"alvo", "forte"}, {"dtype", "normal"}, {"visual", "pocao"}})}}),
-            U("Tônico Transformador", 4200, "Habilidade: vira monstro por 20 s.", {{"hab", H("Transformação", "turbo", 60, {{"dur", 20}, {"valor", 0.2}})}}),
-            U("Transformação Total", 45000, "", {{"hab", H("Transformação Total", "turbo_area", 40, {{"dur", 20}, {"valor", 0.3}})}}),
+            U("Tônico Transformador", 4200, "Habilidade: vira monstro por 20 s.", {{"hab", H("Transformação", "turbo", 60, {{"dur", 20}, {"valor", 0.2}, {"disfarce", "monstro"}})}}),
+            U("Transformação Total", 45000, "Habilidade: ele e as 5 torres mais próximas viram monstros por 20 s.", {{"hab", H("Transformação Total", "turbo_area", 40, {{"dur", 20}, {"valor", 0.3}, {"n", 6}, {"disfarce", "monstro"}})}}),
         },
         {
             U("Arremesso Rápido", 650, "Todos os ataques 25% mais rápidos.", {{"a", "todos"}, {"cad", 0.8}}),

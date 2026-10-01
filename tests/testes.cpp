@@ -704,6 +704,22 @@ TESTE(b11_cemiterio_do_necromante) {
     CHECA(t.cemiterio < pico);
 }
 
+TESTE(b07_fa_clube_transforma_os_dardos) {
+    Partida p("solo", "prado", 1, "sandbox");
+    Pista& pi = p.pista(1);
+    CHECA_IGUAL(p.aplicar(1, "Tdardo@300,240"), OK);
+    for (int k = 0; k < 4; ++k) CHECA_IGUAL(p.aplicar(1, "U1:1"), OK);
+    CHECA_IGUAL(p.aplicar(1, "Tdardo@340,200"), OK);
+    CHECA_IGUAL(p.aplicar(1, "Tninja@260,200"), OK);
+    CHECA_IGUAL(p.aplicar(1, "Xh"), OK);
+    CHECA_IGUAL(p.aplicar(1, "B1:0"), OK);
+    CHECA_IGUAL(pi.torres.at(1)->disfarce, std::string("super"));
+    CHECA_IGUAL(pi.torres.at(2)->disfarce, std::string("super"));
+    CHECA(pi.torres.at(3)->disfarce.empty());  // so os Dardos
+    for (int i = 0; i < 30 * 16; ++i) p.passo();
+    CHECA(pi.torres.at(1)->disfarce.empty());  // volta ao normal depois de 15 s
+}
+
 TESTE(btd6_criticos_a_cada_n_tiros) {
     Partida p = solo();
     Pista& pi = p.pista(1);

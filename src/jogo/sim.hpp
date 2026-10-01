@@ -113,6 +113,9 @@ struct Torre {
     bool patrulha_volta = false;
     double ang = -90.0;
     double turbo = 1.0, turbo_t = 0.0;
+    // transformacao temporaria por habilidade (Fa-Clube, Transformacao): so muda o desenho da torre
+    std::string disfarce;
+    double disfarce_t = 0.0;
     // habilidade "espiral" (Turbilhao de Laminas): bracos de projeteis que giram por alguns segundos
     double espiral_t = 0.0, espiral_ang = 0.0, espiral_prox = 0.0;
     int espiral_bracos = 0;
