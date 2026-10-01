@@ -249,7 +249,12 @@ void RenderPista::desenhar_bloons() {
         }
         const float r = std::floor(static_cast<float>(b->tipo->raio));
         if (b->cong_t > 0) arte::estado_bloon(0, x, y, r, agora);
-        if (b->cola_t > 0) arte::estado_bloon(1, x, y, r, agora);
+        if (b->cola_t > 0) {
+            arte::estado_bloon(1, x, y, r, agora);
+            // cola corrosiva em verde e Super Cola (quase para o bloon) em rosa, por cima da cola amarela
+            if (b->cola_f <= 0.15) DrawCircleV({x, y - r * 0.15f}, r * 0.8f, rgb(255, 105, 180, 150));
+            else if (b->cola_dps > 0) DrawCircleV({x, y - r * 0.15f}, r * 0.8f, rgb(110, 220, 70, 150));
+        }
         if (b->queima_t > 0) arte::estado_bloon(2, x, y, r, agora);
         if (b->atord_t > 0) arte::estado_bloon(3, x, y, r, agora);
     }

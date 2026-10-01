@@ -721,7 +721,10 @@ void CenaJogo::painel_lateral(Vector2 mouse) {
         const bool sobre = ui::dentro(r0, mouse);
         const bool colocando = colocando_ == chave;
         const Rectangle r = sobre && !colocando ? ui::mover(r0, 0, -2) : r0;
-        Color face = pode ? ui::BEGE : ui::BEGE_APAGADO;
+        // fundo do cartao puxado para a cor da categoria (Primaria azul, Militar verde, Magica roxa, Suporte laranja)
+        const Color cat = cor_categoria(dfn), base_face = pode ? ui::BEGE : ui::BEGE_APAGADO;
+        auto mistura = [&](unsigned char a, unsigned char b) { return static_cast<unsigned char>(a * 0.62f + b * 0.38f); };
+        Color face{mistura(base_face.r, cat.r), mistura(base_face.g, cat.g), mistura(base_face.b, cat.b), 255};
         if (em_jogo) face = rgb(247, 215, 116);
         if (sobre && pode) face = rgb(255, 246, 218);
         if (colocando) face = rgb(200, 240, 168);
@@ -855,6 +858,14 @@ void CenaJogo::cabecalho_upgrade(const Torre& t, float x, float y, float w) {
     if (t.necromante) linha += "  ·  Cemitério: " + ui::formatar(std::floor(t.cemiterio));
     if (t.renda_sacrificio > 0) linha += "  ·  +$" + ui::formatar(std::floor(t.renda_sacrificio)) + "/rodada";
     ui::texto(linha, x + 66, y + 40, 14, ui::TINTA, 0, Ancora::MIDLEFT, ui::Peso::TEXTO);
+    if (t.detecta_camo()) {
+        // selo de camo: olho no canto do retrato, so quando a torre enxerga bloons camuflados
+        const Vector2 s{c.x + 20, c.y + 20};
+        DrawCircleV(s, 11, ui::TINTA);
+        DrawCircleV(s, 8.5f, ui::VERDE_ESCURO);
+        DrawEllipse(static_cast<int>(s.x), static_cast<int>(s.y), 6, 3.5f, ui::BEGE);
+        DrawCircleV(s, 2.2f, ui::TINTA);
+    }
     std::string tag;
     if (t.dfn->heroi) tag = "Nv " + std::to_string(t.nivel);
     else tag = std::to_string(t.caminhos[0]) + "-" + std::to_string(t.caminhos[1]) + "-" + std::to_string(t.caminhos[2]);

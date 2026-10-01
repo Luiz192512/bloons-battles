@@ -477,9 +477,9 @@ O avião é grande: o sprite cobre duas faixas da pista.
 | B14 | P1 | Legend of the Night e Shrink Potion com efeito | `src/jogo/sim.cpp` e `src/jogo/dados.cpp` | M | sim | feito (teste; poção vista na tela, buraco negro só no teste; números aproximados) |
 | B15 | P1 | Elite Sniper: modo de alvo "Elite" e caixa de suprimentos que cai no mapa | `src/jogo/sim.cpp`: `MODOS_ALVO` e habilidade `dinheiro`; `src/cliente/render.cpp`: caixa | M | não | feito (teste e tela; caixa com desenho provisório) |
 | B27 | P1 | Tier 5 com silhueta própria: trocar o desenho inteiro da torre nos tier 5 (e nos tiers 3 e 4 mais marcantes), como a catapulta do Juggernaut, o templo do Deus Sol, o lançador de mísseis do MOAB Mauler e o robô do Robo Monkey | `src/cliente/sprites.cpp`: `TS()` e `MAQ()`; conferir na vitrine (`--vitrine`) | G | não | a fazer |
-| B16 | P2 | Loja com cor de fundo por categoria (Primárias, Militares, Mágicas, Suporte) | `src/cliente/cena_jogo.cpp`: desenho dos cartões da loja | P | não | a fazer |
-| B17 | P2 | Selo de camo no painel da torre | `src/cliente/cena_jogo.cpp`: painel de upgrade | P | não | a fazer |
-| B18 | P2 | Cor da cola por upgrade (amarela, verde, rosa) e estrelas na Super Glue | `src/cliente/arte.cpp`: estado de cola; `src/jogo/dados.cpp`: visual por upgrade | P | não | a fazer |
+| B16 | P2 | Loja com cor de fundo por categoria (Primárias, Militares, Mágicas, Suporte) | `src/cliente/cena_jogo.cpp`: desenho dos cartões da loja | P | não | feito (tela) |
+| B17 | P2 | Selo de camo no painel da torre | `src/cliente/cena_jogo.cpp`: painel de upgrade | P | não | feito (tela) |
+| B18 | P2 | Cor da cola por upgrade (amarela, verde, rosa) e estrelas na Super Glue | `src/cliente/arte.cpp`: estado de cola; `src/jogo/dados.cpp`: visual por upgrade | P | não | feito (tela para a cola verde; rosa e estrelas não vistas) |
 | B19 | P2 | Anti-Bloon com um seletor de alvo por braço | `src/jogo/sim.cpp`: alvo por ataque; `src/cliente/cena_jogo.cpp` | M | não | a fazer |
 | B20 | P2 | Sub: botão Submerge e radar verde | `src/jogo/dados.cpp`: submarino 1-3; `src/cliente/cena_jogo.cpp` e `render.cpp` | M | não | a fazer |
 | B21 | P2 | Tela de consulta dos 15 upgrades de cada torre fora da partida | `src/cliente/cenas_menu.cpp` (pode reaproveitar a vitrine) | M | não | a fazer |
