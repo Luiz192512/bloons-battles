@@ -457,37 +457,41 @@ O avião é grande: o sprite cobre duas faixas da pista.
 
 ## 6. Backlog priorizado
 
-| ID | Prioridade | Item | Onde no clone (arquivo: trecho) | Esforço | Já em Pendências? |
-|---|---|---|---|---|---|
-| B01 | P0 | Dartling aponta para o cursor (modo Normal) e pode travar a direção (Locked) | `src/jogo/sim.cpp`: `Pista::alvo` e o laço de disparo; `src/cliente/cena_jogo.cpp`: seletor de alvo; `src/cliente/conexao.cpp`: comando novo para mandar a posição do cursor na Batalha | M | sim |
-| B02 | P0 | Mortar com ponto de impacto fixo: botão "Set Target" no painel e clique no mapa | `src/jogo/sim.cpp`: ramo `TipoAtaque::MORTEIRO`; `src/cliente/cena_jogo.cpp`: botão no painel; `src/cliente/conexao.cpp`: comando | M | sim |
-| B28 | P0 | Projéteis miram a posição atual do bloon e erram alvos distantes ou rápidos (ver 3.2). Corrigir antecipando o alvo no disparo ou aumentando a velocidade dos projéteis | `src/jogo/sim.cpp`: cálculo de `ang` no laço de disparo e `Pista::disparar`; `src/jogo/dados.cpp`: `vel` dos ataques | M | não |
-| B29 | P1 | Boomerang: botão no painel para trocar a mão (lado do arco) | `src/jogo/sim.cpp`: `Pista::mover_bumerangue`; `src/jogo/sim.hpp`: campo na `Torre`; `src/cliente/cena_jogo.cpp`: botão; `src/cliente/conexao.cpp`: comando | P | não |
-| B03 | P1 | Texto "CRIT" nos acertos críticos | `src/jogo/sim.cpp`: `critico` emite um evento novo; `src/cliente/render.cpp`: texto flutuante | P | não |
-| B04 | P1 | Modo Sandbox no solo: dinheiro e vidas infinitos, painel para mandar qualquer bloon ou rodada, apagar bloons e torres | `src/cliente/cenas_menu.cpp`: opção no Jogo Solo; `src/cliente/cena_jogo.cpp`: painel; `src/jogo/sim.cpp`: o modo "rico" do robô (`tools/analise/partida.cpp`) já tem a base | G | não |
-| B05 | P1 | Ás: pista de pouso como torre e rotas no painel (Circle, Infinite, Figure Eight, Centered Path com mira arrastável) | `src/jogo/sim.cpp`: `Mov::ORBITA`; `src/jogo/dados.cpp`: torre "as"; `src/cliente/sprites.cpp`: sprite da pista | M | em parte (Rota Centralizada) |
-| B06 | P1 | Heli: modos Follow Mouse, Lock in Place e Patrol Points | `src/jogo/sim.cpp`: `Mov::HELI`; `src/cliente/cena_jogo.cpp`: seletor | M | não |
-| B07 | P1 | Fan Club e Total Transformation trocam o visual das torres afetadas | `src/jogo/sim.cpp`: habilidade `turbo_area`; `src/cliente/arte.cpp`: desenho da torre transformada | M | sim |
-| B08 | P1 | Sun Temple e True Sun God: diálogo de sacrifício e o efeito de sacrificar torres próximas | `src/cliente/cena_jogo.cpp`: diálogo (usa o confirmar de `src/cliente/ui.hpp`); `src/jogo/sim.cpp`: compra do upgrade | M | sim |
-| B09 | P1 | Bananas caem no chão e são coletadas (com o Ez Collect automático) | `src/jogo/sim.cpp`: `TipoAtaque::RENDA`; `src/cliente/render.cpp` e `cena_jogo.cpp`: clique para coletar | M | sim |
-| B10 | P1 | Upgrade condicional: Monkeyopolis com "Requires Banana Farm" e efeito de sacrificar fazendas | `src/jogo/stats.cpp` e `sim.cpp`: regra de compra; `src/cliente/cena_jogo.cpp`: carta cinza com o motivo | M | sim |
-| B11 | P1 | Cemitério do Necromancer (bloons estourados alimentam os zumbis) e contador de lápide no painel | `src/jogo/sim.cpp`: pilha "zumbi"; `src/cliente/cena_jogo.cpp`: painel | M | sim |
-| B12 | P1 | Blade Maelstrom e Super Maelstrom: a habilidade lança a espiral de serras que se vê pelo mapa | `src/jogo/dados.cpp`: habilidade "Turbilhão" (hoje `turbo`); `src/jogo/sim.cpp`: tipo de habilidade novo que dispara projéteis em espiral | M | não |
-| B13 | P1 | Ray of Doom: raio contínuo que atravessa o mapa na direção do cursor (depende de B01) | `src/jogo/sim.cpp`: hitscan do Plasma Accelerator; `src/cliente/render.cpp`: feixe persistente | M | não |
-| B14 | P1 | Legend of the Night e Shrink Potion com efeito | `src/jogo/sim.cpp` e `src/jogo/dados.cpp` | M | sim |
-| B15 | P1 | Elite Sniper: modo de alvo "Elite" e caixa de suprimentos que cai no mapa | `src/jogo/sim.cpp`: `MODOS_ALVO` e habilidade `dinheiro`; `src/cliente/render.cpp`: caixa | M | não |
-| B27 | P1 | Tier 5 com silhueta própria: trocar o desenho inteiro da torre nos tier 5 (e nos tiers 3 e 4 mais marcantes), como a catapulta do Juggernaut, o templo do Deus Sol, o lançador de mísseis do MOAB Mauler e o robô do Robo Monkey | `src/cliente/sprites.cpp`: `TS()` e `MAQ()`; conferir na vitrine (`--vitrine`) | G | não |
-| B16 | P2 | Loja com cor de fundo por categoria (Primárias, Militares, Mágicas, Suporte) | `src/cliente/cena_jogo.cpp`: desenho dos cartões da loja | P | não |
-| B17 | P2 | Selo de camo no painel da torre | `src/cliente/cena_jogo.cpp`: painel de upgrade | P | não |
-| B18 | P2 | Cor da cola por upgrade (amarela, verde, rosa) e estrelas na Super Glue | `src/cliente/arte.cpp`: estado de cola; `src/jogo/dados.cpp`: visual por upgrade | P | não |
-| B19 | P2 | Anti-Bloon com um seletor de alvo por braço | `src/jogo/sim.cpp`: alvo por ataque; `src/cliente/cena_jogo.cpp` | M | não |
-| B20 | P2 | Sub: botão Submerge e radar verde | `src/jogo/dados.cpp`: submarino 1-3; `src/cliente/cena_jogo.cpp` e `render.cpp` | M | não |
-| B21 | P2 | Tela de consulta dos 15 upgrades de cada torre fora da partida | `src/cliente/cenas_menu.cpp` (pode reaproveitar a vitrine) | M | não |
-| B22 | P2 | Ultraboost: escolher a torre que recebe o buff | `src/jogo/sim.cpp`: habilidade `turbo_area`; `src/cliente/cena_jogo.cpp` | M | não |
-| B23 | P2 | Mini-Comanches, juros do banco e +15 vidas do Wall Street | `src/jogo/sim.cpp` e `src/jogo/dados.cpp` | M | sim |
-| B24 | P2 | Polimento de efeitos: clarão do Bloon Crush, anel expandindo no Inferno Ring, Kylie em chamas, rastro verde do Perma Charge, visual roxo do Super Brittle, avião do Tsar Bomba | `src/cliente/render.cpp`, `arte.cpp` e `sprites.cpp` | P cada | não |
-| B25 | P2 | Modos de restrição (Primary Only, Military Only) | `src/cliente/cenas_menu.cpp` e `src/jogo/sim.cpp` | M | não |
-| B26 | P2 | Beast Handler, Mermonkey, Desperado e Skywarden | torres novas em `src/jogo/dados.cpp` e arte em `src/cliente/sprites.cpp` | G | sim (adiado pelo dono) |
+| ID | Prioridade | Item | Onde no clone (arquivo: trecho) | Esforço | Já em Pendências? | Estado |
+|---|---|---|---|---|---|---|
+| B01 | P0 | Dartling aponta para o cursor (modo Normal) e pode travar a direção (Locked) | `src/jogo/sim.cpp`: `Pista::alvo` e o laço de disparo; `src/cliente/cena_jogo.cpp`: seletor de alvo; `src/cliente/conexao.cpp`: comando novo para mandar a posição do cursor na Batalha | M | sim | feito (teste e tela) |
+| B02 | P0 | Mortar com ponto de impacto fixo: botão "Set Target" no painel e clique no mapa | `src/jogo/sim.cpp`: ramo `TipoAtaque::MORTEIRO`; `src/cliente/cena_jogo.cpp`: botão no painel; `src/cliente/conexao.cpp`: comando | M | sim | feito (teste; painel não visto na tela) |
+| B28 | P0 | Projéteis miram a posição atual do bloon e erram alvos distantes ou rápidos (ver 3.2). Corrigir antecipando o alvo no disparo ou aumentando a velocidade dos projéteis | `src/jogo/sim.cpp`: cálculo de `ang` no laço de disparo e `Pista::disparar`; `src/jogo/dados.cpp`: `vel` dos ataques | M | não | feito (teste; não visto na tela) |
+| B29 | P1 | Boomerang: botão no painel para trocar a mão (lado do arco) | `src/jogo/sim.cpp`: `Pista::mover_bumerangue`; `src/jogo/sim.hpp`: campo na `Torre`; `src/cliente/cena_jogo.cpp`: botão; `src/cliente/conexao.cpp`: comando | P | não | feito (teste; botão não visto na tela) |
+| B03 | P1 | Texto "CRIT" nos acertos críticos | `src/jogo/sim.cpp`: `critico` emite um evento novo; `src/cliente/render.cpp`: texto flutuante | P | não | feito (teste; não visto na tela) |
+| B04 | P1 | Modo Sandbox no solo: dinheiro e vidas infinitos, painel para mandar qualquer bloon ou rodada, apagar bloons e torres | `src/cliente/cenas_menu.cpp`: opção no Jogo Solo; `src/cliente/cena_jogo.cpp`: painel; `src/jogo/sim.cpp`: o modo "rico" do robô (`tools/analise/partida.cpp`) já tem a base | G | não | a fazer |
+| B05 | P1 | Ás: pista de pouso como torre e rotas no painel (Circle, Infinite, Figure Eight, Centered Path com mira arrastável) | `src/jogo/sim.cpp`: `Mov::ORBITA`; `src/jogo/dados.cpp`: torre "as"; `src/cliente/sprites.cpp`: sprite da pista | M | em parte (Rota Centralizada) | a fazer |
+| B06 | P1 | Heli: modos Follow Mouse, Lock in Place e Patrol Points | `src/jogo/sim.cpp`: `Mov::HELI`; `src/cliente/cena_jogo.cpp`: seletor | M | não | a fazer |
+| B07 | P1 | Fan Club e Total Transformation trocam o visual das torres afetadas | `src/jogo/sim.cpp`: habilidade `turbo_area`; `src/cliente/arte.cpp`: desenho da torre transformada | M | sim | a fazer |
+| B08 | P1 | Sun Temple e True Sun God: diálogo de sacrifício e o efeito de sacrificar torres próximas | `src/cliente/cena_jogo.cpp`: diálogo (usa o confirmar de `src/cliente/ui.hpp`); `src/jogo/sim.cpp`: compra do upgrade | M | sim | a fazer |
+| B09 | P1 | Bananas caem no chão e são coletadas (com o Ez Collect automático) | `src/jogo/sim.cpp`: `TipoAtaque::RENDA`; `src/cliente/render.cpp` e `cena_jogo.cpp`: clique para coletar | M | sim | a fazer |
+| B10 | P1 | Upgrade condicional: Monkeyopolis com "Requires Banana Farm" e efeito de sacrificar fazendas | `src/jogo/stats.cpp` e `sim.cpp`: regra de compra; `src/cliente/cena_jogo.cpp`: carta cinza com o motivo | M | sim | a fazer |
+| B11 | P1 | Cemitério do Necromancer (bloons estourados alimentam os zumbis) e contador de lápide no painel | `src/jogo/sim.cpp`: pilha "zumbi"; `src/cliente/cena_jogo.cpp`: painel | M | sim | a fazer |
+| B12 | P1 | Blade Maelstrom e Super Maelstrom: a habilidade lança a espiral de serras que se vê pelo mapa | `src/jogo/dados.cpp`: habilidade "Turbilhão" (hoje `turbo`); `src/jogo/sim.cpp`: tipo de habilidade novo que dispara projéteis em espiral | M | não | a fazer |
+| B13 | P1 | Ray of Doom: raio contínuo que atravessa o mapa na direção do cursor (depende de B01) | `src/jogo/sim.cpp`: hitscan do Plasma Accelerator; `src/cliente/render.cpp`: feixe persistente | M | não | a fazer |
+| B14 | P1 | Legend of the Night e Shrink Potion com efeito | `src/jogo/sim.cpp` e `src/jogo/dados.cpp` | M | sim | a fazer |
+| B15 | P1 | Elite Sniper: modo de alvo "Elite" e caixa de suprimentos que cai no mapa | `src/jogo/sim.cpp`: `MODOS_ALVO` e habilidade `dinheiro`; `src/cliente/render.cpp`: caixa | M | não | a fazer |
+| B27 | P1 | Tier 5 com silhueta própria: trocar o desenho inteiro da torre nos tier 5 (e nos tiers 3 e 4 mais marcantes), como a catapulta do Juggernaut, o templo do Deus Sol, o lançador de mísseis do MOAB Mauler e o robô do Robo Monkey | `src/cliente/sprites.cpp`: `TS()` e `MAQ()`; conferir na vitrine (`--vitrine`) | G | não | a fazer |
+| B16 | P2 | Loja com cor de fundo por categoria (Primárias, Militares, Mágicas, Suporte) | `src/cliente/cena_jogo.cpp`: desenho dos cartões da loja | P | não | a fazer |
+| B17 | P2 | Selo de camo no painel da torre | `src/cliente/cena_jogo.cpp`: painel de upgrade | P | não | a fazer |
+| B18 | P2 | Cor da cola por upgrade (amarela, verde, rosa) e estrelas na Super Glue | `src/cliente/arte.cpp`: estado de cola; `src/jogo/dados.cpp`: visual por upgrade | P | não | a fazer |
+| B19 | P2 | Anti-Bloon com um seletor de alvo por braço | `src/jogo/sim.cpp`: alvo por ataque; `src/cliente/cena_jogo.cpp` | M | não | a fazer |
+| B20 | P2 | Sub: botão Submerge e radar verde | `src/jogo/dados.cpp`: submarino 1-3; `src/cliente/cena_jogo.cpp` e `render.cpp` | M | não | a fazer |
+| B21 | P2 | Tela de consulta dos 15 upgrades de cada torre fora da partida | `src/cliente/cenas_menu.cpp` (pode reaproveitar a vitrine) | M | não | a fazer |
+| B22 | P2 | Ultraboost: escolher a torre que recebe o buff | `src/jogo/sim.cpp`: habilidade `turbo_area`; `src/cliente/cena_jogo.cpp` | M | não | a fazer |
+| B23 | P2 | Mini-Comanches, juros do banco e +15 vidas do Wall Street | `src/jogo/sim.cpp` e `src/jogo/dados.cpp` | M | sim | a fazer |
+| B24 | P2 | Polimento de efeitos: clarão do Bloon Crush, anel expandindo no Inferno Ring, Kylie em chamas, rastro verde do Perma Charge, visual roxo do Super Brittle, avião do Tsar Bomba | `src/cliente/render.cpp`, `arte.cpp` e `sprites.cpp` | P cada | não | a fazer |
+| B25 | P2 | Modos de restrição (Primary Only, Military Only) | `src/cliente/cenas_menu.cpp` e `src/jogo/sim.cpp` | M | não | a fazer |
+| B26 | P2 | Beast Handler, Mermonkey, Desperado e Skywarden | torres novas em `src/jogo/dados.cpp` e arte em `src/cliente/sprites.cpp` | G | sim (adiado pelo dono) | a fazer |
+
+Implementação em andamento na branch `luiz/backlog-btd6`, um commit por item. "Não visto na
+tela" quer dizer que o item passa no teste automático, mas a automação de cliques não conseguiu
+operar o clone para conferir o visual; vale uma olhada à mão.
 
 ## 7. O que não foi possível observar e por quê
 
