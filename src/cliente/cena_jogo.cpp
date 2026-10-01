@@ -194,6 +194,8 @@ void CenaJogo::tecla(int k) {
             definindo_alvo_ = definindo_alvo_ == t->id ? 0 : t->id;
         else if (t && t->chave == "as")
             proxima_rota(t->id);
+        else if (t && t->chave == "heli")
+            proximo_modo_heli(t->id);
         else if (t)
             comando("M" + std::to_string(t->id) + ":" + std::to_string((t->modo + 1) % 4));
         return;
@@ -267,7 +269,12 @@ void CenaJogo::clique(Vector2 pos) {
     }
     const int x = static_cast<int>(pos.x), y = static_cast<int>(pos.y);
     if (definindo_alvo_) {
-        comando("A" + std::to_string(definindo_alvo_) + "@" + std::to_string(x) + "," + std::to_string(y));
+        const bool ok = comando("A" + std::to_string(definindo_alvo_) + "@" + std::to_string(x) + "," + std::to_string(y));
+        // no Heli o clique marca a outra ponta da patrulha
+        if (TorreP t = pista().torre(definindo_alvo_); ok && t && t->chave == "heli") {
+            comando("O" + std::to_string(t->id) + ":2");
+            modo_heli_[t->id] = 3;
+        }
         definindo_alvo_ = 0;
         return;
     }
@@ -281,8 +288,9 @@ void CenaJogo::clique(Vector2 pos) {
     double md = 1e9;
     for (auto& [id, t] : pista().torres) {
         double d = (t->x - x) * (t->x - x) + (t->y - y) * (t->y - y);
-        // o As tambem se seleciona pela pista de pouso, que fica parada
-        if (t->chave == "as") d = std::min(d, (t->cx - x) * (t->cx - x) + (t->cy - y) * (t->cy - y));
+        // o As e o Heli tambem se selecionam pela base no chao, que fica parada
+        if (t->dfn->mov != Mov::FIXO && !t->temporaria)
+            d = std::min(d, (t->cx - x) * (t->cx - x) + (t->cy - y) * (t->cy - y));
         if (d < (t->dfn->raio + 10) * (t->dfn->raio + 10) && d < md) melhor = t.get(), md = d;
     }
     selecionada_ = melhor ? melhor->id : 0;
@@ -324,6 +332,35 @@ void CenaJogo::proxima_rota(int id) {
     else comando("O" + std::to_string(id) + ":" + std::to_string(prox));
 }
 
+// Modo de voo mostrado no painel. A simulacao so sabe "procura bloons", "vai ao ponto" e "patrulha";
+// seguir o mouse e travado sao o mesmo "vai ao ponto", com ou sem o cliente mandando o cursor.
+int CenaJogo::modo_heli(const Torre& t) const {
+    if (t.rota == 0) return 0;
+    if (t.rota == 2) return 3;
+    const auto it = modo_heli_.find(t.id);
+    return it != modo_heli_.end() && it->second == 1 ? 1 : 2;
+}
+
+void CenaJogo::proximo_modo_heli(int id) {
+    if (definindo_alvo_ == id) {  // desistiu da patrulha: volta ao automatico
+        definindo_alvo_ = 0;
+        modo_heli_[id] = 0;
+        comando("O" + std::to_string(id) + ":0");
+        return;
+    }
+    TorreP t = pista().torre(id);
+    if (!t) return;
+    const int prox = (modo_heli(*t) + 1) % 4;
+    if (prox == 3) {
+        definindo_alvo_ = id;  // o modo so muda quando o ponto for escolhido
+        return;
+    }
+    modo_heli_[id] = prox;
+    // 1 segue o cursor (os comandos A saem do atualizar); 2 trava onde esta, sem mandar mais nada
+    if (prox != 2) comando("O" + std::to_string(id) + ":" + std::to_string(prox));
+    mira_enviada_ = {-1, -1};
+}
+
 void CenaJogo::alternar_auto() { ctl_->partida->automatico = !ctl_->partida->automatico; }
 
 void CenaJogo::reiniciar() {
@@ -351,7 +388,10 @@ void CenaJogo::atualizar(double dt) {
         cur.y <= ALTURA_MAPA && (std::fabs(cur.x - mira_enviada_.x) > 6 || std::fabs(cur.y - mira_enviada_.y) > 6)) {
         bool enviou = false;
         for (auto& [id, t] : pista().torres) {
-            if (t->chave != "dartling" || mira_travada_.count(id)) continue;
+            const bool dartling = t->chave == "dartling" && !mira_travada_.count(id);
+            const auto mh = modo_heli_.find(id);
+            const bool heli = t->chave == "heli" && mh != modo_heli_.end() && mh->second == 1;
+            if (!dartling && !heli) continue;
             ctl_->enviar("A" + std::to_string(id) + "@" + std::to_string(static_cast<int>(cur.x)) + "," +
                          std::to_string(static_cast<int>(cur.y)));
             enviou = true;
@@ -421,7 +461,9 @@ void CenaJogo::desenhar() {
     TorreP sel = selecionada_ ? pista().torre(selecionada_) : nullptr;
     render_.desenhar(selecionada_);
     if (sel) circulo_alcance(static_cast<float>(sel->x), static_cast<float>(sel->y), sel->alcance(), true);
-    if (sel && (sel->chave == "morteiro" ? sel->tem_mira : sel->chave == "as" && sel->rota == 3) ||
+    if (sel && (sel->chave == "morteiro" ? sel->tem_mira
+                : sel->chave == "heli"   ? sel->rota == 2
+                                         : sel->chave == "as" && sel->rota == 3) ||
         (sel && definindo_alvo_ == sel->id)) {
         // marca do ponto de impacto: no ponto fixo, ou seguindo o cursor enquanto o jogador escolhe
         const bool esc = definindo_alvo_ == sel->id && mouse.x < PAINEL_X;
@@ -804,6 +846,17 @@ void CenaJogo::rodape_upgrade(const Torre& t, float x, float y, float w, Vector2
         botoes_up_.push_back({ra, [this, id] { alternar_mira(id); }});
         if (ui::dentro(ra, mouse))
             dicas_.push_back({mouse, "Mira da Dartling", "Segue o cursor. Clique ou Tab para travar onde está."});
+    } else if (t.chave == "heli") {
+        // o Heli escolhe como voa: sozinho atras dos bloons, atras do cursor, parado ou em patrulha
+        const int m = modo_heli(t);
+        const bool esperando = definindo_alvo_ == id;
+        const char* nomes[4] = {t.st.persegue ? "Perseguir" : "Automático", "Seguir o mouse", "Travado", "Patrulha"};
+        ui::texto("VOO", cx, ra.y + 12, 10, rgb(207, 239, 191), 0, Ancora::CENTER, ui::Peso::TEXTO);
+        ui::texto(esperando ? "Clique no mapa" : nomes[m], cx, ra.y + 28, 13, esperando ? ui::AMARELO : ui::BRANCO, 3,
+                  Ancora::CENTER);
+        botoes_up_.push_back({ra, [this, id] { proximo_modo_heli(id); }});
+        if (ui::dentro(ra, mouse))
+            dicas_.push_back({mouse, "Modo de voo", "Clique ou Tab para trocar. A patrulha pede um clique no mapa."});
     } else if (t.chave == "as") {
         // o As nao escolhe bloon: o jogador escolhe a rota do voo
         static const char* ROTAS[4] = {"Círculo", "Infinito", "Oito", "Centralizada"};

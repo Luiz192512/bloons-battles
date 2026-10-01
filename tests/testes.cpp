@@ -501,6 +501,30 @@ TESTE(b05_as_rotas_e_rota_centralizada) {
     CHECA(std::hypot(t.x - 200, t.y - 200) < 120);
 }
 
+TESTE(b06_heli_ponto_fixo_e_patrulha) {
+    Partida p("solo", "prado", 1, "sandbox");
+    Pista& pi = p.pista(1);
+    CHECA_IGUAL(p.aplicar(1, "Theli@600,360"), OK);
+    const Torre& t = *pi.torres.at(1);
+    // ponto mirado: voa ate la e fica, mesmo com bloon passando perto do heliponto
+    CHECA_IGUAL(p.aplicar(1, "A1@900,100"), OK);
+    CHECA_IGUAL(t.rota, 1);
+    pi.criar_bloon("vermelho", 900);
+    for (int i = 0; i < 30 * 4; ++i) p.passo();
+    CHECA(std::hypot(t.x - 900, t.y - 100) < 6);
+    // patrulha: vai e volta entre o heliponto e o ponto
+    CHECA_IGUAL(p.aplicar(1, "O1:2"), OK);
+    double perto_base = 1e9, perto_ponto = 1e9;
+    for (int i = 0; i < 30 * 10; ++i) {
+        p.passo();
+        perto_base = std::min(perto_base, std::hypot(t.x - 600, t.y - 360));
+        perto_ponto = std::min(perto_ponto, std::hypot(t.x - 900, t.y - 100));
+    }
+    CHECA(perto_base < 20 && perto_ponto < 20);
+    CHECA_IGUAL(p.aplicar(1, "O1:3"), ERRO_INVALIDO);
+    CHECA_IGUAL(p.aplicar(1, "O1:0"), OK);  // volta a procurar bloons sozinho
+}
+
 TESTE(btd6_criticos_a_cada_n_tiros) {
     Partida p = solo();
     Pista& pi = p.pista(1);

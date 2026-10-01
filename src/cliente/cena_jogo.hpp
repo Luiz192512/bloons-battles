@@ -2,6 +2,7 @@
 #pragma once
 
 #include <functional>
+#include <map>
 #include <memory>
 #include <set>
 #include <string>
@@ -62,6 +63,8 @@ private:
     void alternar_auto();
     void alternar_mira(int id);
     void proxima_rota(int id);
+    void proximo_modo_heli(int id);
+    int modo_heli(const Torre& t) const;
     void reiniciar();
     void desistir();
     void enviar(const Envio& env);
@@ -96,6 +99,7 @@ private:
     std::string colocando_;
     // Dartling: segue o cursor (comando A, no maximo 10 por segundo) ate o jogador travar a mira
     std::set<int> mira_travada_;
+    std::map<int, int> modo_heli_;  // 0 automatico, 1 segue o mouse, 2 travado no lugar, 3 patrulha
     int definindo_alvo_ = 0;
     // Sandbox: painel de envio de bloons no lugar da loja (F2 ou o botao da grade alterna)
     bool painel_bloons_ = false;

@@ -383,9 +383,10 @@ char Pista::mirar(int tid, double x, double y) {
     if (!t) return ERRO_INVALIDO;
     // o As so escolhe o centro da rota depois do upgrade Rota Centralizada (caminho 3, tier 2)
     const bool as_centrado = t->chave == "as" && t->caminhos[2] >= 2;
-    if (!(t->chave == "dartling" || t->chave == "morteiro" || as_centrado)) return ERRO_INVALIDO;
+    if (!(t->chave == "dartling" || t->chave == "morteiro" || t->chave == "heli" || as_centrado)) return ERRO_INVALIDO;
     if (!(x >= 0 && x <= LARGURA_MAPA && y >= 0 && y <= ALTURA_MAPA)) return ERRO_INVALIDO;
     if (as_centrado) t->rota = 3;
+    if (t->chave == "heli" && t->rota == 0) t->rota = 1;
     t->mx = x;
     t->my = y;
     t->tem_mira = true;
@@ -397,6 +398,13 @@ char Pista::opcao(int tid, int valor) {
     if (!t || valor < 0) return ERRO_INVALIDO;
     if (t->chave == "bumerangue" && valor <= 1) {
         t->mao = valor;
+        return OK;
+    }
+    if (t->chave == "heli" && valor <= 2) {
+        // sem ponto escolhido, fica onde esta
+        if (valor && !t->tem_mira) t->mx = t->x, t->my = t->y, t->tem_mira = true;
+        t->rota = valor;
+        t->patrulha_volta = false;
         return OK;
     }
     if (t->chave == "as" && valor <= 3) {
@@ -811,9 +819,17 @@ void Pista::mover_torre(Torre& t) {
                     if (!melhor || b->d > melhor->d) melhor = b;
         }
         double ax = melhor ? melhor->x : t.cx, ay = melhor ? melhor->y : t.cy;
+        double chegada = 30;
+        if (t.rota && t.tem_mira) {
+            // modos do jogador: ir ate o ponto mirado, ou patrulhar entre ele e o heliponto
+            chegada = 4;
+            ax = t.rota == 2 && t.patrulha_volta ? t.cx : t.mx;
+            ay = t.rota == 2 && t.patrulha_volta ? t.cy : t.my;
+            if (t.rota == 2 && std::hypot(ax - t.x, ay - t.y) <= 12) t.patrulha_volta = !t.patrulha_volta;
+        }
         double dx = ax - t.x, dy = ay - t.y;
         double dist = std::hypot(dx, dy);
-        if (dist > 30) {
+        if (dist > chegada) {
             double v = 260.0 * DT;
             t.x += dx / dist * std::min(v, dist);
             t.y += dy / dist * std::min(v, dist);

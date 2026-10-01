@@ -136,6 +136,16 @@ void RenderPista::desenhar_torre(const Torre& t, bool sel) {
         ui::ret(ui::inflar(r, -4, -4), rgb(72, 74, 84), 4);
         for (int k = 0; k < 4; ++k) DrawRectangleRec({px - 22 + k * 13.0f, py - 2, 7, 4}, ui::BRANCO);
     }
+    if (t.chave == "heli") {
+        // heliponto no chao, onde o Heli foi colocado (desenho provisorio)
+        const float px = static_cast<float>(t.cx), py = static_cast<float>(t.cy);
+        const Rectangle r{px - 22, py - 22, 44, 44};
+        if (sel) ui::ret(ui::inflar(r, 5, 5), ui::AMARELO, 12);
+        ui::ret(ui::inflar(r, 3, 3), ui::TINTA, 11);
+        ui::ret(r, rgb(250, 200, 50), 8);
+        ui::ret(ui::inflar(r, -4, -4), rgb(44, 52, 110), 6);
+        ui::texto("H", px, py - 1, 22, rgb(235, 70, 60), 3, ui::Ancora::CENTER);
+    }
     const float tam = tamanho_torre(t);
     const float x = static_cast<float>(t.x), y = static_cast<float>(t.y);
     const anim::Quadro q = animador_.quadro(t.id, ui::tempo());
