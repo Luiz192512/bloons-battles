@@ -383,7 +383,9 @@ char Pista::vender(int tid) {
 
 char Pista::mudar_modo(int tid, int m) {
     TorreP t = torre(tid);
-    if (!t || m < 0 || m >= 4) return ERRO_INVALIDO;
+    if (!t || m < 0 || m > 4) return ERRO_INVALIDO;
+    // modo 4 (Elite) so existe no Atirador de Elite (Sniper, caminho 2, tier 5)
+    if (m == 4 && !(t->chave == "sniper" && t->caminhos[1] >= 5)) return ERRO_BLOQUEADO;
     t->modo = m;
     return OK;
 }
@@ -568,9 +570,15 @@ void Pista::executar_habilidade(const TorreP& tp, const J& h) {
         evento({"flash", 0, 0, 0, 0, 0, "", {180, 230, 255}});
     } else if (tipo == "dinheiro") {
         // CHIMPS nao deixa gerar dinheiro por habilidade; Half Cash e Deflation multiplicam
-        const double v = so_estouro_e_rodada ? 0.0 : h["valor"].get<double>() * mult_dinheiro;
-        dinheiro += v;
-        evento({"dinheiro", t.x, t.y, v});
+        if (h.value("caixa", false)) {
+            // caixa de suprimentos: cai ao lado da torre e paga quando o jogador coleta
+            if (!so_estouro_e_rodada)
+                soltar(t.x + rng.uniform(-60, 60), t.y + rng.uniform(30, 60), h["valor"].get<double>(), 60.0, "caixa");
+        } else {
+            const double v = so_estouro_e_rodada ? 0.0 : h["valor"].get<double>() * mult_dinheiro;
+            dinheiro += v;
+            evento({"dinheiro", t.x, t.y, v});
+        }
     } else if (tipo == "emprestimo") {
         const double v = so_estouro_e_rodada ? 0.0 : h["valor"].get<double>() * mult_dinheiro;
         dinheiro += v;
@@ -817,7 +825,11 @@ Bloon* Pista::alvo(const Torre& t, const Ataque& at, double alcance) const {
         if (modo == 0) k = b->d;
         else if (modo == 1) k = -b->d;
         else if (modo == 2) k = -dist2;
-        else k = b->tipo->rank * 100000.0 + b->d;
+        else if (modo == 4) {
+            // Elite: o mais forte, mas quem ja passou de 75% da trilha vem antes de todos
+            const bool urgente = b->d > mapa.caminhos[b->cam].comprimento * 0.75;
+            k = (urgente ? 1e12 + b->d * 1e3 : 0.0) + b->tipo->rank * 100000.0 + b->d;
+        } else k = b->tipo->rank * 100000.0 + b->d;
         if (!melhor || k > chave_melhor) chave_melhor = k, melhor = b;
     }
     return melhor;

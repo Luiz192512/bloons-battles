@@ -214,6 +214,7 @@ public:
     void xp(double v);
     void pagar_renda();
     void receber(double v);  // entrada de dinheiro; metade vai para a divida do emprestimo
+    Bloon* alvo(const Torre& t, const Ataque& at, double alcance) const;  // bloon escolhido pelo modo de alvo
     AtaqueP critico(Torre& t, size_t i, const AtaqueP& at);  // conta o tiro; no critico devolve o ataque forte
     bool jogar_pocao(const TorreP& f, const Ataque& at);     // Alquimista joga uma pocao numa torre no alcance
     void evento(Evento e);
@@ -272,7 +273,6 @@ private:
     void grade();
     std::vector<Bloon*> vizinhos(double x, double y, double r) const;
     void recalcular_buffs();
-    Bloon* alvo(const Torre& t, const Ataque& at, double alcance) const;
     // ponto onde o bloon vai estar quando um projetil reto, saindo da torre, chegar nele
     Posicao mira_antecipada(const Torre& t, const Ataque& at, const Bloon& b) const;
     void mover_torre(Torre& t);

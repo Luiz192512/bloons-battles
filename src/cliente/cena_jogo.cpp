@@ -20,7 +20,9 @@ constexpr float CARD_W = 72, CARD_H = 60, PASSO_X = 76, PASSO_Y = 64;
 constexpr float GRADE_X = PAINEL_X + 8, GRADE_Y = 72;
 constexpr float ENVIO_H = 104;
 constexpr float UP_W = 384, UP_H = 320;
-const char* const NOMES_MODO[4] = {"Primeiro", "Último", "Perto", "Forte"};
+const char* const NOMES_MODO[5] = {"Primeiro", "Último", "Perto", "Forte", "Elite"};
+// quantos modos de alvo a torre tem: o Atirador de Elite ganha o quinto
+int modos_de_alvo(const Torre& t) { return t.chave == "sniper" && t.caminhos[1] >= 5 ? 5 : 4; }
 const Color MADEIRA_BLOQ = rgb(58, 42, 30);
 
 std::string numero_g(double v) {
@@ -197,7 +199,7 @@ void CenaJogo::tecla(int k) {
         else if (t && t->chave == "heli")
             proximo_modo_heli(t->id);
         else if (t)
-            comando("M" + std::to_string(t->id) + ":" + std::to_string((t->modo + 1) % 4));
+            comando("M" + std::to_string(t->id) + ":" + std::to_string((t->modo + 1) % modos_de_alvo(*t)));
         return;
     }
     if (k >= KEY_ONE && k <= KEY_NINE) {
@@ -892,7 +894,8 @@ void CenaJogo::rodape_upgrade(const Torre& t, float x, float y, float w, Vector2
         ui::texto(NOMES_MODO[t.modo], cx, ra.y + 28, 13, ui::BRANCO, 3, Ancora::CENTER);
         botoes_up_.push_back({ra, [this, id] {
                                   if (TorreP tt = pista().torre(id))
-                                      comando("M" + std::to_string(id) + ":" + std::to_string((tt->modo + 1) % 4));
+                                      comando("M" + std::to_string(id) + ":" +
+                                              std::to_string((tt->modo + 1) % modos_de_alvo(*tt)));
                               }});
         if (ui::dentro(ra, mouse)) dicas_.push_back({mouse, "Prioridade de alvo", "Clique ou Tab para trocar."});
     }

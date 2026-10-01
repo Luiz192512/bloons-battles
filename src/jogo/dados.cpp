@@ -239,8 +239,8 @@ static DefTorre t_sniper() {
             U("Óculos de Visão Noturna", 250, "Detecta camo.", {{"camo", true}}),
             U("Tiro de Estilhaços", 450, "5 estilhaços por tiro.", {{"frag", {{"n", 5}, {"dano", 1}, {"pierce", 2}, {"dtype", "afiado"}, {"visual", "fragmento"}}}}),
             U("Bala Ricochete", 2100, "A bala quica 2 vezes.", {{"quica", 2}}),
-            U("Lançamento de Suprimentos", 7600, "Quica 4 vezes. Habilidade: caixa de $1.100.", {{"quica", 2}, {"dtype", "normal"}, {"frag", {{"n", 5}, {"dano", 1}, {"pierce", 5}, {"dtype", "afiado"}, {"visual", "fragmento"}}}, {"hab", H("Suprimentos", "dinheiro", 60, {{"valor", 1100}})}}),
-            U("Atirador de Elite", 12000, "Muito mais rápido; os outros Snipers do mapa atacam 33% mais rápido. Habilidade: caixa de $3.000.", {{"cad", 0.4}, {"buffs", {{"cad", 0.75}, {"escopo", "sniper"}, {"global_", true}, {"sem_si", true}}}, {"hab", H("Suprimentos de Elite", "dinheiro", 90, {{"valor", 3000}})}}),
+            U("Lançamento de Suprimentos", 7600, "Quica 4 vezes. Habilidade: caixa de $1.100.", {{"quica", 2}, {"dtype", "normal"}, {"frag", {{"n", 5}, {"dano", 1}, {"pierce", 5}, {"dtype", "afiado"}, {"visual", "fragmento"}}}, {"hab", H("Suprimentos", "dinheiro", 60, {{"valor", 1100}, {"caixa", true}})}}),
+            U("Atirador de Elite", 12000, "Muito mais rápido; os outros Snipers do mapa atacam 33% mais rápido. Libera o alvo Elite. Habilidade: caixa de $3.000.", {{"cad", 0.4}, {"buffs", {{"cad", 0.75}, {"escopo", "sniper"}, {"global_", true}, {"sem_si", true}}}, {"hab", H("Suprimentos de Elite", "dinheiro", 90, {{"valor", 3000}, {"caixa", true}})}}),
         },
         {
             U("Disparo Rápido", 450, "", {{"cad", 0.7}}),
@@ -372,7 +372,7 @@ static DefTorre t_heli() {
             U("Jatos Maiores", 300, "Voa mais rápido.", J::object()),
             U("IFR", 600, "Detecta camo.", {{"camo", true}}),
             U("Corrente Descendente", 3500, "Joga bloons de volta para a entrada.", {{"novo", A("aura", {{"cad", 0.18}, {"dano", 0}, {"pierce", 2}, {"empurra", 150}, {"raio_aura", 80}, {"visual", "vento"}})}}),
-            U("Chinook de Apoio", 9500, "Dardos com 2 de dano. Habilidade: caixa de dinheiro.", {{"dano", 1}, {"raio_proj", 3}, {"hab", H("Entrega", "dinheiro", 60, {{"valor", 1000}})}}),
+            U("Chinook de Apoio", 9500, "Dardos com 2 de dano. Habilidade: caixa de dinheiro.", {{"dano", 1}, {"raio_proj", 3}, {"hab", H("Entrega", "dinheiro", 60, {{"valor", 1000}, {"caixa", true}})}}),
             U("Operações Especiais", 30000, "Habilidade: fuzileiro de elite.", {{"hab", H("Fuzileiro", "invocar", 60, {{"dur", 20}, {"base", "sniper"}, {"nivel", J::array({4, 0, 3})}})}}),
         },
         {

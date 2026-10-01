@@ -619,6 +619,32 @@ TESTE(b09_bananas_caem_e_sao_coletadas) {
     CHECA(pi.dinheiro > a2);
 }
 
+TESTE(b15_sniper_elite_alvo_e_caixa) {
+    Partida p("solo", "prado", 1, "sandbox");
+    Pista& pi = p.pista(1);
+    CHECA_IGUAL(p.aplicar(1, "Tsniper@750,270"), OK);
+    CHECA_IGUAL(p.aplicar(1, "M1:4"), ERRO_BLOQUEADO);  // so o Atirador de Elite tem o alvo Elite
+    for (int k = 0; k < 5; ++k) CHECA_IGUAL(p.aplicar(1, "U1:1"), OK);
+    CHECA_IGUAL(p.aplicar(1, "M1:4"), OK);
+    const Torre& t = *pi.torres.at(1);
+    const double fim = p.mapa.caminhos[0].comprimento;
+    // longe da saida: escolhe o mais forte, mesmo com um fraco mais adiantado
+    BloonP cer = pi.criar_bloon("ceramica", 100);
+    BloonP verm = pi.criar_bloon("vermelho", 300);
+    CHECA(pi.alvo(t, *t.ats[0], 9999) == cer.get());  // sem dar passo: a bala ricocheteia e mataria os dois
+    // o fraco passou de 75% da trilha: vira prioridade
+    verm->d = fim * 0.8;
+    CHECA(pi.alvo(t, *t.ats[0], 9999) == verm.get());
+    // a habilidade solta a caixa; o dinheiro so entra na coleta
+    CHECA_IGUAL(p.aplicar(1, "Xh"), OK);
+    CHECA_IGUAL(p.aplicar(1, "Xl"), OK);
+    const size_t antes = pi.coletaveis.size();
+    CHECA_IGUAL(p.aplicar(1, "B1:0"), OK);
+    CHECA_IGUAL(pi.coletaveis.size(), antes + 1);
+    CHECA_IGUAL(pi.coletaveis.back().visual, std::string("caixa"));
+    CHECA_IGUAL(p.aplicar(1, "C" + std::to_string(pi.coletaveis.back().id)), OK);
+}
+
 TESTE(btd6_criticos_a_cada_n_tiros) {
     Partida p = solo();
     Pista& pi = p.pista(1);

@@ -130,7 +130,16 @@ void RenderPista::desenhar(int selecionada) {
         if (c.vida < 3.0 && std::fmod(t, 0.3) < 0.12) continue;
         const float x = static_cast<float>(c.x), y = static_cast<float>(c.y) + 3 * std::sin(static_cast<float>(t) * 4 + c.id);
         DrawEllipse(static_cast<int>(x), static_cast<int>(c.y) + 14, 14, 5, ui::com_alfa(ui::TINTA, 70));
-        arte::projetil_vivo(c.visual == "banana" ? "banana" : "moeda", x, y, 40, 0, t);
+        if (c.visual == "banana") {
+            arte::projetil_vivo("banana", x, y, 40, 0, t);
+        } else {
+            // caixa de suprimentos (desenho provisorio): caixote de madeira com a moeda em cima
+            const Rectangle r{x - 16, y - 10, 32, 24};
+            ui::ret(ui::inflar(r, 3, 3), ui::TINTA, 6);
+            ui::ret(r, rgb(190, 130, 70), 4);
+            DrawRectangleRec({r.x, r.y + 9, r.width, 4}, rgb(120, 78, 40));
+            arte::projetil_vivo("moeda", x, y - 14, 30, 0, t);
+        }
     }
     desenhar_habilidades_em_uso();
     desenhar_efeitos();
