@@ -41,6 +41,7 @@ python tools/blender/conferir_variacoes.py dardo
 | dardo | 64 de 64 | 8.929 (2-0-5) | 6 | 12,7 MB | 0-0-1 e 3-1-0 mudam pouco a 48 px; o capuz é largo para cobrir as orelhas |
 | bumerangue | 64 de 64 | 8.876 (5-2-0) | 5 | 10,8 MB | 1-0-0 muda pouco (só o gume e as pontas de aço); o bumerangue lê como um arco; a mochila do 0-4-0 some na vista do jogo |
 | bomba | 64 de 64 | 6.152 (2-0-5) | 2 | 6,0 MB | 1-0-0 muda pouco (cano 10% mais grosso); 4-0-0 e 5-0-0 se parecem de cima (o 5 é preto com cinta vermelha) |
+| tachinha | 64 de 64 | 3.381 (2-0-5) | 2 | 5,3 MB | 0-0-1 e 0-0-2 (10 e 12 bicos) quase não se distinguem de 0-0-0 a 48 px; a engrenagem do topo lê como uma flor; 0-5-0 fica confuso de tantas lâminas |
 | bucaneiro | 1 de 64 (só a base) | 8.868 | 5 | 0,23 MB | upgrades entram na Parte B; a base já usa 8.868 triângulos, sobra pouco para peças |
 
 As outras torres ainda não foram começadas.
@@ -161,3 +162,27 @@ lança-mísseis ou feixe de canos) e os tiers cruzados enfeitam qualquer tipo.
 Composições resolvidas: em **2-0-5** cada um dos sete canos ganha o aro dourado e a cinta de aço;
 em **0-2-4** cada cano do feixe leva o nariz de míssil; em **5-0-2** os cravos amarelos entram
 atrás da coroa de pontas.
+
+## Tachinha (Atirador de Tachinhas)
+
+Base: máquina sem macaco. Prato de metal (`base`) e tambor vermelho de tampa dourada com oito
+bicos em volta (`torreta`, gira no jogo). A torreta lê os três tiers, então engrenagens, bicos
+compridos e número de bicos valem em qualquer combinação.
+
+| Caminho | Tier | Upgrade (nome no clone) | Encaixe | Peça | O que comunica |
+|---|---|---|---|---|---|
+| 1 | 1 | Disparo Rápido | torreta (parâmetro) | engrenagem dourada no topo | mecanismo mais rápido |
+| 1 | 2 | Disparo Mais Rápido | torreta (parâmetro) | segunda engrenagem, menor, por cima | ainda mais rápido |
+| 1 | 3 | Tiros Quentes | torreta | bicos e engrenagens em laranja e cinta em brasa no tambor | tachinhas quentes |
+| 1 | 4 | Anel de Fogo | torreta, base | tambor preto de tampa laranja; anel de doze chamas em volta do prato | anel de fogo |
+| 1 | 5 | Anel Infernal | torreta, base | tampa amarela; dezesseis chamas maiores, vermelhas e amarelas | inferno |
+| 2 | 1 | Tachinhas de Longo Alcance | torreta (parâmetro) | bicos 30% mais compridos | alcança mais longe |
+| 2 | 2 | Tachinhas de Super Alcance | torreta (parâmetro) | bicos 60% mais compridos | mais alcance ainda |
+| 2 | 3 | Atirador de Lâminas | torreta | tambor azul de tampa cinza; lâminas de aço deitadas no lugar dos bicos | lâminas |
+| 2 | 4 | Turbilhão de Lâminas | torreta | lâminas maiores e uma lâmina grande girando no topo | turbilhão |
+| 2 | 5 | Super Turbilhão | torreta | tambor preto, duas fileiras de lâminas douradas e lâmina dourada maior no topo | super turbilhão |
+| 3 | 1 | Mais Tachinhas | torreta (parâmetro) | dez bicos | mais tachinhas |
+| 3 | 2 | Ainda Mais Tachinhas | torreta (parâmetro) | doze bicos | ainda mais |
+| 3 | 3 | Pulverizador de Tachinhas | torreta | dezesseis bicos num tambor mais alto | pulveriza |
+| 3 | 4 | Sobrecarga | torreta | duas bobinas ciano em volta do tambor e antena | sobrecarga |
+| 3 | 5 | Zona das Tachinhas | torreta, base | tambor dourado de tampa vermelha, duas fileiras de dezesseis bicos; prato maior de aro dourado | zona coberta |
