@@ -380,8 +380,12 @@ char Pista::mudar_modo(int tid, int m) {
 
 char Pista::mirar(int tid, double x, double y) {
     TorreP t = torre(tid);
-    if (!t || !(t->chave == "dartling" || t->chave == "morteiro")) return ERRO_INVALIDO;
+    if (!t) return ERRO_INVALIDO;
+    // o As so escolhe o centro da rota depois do upgrade Rota Centralizada (caminho 3, tier 2)
+    const bool as_centrado = t->chave == "as" && t->caminhos[2] >= 2;
+    if (!(t->chave == "dartling" || t->chave == "morteiro" || as_centrado)) return ERRO_INVALIDO;
     if (!(x >= 0 && x <= LARGURA_MAPA && y >= 0 && y <= ALTURA_MAPA)) return ERRO_INVALIDO;
+    if (as_centrado) t->rota = 3;
     t->mx = x;
     t->my = y;
     t->tem_mira = true;
@@ -390,9 +394,18 @@ char Pista::mirar(int tid, double x, double y) {
 
 char Pista::opcao(int tid, int valor) {
     TorreP t = torre(tid);
-    if (!t || t->chave != "bumerangue" || valor < 0 || valor > 1) return ERRO_INVALIDO;
-    t->mao = valor;
-    return OK;
+    if (!t || valor < 0) return ERRO_INVALIDO;
+    if (t->chave == "bumerangue" && valor <= 1) {
+        t->mao = valor;
+        return OK;
+    }
+    if (t->chave == "as" && valor <= 3) {
+        if (valor == 3 && t->caminhos[2] < 2) return ERRO_BLOQUEADO;
+        if (valor == 3 && !t->tem_mira) t->mx = t->cx, t->my = t->cy, t->tem_mira = true;
+        t->rota = valor;
+        return OK;
+    }
+    return ERRO_INVALIDO;
 }
 
 char Pista::usar_habilidade(int tid, int idx) {
@@ -773,10 +786,21 @@ Posicao Pista::mira_antecipada(const Torre& t, const Ataque& at, const Bloon& b)
 void Pista::mover_torre(Torre& t) {
     if (t.dfn->mov == Mov::ORBITA) {
         t.orbita += DT * 1.3;
-        const double raio = 110.0;
-        t.x = t.cx + std::cos(t.orbita) * raio;
-        t.y = t.cy + std::sin(t.orbita) * raio * 0.75;
-        t.ang = graus(t.orbita) + 90;
+        const double raio = 110.0, o = t.orbita;
+        const double ax = t.x, ay = t.y;
+        if (t.rota == 1) {  // infinito: um 8 deitado
+            t.x = t.cx + std::cos(o) * raio * 1.7;
+            t.y = t.cy + std::sin(2 * o) * raio * 0.55;
+        } else if (t.rota == 2) {  // oito: um 8 em pe
+            t.x = t.cx + std::sin(2 * o) * raio * 0.55;
+            t.y = t.cy + std::cos(o) * raio * 1.3;
+        } else {  // circulo, em volta da pista ou do ponto escolhido
+            const bool centrado = t.rota == 3 && t.tem_mira;
+            t.x = (centrado ? t.mx : t.cx) + std::cos(o) * raio;
+            t.y = (centrado ? t.my : t.cy) + std::sin(o) * raio * 0.75;
+        }
+        // o nariz aponta para onde o aviao anda
+        if (t.x != ax || t.y != ay) t.ang = graus(std::atan2(t.y - ay, t.x - ax));
     } else if (t.dfn->mov == Mov::HELI) {
         const double limite = t.st.persegue ? 9999 : 260;
         Bloon* melhor = nullptr;

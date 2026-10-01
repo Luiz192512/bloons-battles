@@ -61,6 +61,7 @@ private:
     void pausar(bool v);
     void alternar_auto();
     void alternar_mira(int id);
+    void proxima_rota(int id);
     void reiniciar();
     void desistir();
     void enviar(const Envio& env);

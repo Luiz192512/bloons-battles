@@ -126,6 +126,16 @@ void RenderPista::desenhar(int selecionada) {
 }
 
 void RenderPista::desenhar_torre(const Torre& t, bool sel) {
+    if (t.chave == "as") {
+        // pista de pouso no chao, onde o As foi colocado (desenho provisorio, com as pecas da interface)
+        const float px = static_cast<float>(t.cx), py = static_cast<float>(t.cy);
+        const Rectangle r{px - 30, py - 17, 60, 34};
+        if (sel) ui::ret(ui::inflar(r, 5, 5), ui::AMARELO, 10);
+        ui::ret(ui::inflar(r, 3, 3), ui::TINTA, 9);
+        ui::ret(r, rgb(250, 200, 50), 6);
+        ui::ret(ui::inflar(r, -4, -4), rgb(72, 74, 84), 4);
+        for (int k = 0; k < 4; ++k) DrawRectangleRec({px - 22 + k * 13.0f, py - 2, 7, 4}, ui::BRANCO);
+    }
     const float tam = tamanho_torre(t);
     const float x = static_cast<float>(t.x), y = static_cast<float>(t.y);
     const anim::Quadro q = animador_.quadro(t.id, ui::tempo());

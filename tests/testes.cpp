@@ -472,6 +472,35 @@ TESTE(b04_sandbox_dinheiro_vidas_e_comandos) {
     CHECA_IGUAL(n.aplicar(1, "Xb:vermelho:5"), ERRO_INVALIDO);
 }
 
+TESTE(b05_as_rotas_e_rota_centralizada) {
+    Partida p("solo", "prado", 1, "sandbox");
+    Pista& pi = p.pista(1);
+    CHECA_IGUAL(p.aplicar(1, "Tas@600,360"), OK);
+    const Torre& t = *pi.torres.at(1);
+    // cada rota varre uma caixa diferente em volta da pista
+    auto caixa = [&](int rota) {
+        CHECA_IGUAL(p.aplicar(1, "O1:" + std::to_string(rota)), OK);
+        double minx = 1e9, maxx = -1e9, miny = 1e9, maxy = -1e9;
+        for (int i = 0; i < 30 * 12; ++i) {
+            p.passo();
+            if (i < 5) continue;
+            minx = std::min(minx, t.x), maxx = std::max(maxx, t.x), miny = std::min(miny, t.y), maxy = std::max(maxy, t.y);
+        }
+        return std::make_pair(maxx - minx, maxy - miny);
+    };
+    const auto circ = caixa(0), inf = caixa(1), oito = caixa(2);
+    CHECA(inf.first > circ.first * 1.4 && inf.second < circ.second);    // largo e baixo
+    CHECA(oito.second > circ.second * 1.4 && oito.first < circ.first);  // alto e estreito
+    // Rota Centralizada so depois do upgrade (caminho 3, tier 2)
+    CHECA_IGUAL(p.aplicar(1, "O1:3"), ERRO_BLOQUEADO);
+    CHECA_IGUAL(p.aplicar(1, "A1@200,200"), ERRO_INVALIDO);
+    for (int k = 0; k < 2; ++k) CHECA_IGUAL(p.aplicar(1, "U1:2"), OK);
+    CHECA_IGUAL(p.aplicar(1, "A1@200,200"), OK);
+    CHECA_IGUAL(t.rota, 3);
+    for (int i = 0; i < 60; ++i) p.passo();
+    CHECA(std::hypot(t.x - 200, t.y - 200) < 120);
+}
+
 TESTE(btd6_criticos_a_cada_n_tiros) {
     Partida p = solo();
     Pista& pi = p.pista(1);

@@ -107,6 +107,7 @@ struct Torre {
     double mx = 0.0, my = 0.0;
     bool tem_mira = false;
     int mao = 0;  // Bumerangue (comando O): 0 arremessa com a direita, 1 com a esquerda (inverte o arco)
+    int rota = 0;  // As (comando O): 0 circulo, 1 infinito, 2 oito, 3 em volta do ponto mirado (Rota Centralizada)
     double ang = -90.0;
     double turbo = 1.0, turbo_t = 0.0;
     double temporaria;

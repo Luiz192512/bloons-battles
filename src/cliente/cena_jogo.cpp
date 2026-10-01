@@ -192,6 +192,8 @@ void CenaJogo::tecla(int k) {
             alternar_mira(t->id);
         else if (t && t->chave == "morteiro")
             definindo_alvo_ = definindo_alvo_ == t->id ? 0 : t->id;
+        else if (t && t->chave == "as")
+            proxima_rota(t->id);
         else if (t)
             comando("M" + std::to_string(t->id) + ":" + std::to_string((t->modo + 1) % 4));
         return;
@@ -279,6 +281,8 @@ void CenaJogo::clique(Vector2 pos) {
     double md = 1e9;
     for (auto& [id, t] : pista().torres) {
         double d = (t->x - x) * (t->x - x) + (t->y - y) * (t->y - y);
+        // o As tambem se seleciona pela pista de pouso, que fica parada
+        if (t->chave == "as") d = std::min(d, (t->cx - x) * (t->cx - x) + (t->cy - y) * (t->cy - y));
         if (d < (t->dfn->raio + 10) * (t->dfn->raio + 10) && d < md) melhor = t.get(), md = d;
     }
     selecionada_ = melhor ? melhor->id : 0;
@@ -303,6 +307,21 @@ void CenaJogo::vender() {
 void CenaJogo::alternar_mira(int id) {
     if (!mira_travada_.erase(id)) mira_travada_.insert(id);
     mira_enviada_ = {-1, -1};  // ao destravar, manda o cursor de novo mesmo parado
+}
+
+// As: circulo, infinito, oito e, com o upgrade, a rota em volta de um ponto escolhido no mapa
+void CenaJogo::proxima_rota(int id) {
+    TorreP t = pista().torre(id);
+    if (!t) return;
+    if (definindo_alvo_ == id) {  // desistiu de escolher o centro: volta ao circulo
+        definindo_alvo_ = 0;
+        comando("O" + std::to_string(id) + ":0");
+        return;
+    }
+    const int n = t->caminhos[2] >= 2 ? 4 : 3;
+    const int prox = (t->rota + 1) % n;
+    if (prox == 3) definindo_alvo_ = id;  // o clique no mapa manda o comando A, que ja liga a rota 3
+    else comando("O" + std::to_string(id) + ":" + std::to_string(prox));
 }
 
 void CenaJogo::alternar_auto() { ctl_->partida->automatico = !ctl_->partida->automatico; }
@@ -402,7 +421,8 @@ void CenaJogo::desenhar() {
     TorreP sel = selecionada_ ? pista().torre(selecionada_) : nullptr;
     render_.desenhar(selecionada_);
     if (sel) circulo_alcance(static_cast<float>(sel->x), static_cast<float>(sel->y), sel->alcance(), true);
-    if (sel && sel->chave == "morteiro" && (sel->tem_mira || definindo_alvo_ == sel->id)) {
+    if (sel && (sel->chave == "morteiro" ? sel->tem_mira : sel->chave == "as" && sel->rota == 3) ||
+        (sel && definindo_alvo_ == sel->id)) {
         // marca do ponto de impacto: no ponto fixo, ou seguindo o cursor enquanto o jogador escolhe
         const bool esc = definindo_alvo_ == sel->id && mouse.x < PAINEL_X;
         const Vector2 c = esc ? mouse : Vector2{static_cast<float>(sel->mx), static_cast<float>(sel->my)};
@@ -784,6 +804,16 @@ void CenaJogo::rodape_upgrade(const Torre& t, float x, float y, float w, Vector2
         botoes_up_.push_back({ra, [this, id] { alternar_mira(id); }});
         if (ui::dentro(ra, mouse))
             dicas_.push_back({mouse, "Mira da Dartling", "Segue o cursor. Clique ou Tab para travar onde está."});
+    } else if (t.chave == "as") {
+        // o As nao escolhe bloon: o jogador escolhe a rota do voo
+        static const char* ROTAS[4] = {"Círculo", "Infinito", "Oito", "Centralizada"};
+        const bool esperando = definindo_alvo_ == id;
+        ui::texto("ROTA", cx, ra.y + 12, 10, rgb(207, 239, 191), 0, Ancora::CENTER, ui::Peso::TEXTO);
+        ui::texto(esperando ? "Clique no mapa" : ROTAS[t.rota], cx, ra.y + 28, 13, esperando ? ui::AMARELO : ui::BRANCO, 3,
+                  Ancora::CENTER);
+        botoes_up_.push_back({ra, [this, id] { proxima_rota(id); }});
+        if (ui::dentro(ra, mouse))
+            dicas_.push_back({mouse, "Rota do voo", "Clique ou Tab para trocar. A Rota Centralizada pede o upgrade e um clique no mapa."});
     } else if (t.chave == "morteiro") {
         // o Morteiro bombardeia um ponto fixo, escolhido com um clique no mapa
         const bool esperando = definindo_alvo_ == id;
