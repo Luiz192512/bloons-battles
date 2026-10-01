@@ -40,7 +40,7 @@ python tools/blender/conferir_variacoes.py dardo
 |---|---|---|---|---|---|
 | dardo | 64 de 64 | 8.929 (2-0-5) | 6 | 12,7 MB | 0-0-1 e 3-1-0 mudam pouco a 48 px; o capuz é largo para cobrir as orelhas |
 | bumerangue | 64 de 64 | 8.876 (5-2-0) | 5 | 10,8 MB | 1-0-0 muda pouco (só o gume e as pontas de aço); o bumerangue lê como um arco; a mochila do 0-4-0 some na vista do jogo |
-| bomba | 1 de 64 (só a base) | 1.984 | 2 | 0,07 MB | upgrades entram na Parte B |
+| bomba | 64 de 64 | 6.152 (2-0-5) | 2 | 6,0 MB | 1-0-0 muda pouco (cano 10% mais grosso); 4-0-0 e 5-0-0 se parecem de cima (o 5 é preto com cinta vermelha) |
 | bucaneiro | 1 de 64 (só a base) | 8.868 | 5 | 0,23 MB | upgrades entram na Parte B; a base já usa 8.868 triângulos, sobra pouco para peças |
 
 As outras torres ainda não foram começadas.
@@ -133,3 +133,31 @@ em qualquer combinação.
 Composições resolvidas: em **2-0-5** o kylie ganha dentes de serra de aço (o caminho 1 afia a arma
 que estiver na mão); em **0-1-4** a faixa da testa não cabe (chapéu) nem o cachecol (colete), e o
 tier vira munhequeira; em **5-0-2** as glaives ficam em brasa.
+
+## Bomba (Canhão Bomba)
+
+Base: máquina sem macaco. Carreta de madeira com duas rodas (`base`) e o cano com o pavio aceso
+(`torreta`). A torreta lê os três tiers: o caminho principal escolhe o tipo (canhão,
+lança-mísseis ou feixe de canos) e os tiers cruzados enfeitam qualquer tipo.
+
+| Caminho | Tier | Upgrade (nome no clone) | Encaixe | Peça | O que comunica |
+|---|---|---|---|---|---|
+| 1 | 1 | Bombas Maiores | torreta (parâmetro) | cano 10% mais grosso; como cruzado, aro dourado grosso na boca | explosão maior |
+| 1 | 2 | Bombas Pesadas | torreta (parâmetro) | cano 18% mais grosso com cinta de aço; como cruzado, cinta de aço | mais dano |
+| 1 | 3 | Bombas Muito Grandes | torreta | canhão curto e bem mais grosso, de cinta vermelha | bomba que empurra |
+| 1 | 4 | Impacto Bloon | torreta, base | canhão maior com coroa de pontas amarelas na boca; carreta com chapas de aço | atordoa |
+| 1 | 5 | Esmaga Bloon | torreta, base | canhão enorme preto de anéis dourados e pontas de ouro; carreta de aço com ouro | esmaga tudo |
+| 2 | 1 | Recarga Rápida | extra | pilha de três bombas de reserva ao lado da carreta | recarrega rápido |
+| 2 | 2 | Lança-Mísseis | torreta (parâmetro) | nariz vermelho de míssil saindo da boca de cada cano | míssil |
+| 2 | 3 | Destruidor de M.O.A.B. | torreta, base | tubo lança-mísseis verde com o míssil na boca; carreta verde | caça dirigível |
+| 2 | 4 | Assassino de M.O.A.B. | torreta, base | dois tubos lado a lado com anéis amarelos | mais dano em dirigível |
+| 2 | 5 | Eliminador de M.O.A.B. | torreta, base | um míssil gigante preto de faixas amarelas e nariz vermelho, com aletas, sobre um trilho | o míssil definitivo |
+| 3 | 1 | Alcance Extra | torreta (parâmetro) | cano 22% mais comprido (vale para qualquer tipo) | alcança mais longe |
+| 3 | 2 | Bombas de Fragmentação | torreta (parâmetro) | coroa de cravos amarelos em volta do cano | solta fragmentos |
+| 3 | 3 | Bombas de Cacho | torreta | feixe de três canos finos presos por um aro | mini bombas |
+| 3 | 4 | Cacho Recursivo | torreta, base | feixe de cinco canos com cintas ciano e aro azul; chapas na carreta | cacho de cachos |
+| 3 | 5 | Blitz de Bombas | torreta, base | feixe de sete canos vermelhos com ouro | chuva de bombas |
+
+Composições resolvidas: em **2-0-5** cada um dos sete canos ganha o aro dourado e a cinta de aço;
+em **0-2-4** cada cano do feixe leva o nariz de míssil; em **5-0-2** os cravos amarelos entram
+atrás da coroa de pontas.
