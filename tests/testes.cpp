@@ -525,6 +525,29 @@ TESTE(b06_heli_ponto_fixo_e_patrulha) {
     CHECA_IGUAL(p.aplicar(1, "O1:0"), OK);  // volta a procurar bloons sozinho
 }
 
+TESTE(b12_turbilhao_lanca_laminas_em_espiral) {
+    Partida p("solo", "prado", 1, "sandbox");
+    Pista& pi = p.pista(1);
+    CHECA_IGUAL(p.aplicar(1, "Ttachinha@600,360"), OK);
+    for (int k = 0; k < 4; ++k) CHECA_IGUAL(p.aplicar(1, "U1:1"), OK);  // Turbilhao de Laminas
+    CHECA_IGUAL(p.aplicar(1, "Xh"), OK);
+    CHECA_IGUAL(p.aplicar(1, "B1:0"), OK);
+    // sem bloon nenhum no mapa, as laminas saem assim mesmo e passam longe do alcance da torre
+    double longe = 0;
+    std::set<int> direcoes;
+    for (int i = 0; i < 30 * 3; ++i) {
+        p.passo();
+        for (auto& pr : pi.projeteis) {
+            longe = std::max(longe, std::hypot(pr->x - 600, pr->y - 360));
+            direcoes.insert(static_cast<int>(std::fmod(pr->ang + 720, 360) / 30));
+        }
+    }
+    CHECA(longe > 300);
+    CHECA(direcoes.size() >= 10);  // o giro cobre quase todos os setores de 30 graus
+    for (int i = 0; i < 30 * 6; ++i) p.passo();
+    CHECA(pi.projeteis.empty());  // acabou junto com a habilidade
+}
+
 TESTE(btd6_criticos_a_cada_n_tiros) {
     Partida p = solo();
     Pista& pi = p.pista(1);

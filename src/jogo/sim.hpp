@@ -113,6 +113,10 @@ struct Torre {
     bool patrulha_volta = false;
     double ang = -90.0;
     double turbo = 1.0, turbo_t = 0.0;
+    // habilidade "espiral" (Turbilhao de Laminas): bracos de projeteis que giram por alguns segundos
+    double espiral_t = 0.0, espiral_ang = 0.0, espiral_prox = 0.0;
+    int espiral_bracos = 0;
+    AtaqueP espiral_at;
     double temporaria;
     double orbita = 0.0;
     Buffs buff;

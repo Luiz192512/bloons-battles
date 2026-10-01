@@ -441,6 +441,22 @@ void Pista::executar_habilidade(const TorreP& tp, const J& h) {
     if (tipo == "turbo") {
         t.turbo = h["valor"].get<double>();
         t.turbo_t = h["dur"].get<double>();
+    } else if (tipo == "espiral") {
+        // laminas do ataque principal, sem limite de alcance, saindo em bracos que giram
+        if (!t.ats.empty()) {
+            auto a = std::make_shared<Ataque>(*t.ats[0]);
+            a->tipo = TipoAtaque::PROJETIL;
+            a->dist = 2200;
+            a->vel = 620;
+            a->busca = false;
+            a->pierce = h.value("pierce", 12.0);
+            a->visual = "lamina";
+            a->critico = false;
+            t.espiral_at = a;
+            t.espiral_t = h["dur"].get<double>();
+            t.espiral_bracos = static_cast<int>(h.value("n", 2.0));
+            t.espiral_prox = 0.0;
+        }
     } else if (tipo == "turbo_area") {
         std::set<std::string> filtro;
         std::stringstream ss(h.value("filtro", std::string()));
@@ -850,6 +866,16 @@ void Pista::passo_torre(const TorreP& tp) {
     if (t.turbo_t > 0) {
         t.turbo_t -= DT;
         if (t.turbo_t <= 0) t.turbo = 1.0;
+    }
+    if (t.espiral_t > 0 && t.espiral_at) {
+        t.espiral_t -= DT;
+        t.espiral_prox -= DT;
+        if (t.espiral_prox <= 0) {
+            t.espiral_prox = 0.066;
+            for (int k = 0; k < t.espiral_bracos; ++k)
+                disparar(tp, t.espiral_at, t.espiral_ang + k * 360.0 / t.espiral_bracos);
+            t.espiral_ang += 17.0;
+        }
     }
     for (double& r : t.hab_rec)
         if (r > 0) r -= DT;

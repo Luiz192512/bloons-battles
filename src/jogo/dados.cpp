@@ -146,8 +146,8 @@ static DefTorre t_tachinha() {
             U("Tachinhas de Longo Alcance", 100, "+17% de alcance.", {{"alcance", 16}, {"dist", 20}, {"vel", 1.17}}),
             U("Tachinhas de Super Alcance", 225, "+17% de alcance e pierce 4.", {{"alcance", 16}, {"dist", 15}, {"pierce", 3}}),
             U("Atirador de Lâminas", 550, "Lâminas: pierce 8 e alcance 46.", {{"pierce", 4}, {"alcance", 60}, {"raio_proj", 4}, {"visual", "lamina"}}),
-            U("Turbilhão de Lâminas", 2700, "Lâminas com 2 de dano. Habilidade: redemoinho de lâminas.", {{"dano", 1}, {"hab", H("Turbilhão", "turbo", 20, {{"dur", 3}, {"valor", 0.05}})}}),
-            U("Super Turbilhão", 15000, "5 de dano, +5 em cerâmica, estoura tudo. Habilidade de 9 s.", {{"dano", 3}, {"cer", 5}, {"dtype", "normal"}, {"hab", H("Super Turbilhão", "turbo", 20, {{"dur", 9}, {"valor", 0.04}})}}),
+            U("Turbilhão de Lâminas", 2700, "Lâminas com 2 de dano. Habilidade: 2 braços de lâminas em espiral pelo mapa por 3 s.", {{"dano", 1}, {"hab", H("Turbilhão", "espiral", 20, {{"dur", 3}, {"n", 2}, {"pierce", 12}})}}),
+            U("Super Turbilhão", 15000, "5 de dano, +5 em cerâmica, estoura tudo. Habilidade: 4 braços de lâminas por 9 s.", {{"dano", 3}, {"cer", 5}, {"dtype", "normal"}, {"hab", H("Super Turbilhão", "espiral", 20, {{"dur", 9}, {"n", 4}, {"pierce", 500}})}}),
         },
         {
             U("Mais Tachinhas", 150, "10 tachinhas.", {{"n", 2}}),
