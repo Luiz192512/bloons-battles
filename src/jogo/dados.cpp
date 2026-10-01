@@ -495,8 +495,8 @@ static DefTorre t_super() {
             U("Rajadas Laser", 2000, "Laser: +1 pierce.", {{"dtype", "energia"}, {"pierce", 1}, {"raio_proj", 3}, {"visual", "laser"}}),
             U("Rajadas de Plasma", 2500, "Plasma: 50% mais rápido e estoura chumbo.", {{"dtype", "normal"}, {"cad", 0.667}, {"raio_proj", 1}, {"visual", "plasma"}}),
             U("Avatar do Sol", 20000, "3 raios de sol por tiro, +4 pierce.", {{"n", 2}, {"spread", 30}, {"pierce", 4}, {"vel", 2.0}, {"visual", "sol"}}),
-            U("Templo do Sol", 100000, "Raio de sol único: 5 de dano, pierce 20.", {{"n", -2}, {"spread", 0}, {"dano", 4}, {"pierce", 14}, {"cad", 1.67}, {"alcance", 60}}),
-            U("Verdadeiro Deus Sol", 500000, "Raio de 15 de dano.", {{"dano", 10}}),
+            U("Templo do Sol", 100000, "Raio de sol único: 5 de dano, pierce 20. Sacrifica as torres no alcance e ganha bônus por categoria.", {{"n", -2}, {"spread", 0}, {"dano", 4}, {"pierce", 14}, {"cad", 1.67}, {"alcance", 60}}),
+            U("Verdadeiro Deus Sol", 500000, "Raio de 15 de dano. Sacrifica de novo as torres no alcance.", {{"dano", 10}}),
         },
         {
             U("Super Alcance", 1500, "+10 de alcance e +1 pierce.", {{"alcance", 40}, {"pierce", 1}}),
@@ -705,7 +705,7 @@ static DefTorre t_vila() {
             U("Comércio Macaco", 500, "15% de desconto.", {{"desconto", 0.15}}),
             U("Cidade Macaco", 10000, "Torres próximas ganham 50% mais por estouro.", {{"buffs", {{"ouro", 0.5}}}}),
             U("Metrópole Macaco", 3000, "+10 de alcance.", {{"alcance", 40}}),
-            U("Macacópolis", 5000, "Sacrifica fazendas para gerar dinheiro.", J::object()),
+            U("Macacópolis", 5000, "Sacrifica as Fazendas de Bananas no alcance: 15% do valor delas vira renda por rodada.", J::object()),
         },
     };
     t.categoria = "suporte";

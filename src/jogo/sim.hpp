@@ -120,6 +120,8 @@ struct Torre {
     double temporaria;
     double orbita = 0.0;
     Buffs buff;
+    Buffs sacrificio;            // bonus permanente das torres sacrificadas (Templo do Sol)
+    double renda_sacrificio = 0;  // dinheiro por rodada das fazendas sacrificadas (Macacopolis)
     std::vector<std::pair<int, double>> pontos_trilha;
     Stats st;
     std::vector<AtaqueP> ats;  // st.ataques congelados (projeteis guardam o ataque que os criou)
@@ -198,6 +200,10 @@ public:
     char vender(int tid);
     char mudar_modo(int tid, int modo);
     char mirar(int tid, double x, double y);
+    // Upgrades especiais do BTD6. requisito: texto do que falta para comprar (vazio = liberado).
+    // sacrificio: texto de aviso se a compra destroi torres vizinhas (vazio = compra comum).
+    std::string requisito_upgrade(const Torre& t, int p) const;
+    std::string aviso_sacrificio(const Torre& t, int p) const;
     char coletar(int cid);
     void soltar(double x, double y, double valor, double vida, const std::string& visual);
     char opcao(int tid, int valor);
@@ -293,6 +299,7 @@ private:
     void colidir(Projetil& p);
     void passo_pilhas();
     void mover_bloons();
+    void sacrificar(Torre& t, int p);
     void regenerar(Bloon& b);
 
     std::unordered_map<std::int64_t, std::vector<Bloon*>> grade_;

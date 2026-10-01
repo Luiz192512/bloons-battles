@@ -23,6 +23,7 @@ public:
     void sair() override;
     void selecionar(int torre_id) { selecionada_ = torre_id; }  // usado pela demo
     void mostrar_painel_bloons() { painel_bloons_ = true; }     // usado pelo --sandbox
+    void pedir_upgrade(int caminho) { upar(caminho); }           // usado pelo --up (como apertar , . /)
     void abrir_pausa() { pausar(true); }
 
 private:
@@ -89,6 +90,7 @@ private:
     void mensagens();
     Rectangle sobreposicao(const std::string& titulo, Color cor);
     void tela_pausa();
+    void tela_sacrificio();
     void tela_fim();
 
     std::unique_ptr<Controlador> ctl_;
@@ -101,6 +103,7 @@ private:
     std::set<int> mira_travada_;
     std::map<int, int> modo_heli_;  // 0 automatico, 1 segue o mouse, 2 travado no lugar, 3 patrulha
     int definindo_alvo_ = 0;
+    int confirma_up_ = -1;  // caminho do upgrade com sacrificio esperando o jogador confirmar
     std::set<int> coleta_pedida_;  // bananas e caixas ja pedidas, para nao repetir o comando C
     // Sandbox: painel de envio de bloons no lugar da loja (F2 ou o botao da grade alterna)
     bool painel_bloons_ = false;

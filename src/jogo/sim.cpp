@@ -357,10 +357,11 @@ char Pista::upar(int tid, int p) {
     TorreP t = torre(tid);
     if (!t || t->temporaria || p < 0 || p > 2) return ERRO_INVALIDO;
     auto c = custo_upgrade(*t, p);
-    if (!c) return ERRO_BLOQUEADO;
+    if (!c || !requisito_upgrade(*t, p).empty()) return ERRO_BLOQUEADO;
     if (dinheiro < *c) return ERRO_DINHEIRO;
     dinheiro -= *c;
     t->investido += *c;
+    if (!aviso_sacrificio(*t, p).empty()) sacrificar(*t, p);
     t->caminhos[p] += 1;
     t->recalcular();
     preparar_trilha(*t);
@@ -445,6 +446,60 @@ char Pista::coletar(int cid) {
         return OK;
     }
     return ERRO_INVALIDO;
+}
+
+std::string Pista::requisito_upgrade(const Torre& t, int p) const {
+    // Macacopolis (Vila, caminho 3, tier 5) precisa de uma Fazenda de Bananas no alcance para sacrificar
+    if (t.chave == "vila" && p == 2 && t.caminhos[2] == 4) {
+        const double r2 = quad(t.alcance());
+        for (auto& [id, f] : torres)
+            if (f->chave == "fazenda" && quad(f->x - t.x) + quad(f->y - t.y) <= r2) return "";
+        return "Requer Fazenda de Bananas no alcance";
+    }
+    return "";
+}
+
+std::string Pista::aviso_sacrificio(const Torre& t, int p) const {
+    if (t.chave == "super" && p == 0 && t.caminhos[0] == 3)
+        return "O Templo exige sacrifício. Todas as torres no alcance serão destruídas e fortalecem o Templo.";
+    if (t.chave == "super" && p == 0 && t.caminhos[0] == 4)
+        return "Invocar o Verdadeiro Deus Sol? As torres no alcance serão sacrificadas de novo.";
+    if (t.chave == "vila" && p == 2 && t.caminhos[2] == 4)
+        return "As Fazendas de Bananas no alcance serão sacrificadas e viram renda da Macacópolis.";
+    return "";
+}
+
+// Destroi as torres vizinhas e guarda o bonus. Aproximacao do BTD6: la o Templo tem faixas de valor por
+// categoria (ate 3 categorias); aqui cada categoria da um tipo de bonus, proporcional ao valor sacrificado.
+void Pista::sacrificar(Torre& t, int p) {
+    (void)p;
+    const bool so_fazendas = t.chave == "vila";
+    const double r2 = quad(t.alcance());
+    std::map<std::string, double> total;
+    std::vector<int> ids;
+    for (auto& [id, f] : torres) {
+        if (f.get() == &t || f->dfn->heroi || f->temporaria) continue;
+        if (so_fazendas && f->chave != "fazenda") continue;
+        if (quad(f->x - t.x) + quad(f->y - t.y) > r2) continue;
+        total[f->dfn->categoria] += f->investido;
+        ids.push_back(id);
+    }
+    for (int id : ids) {
+        evento({"venda", torres[id]->x, torres[id]->y});
+        torres.erase(id);
+    }
+    if (so_fazendas) {
+        double soma = 0;
+        for (auto& [cat, v] : total) soma += v;
+        t.renda_sacrificio += soma * 0.15;  // por rodada
+        return;
+    }
+    Buffs& b = t.sacrificio;
+    b.vazio = false;
+    b.dano += std::min(5.0, std::floor(total["primaria"] / 5000.0));
+    b.pierce += std::min(20.0, std::floor(total["militar"] / 2500.0));
+    b.vel_pct += std::min(0.5, total["magica"] / 50000.0);
+    b.alcance_pct += std::min(0.3, total["suporte"] / 50000.0);
 }
 
 char Pista::usar_habilidade(int tid, int idx) {
@@ -766,6 +821,7 @@ void Pista::recalcular_buffs() {
             }
         }
         for (auto& [tipo, p] : t->pocoes) t->buff.mesclar(p.b);
+        if (!t->sacrificio.vazio) t->buff.mesclar(t->sacrificio);
     }
 }
 
@@ -1510,6 +1566,10 @@ void Pista::receber(double v) {
 void Pista::pagar_renda() {
     if (so_estouro_e_rodada) return;  // CHIMPS: fazendas, bancos e renda de heroi nao pagam
     for (auto& [id, t] : torres) {
+        if (t->renda_sacrificio > 0) {
+            receber(t->renda_sacrificio);
+            evento({"dinheiro", t->x, t->y, std::floor(t->renda_sacrificio)});
+        }
         for (const Ataque& at : t->st.ataques) {
             if (at.tipo == TipoAtaque::RENDA && at.valor) {
                 // Fazenda de bananas: a renda cai no chao em 4 cachos e o jogador coleta. Banco (caminho 2,

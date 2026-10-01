@@ -645,6 +645,39 @@ TESTE(b15_sniper_elite_alvo_e_caixa) {
     CHECA_IGUAL(p.aplicar(1, "C" + std::to_string(pi.coletaveis.back().id)), OK);
 }
 
+TESTE(b08_b10_sacrificios_do_templo_e_da_macacopolis) {
+    Partida p("solo", "prado", 1, "sandbox");
+    Pista& pi = p.pista(1);
+    // Templo do Sol: destroi os vizinhos e fica com o bonus
+    CHECA_IGUAL(p.aplicar(1, "Tsuper@750,270"), OK);
+    CHECA_IGUAL(p.aplicar(1, "Tdardo@700,310"), OK);
+    for (int k = 0; k < 5; ++k) CHECA_IGUAL(p.aplicar(1, "U2:0"), OK);  // Ultra-Juggernaut: mais de $15.000
+    CHECA_IGUAL(p.aplicar(1, "Tdardo@980,650"), OK);                    // longe: sobrevive
+    for (int k = 0; k < 3; ++k) CHECA_IGUAL(p.aplicar(1, "U1:0"), OK);
+    const Torre& templo = *pi.torres.at(1);
+    CHECA(!pi.aviso_sacrificio(templo, 0).empty());
+    CHECA(pi.aviso_sacrificio(templo, 1).empty());
+    CHECA_IGUAL(p.aplicar(1, "U1:0"), OK);
+    CHECA(!pi.torres.count(2));
+    CHECA(pi.torres.count(3));
+    CHECA(templo.sacrificio.dano >= 3);
+    p.passo();
+    CHECA(templo.buff.dano >= 3);
+    // Macacopolis: sem fazenda no alcance nao compra; com fazenda, sacrifica e rende por rodada
+    CHECA_IGUAL(p.aplicar(1, "Tvila@300,240"), OK);
+    const int vila = pi.torres.rbegin()->first;
+    const std::string up = "U" + std::to_string(vila) + ":2";
+    for (int k = 0; k < 4; ++k) CHECA_IGUAL(p.aplicar(1, up), OK);
+    CHECA(!pi.requisito_upgrade(*pi.torres.at(vila), 2).empty());
+    CHECA_IGUAL(p.aplicar(1, up), ERRO_BLOQUEADO);
+    CHECA_IGUAL(p.aplicar(1, "Tfazenda@300,180"), OK);
+    const int faz = pi.torres.rbegin()->first;
+    CHECA(pi.requisito_upgrade(*pi.torres.at(vila), 2).empty());
+    CHECA_IGUAL(p.aplicar(1, up), OK);
+    CHECA(!pi.torres.count(faz));
+    CHECA(pi.torres.at(vila)->renda_sacrificio > 100);
+}
+
 TESTE(btd6_criticos_a_cada_n_tiros) {
     Partida p = solo();
     Pista& pi = p.pista(1);
@@ -855,6 +888,8 @@ TESTE(sim_todas_as_torres_atacam_sem_travar) {
             pi.dinheiro = 1e7;
             const char* pos = t.agua ? "530,300" : "300,220";
             CHECA_IGUAL(p.aplicar(1, "T" + t.chave + "@" + pos), OK);
+            // a Macacopolis (Vila, caminho 3, tier 5) so compra com uma fazenda no alcance para sacrificar
+            if (t.chave == "vila" && principal == 2) CHECA_IGUAL(p.aplicar(1, "Tfazenda@300,170"), OK);
             for (int k = 0; k < 5; ++k) p.aplicar(1, "U1:" + std::to_string(principal));
             for (int k = 0; k < 2; ++k) p.aplicar(1, "U1:" + std::to_string((principal + 1) % 3));
             CHECA_IGUAL(pi.torre(1)->caminhos[principal], 5);

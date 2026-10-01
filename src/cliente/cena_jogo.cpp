@@ -119,6 +119,19 @@ std::vector<CenaJogo::Hab> CenaJogo::hab_lista() {
 
 // ============================================================== eventos
 void CenaJogo::evento(const ui::Evento& e) {
+    if (confirma_up_ >= 0 && !ctl_->terminou() && !menu_pausa_) {
+        // dialogo do sacrificio aberto: so ele recebe o clique; Esc cancela e Enter confirma
+        if (e.tipo == ui::Evento::TECLA && e.tecla == KEY_ESCAPE) confirma_up_ = -1;
+        else if (e.tipo == ui::Evento::TECLA && e.tecla == KEY_ENTER) upar(confirma_up_);
+        else
+            for (auto& [b, acao] : botoes_menu_)
+                if (b.clicou(e)) {
+                    Acao a = acao;
+                    a();
+                    return;
+                }
+        return;
+    }
     if (ctl_->terminou() || menu_pausa_) {
         if (menu_pausa_ && e.tipo == ui::Evento::TECLA && e.tecla == KEY_ESCAPE) {
             pausar(false);
@@ -305,6 +318,16 @@ void CenaJogo::upar(int p) {
         aviso("Caminho bloqueado ou no máximo.");
         return;
     }
+    if (const std::string req = pista().requisito_upgrade(*t, p); !req.empty()) {
+        aviso(req + ".");
+        return;
+    }
+    // upgrade que destroi torres vizinhas: pede confirmacao antes de mandar o comando
+    if (!pista().aviso_sacrificio(*t, p).empty() && confirma_up_ != p && pista().dinheiro >= *pista().custo_upgrade(*t, p)) {
+        confirma_up_ = p;
+        return;
+    }
+    confirma_up_ = -1;
     comando("U" + std::to_string(t->id) + ":" + std::to_string(p));
 }
 
@@ -507,6 +530,7 @@ void CenaJogo::desenhar() {
                   ui::AMARELO, 2, Ancora::CENTER);
     if (ctl_->terminou()) tela_fim();
     else if (menu_pausa_) tela_pausa();
+    else if (confirma_up_ >= 0) tela_sacrificio();
 }
 
 void CenaJogo::circulo_alcance(float x, float y, double r, bool valido) {
@@ -996,6 +1020,18 @@ void CenaJogo::linha_upgrade(const TorreP& tp, int pth, float x, float y, float 
                   Ancora::CENTER, ui::Peso::TEXTO);
         return;
     }
+    if (const std::string req = p.requisito_upgrade(t, pth); !req.empty()) {
+        // upgrade condicional: cinza, com o nome, o cadeado e o que falta
+        bloco(card, ui::CINZA, ui::CINZA_ESCURO, 12, 4, false);
+        arte::icone("cadeado", cc.x - 13, card.y + 10, 26);
+        nome_card(up.nome, rgb(236, 236, 240), card.y + 52);
+        const auto ls = ui::quebrar(req, 11, w - 12, ui::Peso::TEXTO);
+        for (size_t i = 0; i < ls.size() && i < 3; ++i)
+            ui::texto(ls[i], cc.x, card.y + 84 + i * 14.0f, 11, ui::AMARELO, 0, Ancora::CENTER, ui::Peso::TEXTO);
+        botoes_up_.push_back({card, [this, pth] { upar(pth); }});
+        if (ui::dentro(card, mouse)) dicas_.push_back({mouse, up.nome, up.desc + " " + req + "."});
+        return;
+    }
     const bool pode = p.dinheiro >= *custo;
     const bool sobre = ui::dentro(card, mouse);
     const Color face = pode ? (sobre ? rgb(90, 174, 240) : ui::AZUL) : rgb(108, 127, 148);
@@ -1234,6 +1270,31 @@ Rectangle CenaJogo::sobreposicao(const std::string& titulo, Color cor) {
     ui::painel_menu(r, 24);
     ui::texto(titulo, r.x + r.width / 2, r.y + 56, 44, cor, 6, Ancora::CENTER, ui::Peso::LOGO);
     return r;
+}
+
+void CenaJogo::tela_sacrificio() {
+    TorreP t = selecionada_ ? pista().torre(selecionada_) : nullptr;
+    const std::string txt = t ? pista().aviso_sacrificio(*t, confirma_up_) : "";
+    if (txt.empty()) {
+        confirma_up_ = -1;
+        return;
+    }
+    DrawRectangle(0, 0, ui::LARGURA, ui::ALTURA, rgb(22, 20, 26, 150));
+    const Rectangle r{ui::LARGURA / 2.0f - 290, ui::ALTURA / 2.0f - 140, 580, 280};
+    ui::painel_menu(r, 24);
+    ui::texto("SACRIFÍCIO", r.x + r.width / 2, r.y + 46, 34, ui::AMARELO, 6, Ancora::CENTER, ui::Peso::LOGO);
+    const auto linhas = ui::quebrar(txt, 17, r.width - 70, ui::Peso::TEXTO);
+    for (size_t i = 0; i < linhas.size() && i < 4; ++i)
+        ui::texto(linhas[i], r.x + r.width / 2, r.y + 100 + i * 24.0f, 17, ui::BRANCO, 0, Ancora::CENTER, ui::Peso::TEXTO);
+    ui::Botao nao{{r.x + 50, r.y + r.height - 78, 220, 54}, "Cancelar", ui::AMARELO, 20};
+    ui::Botao sim{{r.x + r.width - 270, r.y + r.height - 78, 220, 54}, "Sacrificar", ui::VERDE, 20};
+    nao.atalho = "Esc";
+    sim.atalho = "Enter";
+    nao.desenhar();
+    sim.desenhar();
+    botoes_menu_.push_back({nao, [this] { confirma_up_ = -1; }});
+    const int p = confirma_up_;
+    botoes_menu_.push_back({sim, [this, p] { upar(p); }});
 }
 
 void CenaJogo::tela_pausa() {

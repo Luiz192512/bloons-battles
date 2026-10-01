@@ -100,6 +100,8 @@ App::App(const std::vector<std::string>& args) {
             cena_ = std::make_unique<CenaJogo>(*this, std::move(ctl));
         } else if (args[i] == "--sel" && i + 1 < args.size()) {
             if (auto* j = dynamic_cast<CenaJogo*>(cena_.get())) j->selecionar(static_cast<int>(num(i + 1, 0)));
+        } else if (args[i] == "--up" && i + 1 < args.size()) {
+            if (auto* j = dynamic_cast<CenaJogo*>(cena_.get())) j->pedir_upgrade(static_cast<int>(num(i + 1, 0)));
         } else if (args[i] == "--bloons") {
             if (auto* j = dynamic_cast<CenaJogo*>(cena_.get())) j->mostrar_painel_bloons();
         } else if (args[i] == "--captura" && i + 1 < args.size()) {
