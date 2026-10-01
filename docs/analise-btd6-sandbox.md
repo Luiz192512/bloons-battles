@@ -8,7 +8,7 @@ jogando (forma e comportamento do disparo, visual de cada tier e interface).
 ## 0. Resumo
 
 Foram testadas no BTD6 as 22 torres que o clone também tem, cada uma nos 3 caminhos até o
-tier 5, e ainda o Beast Handler (tiers 4). O backlog da seção 6 tem **2 itens P0, 13 P1 e 11 P2**.
+tier 5, e ainda o Beast Handler (tiers 4). O backlog da seção 6 tem **2 itens P0, 14 P1 e 11 P2**.
 O clone já reproduz bem a maior parte dos disparos (divisão do Ultra-Juggernaut, glaives em
 órbita, leque do Triple Shot, cipós na trilha, zumbis, anéis de fogo e de tachinhas). As lacunas
 estão em modos de alvo, feedback visual e mecânicas especiais de upgrade.
@@ -26,10 +26,12 @@ As 10 lacunas de maior impacto:
 8. **Bananas não caem para coletar** (B09) e **Monkeyopolis sem a trava "Requires Banana Farm"**
    (B10).
 9. **Habilidade do Maelstrom é só turbo** (B12): no BTD6 é a espiral de serras pelo mapa.
-10. **Necromancer sem cemitério e sem contador** (B11).
+10. **Tier 5 sem troca de silhueta** (B27): no BTD6 o tier 5 vira outro objeto (catapulta, templo,
+    robô, lançador com cara de tubarão); no clone continua o mesmo macaco com um acessório.
 
-O clone não foi jogado nesta sessão (permissão negada). A coluna do clone vem do código e das
-capturas antigas. Depois, a leitura do código resolveu os 8 itens que estavam como "conferir".
+A coluna do clone vem do código e das capturas antigas, e a leitura do código resolveu os 8
+itens que estavam como "conferir". Depois o acesso ao clone foi liberado e ele foi jogado por
+pouco tempo no modo `--demo` (seção 3.1), o que rendeu o item B27.
 
 ## 1. Sessão
 
@@ -40,8 +42,9 @@ capturas antigas. Depois, a leitura do código resolveu os 8 itens que estavam c
 - **Data:** 30/09/2026.
 - **Conta:** nível 108. Todos os upgrades testados estavam liberados (a tela de Upgrades do Dart
   mostra os 15 e o Paragon). Só o Desperado aparece com cadeado na loja.
-- **Clone:** a permissão para controlar o `BloonsBattles.exe` foi negada na janela de acesso, então
-  o clone **não foi jogado nesta sessão**. As colunas "clone" vêm da leitura de
+- **Clone:** nas duas primeiras tentativas a permissão para controlar o `BloonsBattles.exe` foi
+  negada; na terceira foi liberada e o clone foi jogado por pouco tempo no modo `--demo` (seção
+  3.1), sem cobrir torre por torre. As colunas "clone" vêm da leitura de
   `src/jogo/dados.cpp`, `src/jogo/sim.cpp` e `src/cliente/cena_jogo.cpp` e das capturas que já
   estavam no repositório (`docs/design/capturas/*.png` e `btd6/demo_*`, `painel_*`, `vitrine_*`).
 - **Capturas:** `docs/design/capturas/btd6/real_*.jpg`. As outras imagens dessa pasta
@@ -93,6 +96,35 @@ A coluna "Clone" vem das capturas do clone já existentes e do código (ver seç
 Legenda: "Disparo no BTD6" é o que apareceu nas capturas (forma, quantidade, trajetória,
 impacto e ritmo). "Disparo no clone" é a descrição do upgrade e o tipo de ataque e sprite que o
 código usa (`dados.cpp`), e não uma observação na tela.
+
+### 3.1 Conferência com o clone rodando (modo `--demo`)
+
+O clone foi aberto com `BloonsBattles.exe --demo`, que dá $200.000 e põe 12 torres no Prado dos
+Macacos. Capturas em `docs/design/capturas/clone-vs-btd6/`. O que foi visto:
+
+- **Controles:** `,` compra o caminho 1 de primeira, Backspace vende, Q pega o Dardo e Espaço
+  inicia a rodada. O teclado responde melhor que o do BTD6.
+- **Painel:** mostra o código do caminho (5-0-0), os 15 marcadores e "MÁXIMO" em amarelo no
+  caminho completo. Depois do tier 5, os outros dois caminhos seguem à venda (Tiros Rápidos $100,
+  Dardos de Longo Alcance $90), como no BTD6.
+- **Macaco gira para o alvo:** o Dardo vira de lado quando os bloons entram pela esquerda.
+- **Disparos vistos em voo:** flechas do Quincy (haste cinza, ponta vermelha), estrepes do Ninja
+  no chão, bumerangue amarelo, chamas laranja do Mago e o tiro do Sniper como uma linha amarela
+  com clarão no cano (parecido com o BTD6).
+- **Ultra-Juggernaut:** a bola em voo e a divisão em 6 não apareceram nas capturas. As rodadas 2
+  a 4 têm poucos bloons e as outras torres matam antes. Não observado.
+- **Tier 5 mantém a silhueta:** o Dardo 5-0-0 é o mesmo macaco, com capacete e uma bola de
+  espinhos na mão. No BTD6 ele vira uma catapulta. A vitrine (`11_vitrine_tiers_1.png` e
+  `12_vitrine_tiers_2.png`) mostra o mesmo padrão nas outras torres: o Canhão continua um canhão
+  preto nos três tier 5 (no BTD6: caveira azul, lançador tubarão, canhão azul e dourado), o
+  Verdadeiro Deus Sol é um macaco dourado com asas (no BTD6: templo com estátua gigante) e o
+  Morteiro é o mesmo disco. Virou o item B27.
+- **F9 (disparo em loop):** anima só o braço da torre, sem soltar projétil. Serve para conferir a
+  pose, não o projétil.
+- **Sem Sandbox, testar é lento:** para ver um tier 5 atirando é preciso jogar dezenas de rodadas
+  ou usar o `--demo`. Reforça o item B04.
+- **AUTO:** o botão de rodada automática não ligou com o clique enviado pela automação. Pode ser
+  só o clique; vale testar à mão.
 
 ### Dart Monkey (Macaco Dardo)
 
@@ -412,6 +444,7 @@ O avião é grande: o sprite cobre duas faixas da pista.
 | B13 | P1 | Ray of Doom: raio contínuo que atravessa o mapa na direção do cursor (depende de B01) | `src/jogo/sim.cpp`: hitscan do Plasma Accelerator; `src/cliente/render.cpp`: feixe persistente | M | não |
 | B14 | P1 | Legend of the Night e Shrink Potion com efeito | `src/jogo/sim.cpp` e `src/jogo/dados.cpp` | M | sim |
 | B15 | P1 | Elite Sniper: modo de alvo "Elite" e caixa de suprimentos que cai no mapa | `src/jogo/sim.cpp`: `MODOS_ALVO` e habilidade `dinheiro`; `src/cliente/render.cpp`: caixa | M | não |
+| B27 | P1 | Tier 5 com silhueta própria: trocar o desenho inteiro da torre nos tier 5 (e nos tiers 3 e 4 mais marcantes), como a catapulta do Juggernaut, o templo do Deus Sol, o lançador de mísseis do MOAB Mauler e o robô do Robo Monkey | `src/cliente/sprites.cpp`: `TS()` e `MAQ()`; conferir na vitrine (`--vitrine`) | G | não |
 | B16 | P2 | Loja com cor de fundo por categoria (Primárias, Militares, Mágicas, Suporte) | `src/cliente/cena_jogo.cpp`: desenho dos cartões da loja | P | não |
 | B17 | P2 | Selo de camo no painel da torre | `src/cliente/cena_jogo.cpp`: painel de upgrade | P | não |
 | B18 | P2 | Cor da cola por upgrade (amarela, verde, rosa) e estrelas na Super Glue | `src/cliente/arte.cpp`: estado de cola; `src/jogo/dados.cpp`: visual por upgrade | P | não |
@@ -426,9 +459,10 @@ O avião é grande: o sprite cobre duas faixas da pista.
 
 ## 7. O que não foi possível observar e por quê
 
-- **O clone na tela:** a permissão para controlar o `BloonsBattles.exe` foi negada. A fase 2 usou
-  o código e as capturas antigas. A leitura do código resolveu os 8 itens
-  "conferir", mas o visual final do clone (cores, tamanhos, animação) não foi visto em tela.
+- **O clone torre por torre:** o clone só foi jogado por pouco tempo no modo `--demo` (seção
+  3.1). A comparação por torre usou o código e as capturas antigas. A leitura do código resolveu
+  os 8 itens "conferir", mas o visual de cada disparo do clone (cores, tamanhos, animação) não
+  foi visto em tela torre por torre.
 - **Mermonkey e Skywarden:** sem tecla de atalho, e a rolagem da loja parou de responder.
 - **Desperado:** bloqueado na conta.
 - **Tiers 1, 2 e 4 da maioria das torres:** para caber no tempo, cada caminho foi capturado no
