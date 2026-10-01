@@ -246,6 +246,8 @@ private:
     std::vector<Bloon*> vizinhos(double x, double y, double r) const;
     void recalcular_buffs();
     Bloon* alvo(const Torre& t, const Ataque& at, double alcance) const;
+    // ponto onde o bloon vai estar quando um projetil reto, saindo da torre, chegar nele
+    Posicao mira_antecipada(const Torre& t, const Ataque& at, const Bloon& b) const;
     void mover_torre(Torre& t);
     void passo_torre(const TorreP& t);
     AtaqueP ataque_efetivo(const Torre& t, const AtaqueP& at) const;

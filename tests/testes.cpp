@@ -314,6 +314,18 @@ TESTE(btd6_armadilha_e_emprestimo) {
     CHECA_IGUAL(pi.divida, 75.0);
 }
 
+TESTE(b28_projetil_antecipa_o_alvo_na_borda_do_alcance) {
+    // um rosa cruzando a linha de tiro a 175 px: sem antecipar, o dardo passava 50 px atras dele
+    Partida p = solo();
+    Pista& pi = p.pista(1);
+    pi.dinheiro = 1e6;
+    CHECA_IGUAL(p.aplicar(1, "Tdardo@240,285"), OK);
+    for (int k = 0; k < 2; ++k) CHECA_IGUAL(p.aplicar(1, "U1:2"), OK);
+    BloonP rosa = pi.criar_bloon("rosa", 430);
+    for (int i = 0; i < 15; ++i) p.passo();
+    CHECA(!rosa->vivo);
+}
+
 TESTE(btd6_criticos_a_cada_n_tiros) {
     Partida p = solo();
     Pista& pi = p.pista(1);

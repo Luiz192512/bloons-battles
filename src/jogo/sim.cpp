@@ -736,6 +736,22 @@ Bloon* Pista::alvo(const Torre& t, const Ataque& at, double alcance) const {
     return melhor;
 }
 
+Posicao Pista::mira_antecipada(const Torre& t, const Ataque& at, const Bloon& b) const {
+    Posicao m{b.x, b.y, b.ang};
+    if (at.vel <= 0 || b.cong_t > 0 || b.atord_t > 0) return m;
+    // mesma conta de mover_bloons, em px/s
+    double v = VELOCIDADE_BASE * mult_vel * b.tipo->velocidade * (lentidao_global_t > 0 ? lentidao_global_f : 1.0);
+    if (b.lento_t > 0) v *= b.lento_f;
+    if (b.cola_t > 0) v *= b.cola_f;
+    const Caminho& cam = mapa.caminhos[b.cam];
+    // o tempo de voo depende do ponto mirado, que depende do tempo de voo: 3 voltas bastam
+    for (int k = 0; k < 3; ++k) {
+        const double tempo = std::hypot(m.x - t.x, m.y - t.y) / at.vel;
+        m = cam.posicao(std::min(b.d + v * tempo, cam.comprimento));
+    }
+    return m;
+}
+
 void Pista::mover_torre(Torre& t) {
     if (t.dfn->mov == Mov::ORBITA) {
         t.orbita += DT * 1.3;
@@ -864,7 +880,10 @@ void Pista::passo_torre(const TorreP& tp) {
         if (!a) continue;
         t.recargas[i] = cad;
         const AtaqueP atc = critico(t, i, atp);
-        const double ang = graus(std::atan2(a->y - t.y, a->x - t.x));
+        // projetil reto mira onde o bloon vai estar; teleguiado, bumerangue e o resto miram o bloon
+        const bool antecipa = tipo == TipoAtaque::PROJETIL && !at.busca && !at.boom;
+        const Posicao mira = antecipa ? mira_antecipada(t, *atc, *a) : Posicao{a->x, a->y, 0};
+        const double ang = graus(std::atan2(mira.y - t.y, mira.x - t.x));
         if (i == 0 && t.dfn->mov == Mov::FIXO) t.ang = ang;
         if (tipo == TipoAtaque::HITSCAN) {
             hitscan(tp, atc, *a);
