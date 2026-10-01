@@ -398,6 +398,17 @@ void CenaJogo::atualizar(double dt) {
         }
         if (enviou) mira_espera_ = 0.1, mira_enviada_ = cur;
     }
+    // passar o cursor por cima coleta bananas e caixas (Coleta Facil, caminho 3 da Fazenda, alarga o raio)
+    if (!pista().coletaveis.empty() && cur.x < PAINEL_X) {
+        double raio = 34;
+        for (auto& [id, t] : pista().torres)
+            if (t->chave == "fazenda" && t->caminhos[2] >= 1) raio = 85;
+        for (const Coletavel& c : pista().coletaveis)
+            if (std::hypot(c.x - cur.x, c.y - cur.y) <= raio && coleta_pedida_.insert(c.id).second)
+                ctl_->enviar("C" + std::to_string(c.id));
+    } else if (pista().coletaveis.empty()) {
+        coleta_pedida_.clear();
+    }
     ctl_->atualizar(dt);
     render_.consumir_eventos();
     render_.atualizar(dt);

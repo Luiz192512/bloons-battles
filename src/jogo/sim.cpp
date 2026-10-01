@@ -426,6 +426,25 @@ char Pista::opcao(int tid, int valor) {
     return ERRO_INVALIDO;
 }
 
+void Pista::soltar(double x, double y, double valor, double vida, const std::string& visual) {
+    x = std::clamp(x, 20.0, static_cast<double>(LARGURA_MAPA) - 20.0);
+    y = std::clamp(y, 20.0, static_cast<double>(ALTURA_MAPA) - 20.0);
+    coletaveis.push_back({nid(), x, y, valor, vida, visual});
+}
+
+char Pista::coletar(int cid) {
+    for (size_t i = 0; i < coletaveis.size(); ++i) {
+        if (coletaveis[i].id != cid) continue;
+        const Coletavel c = coletaveis[i];
+        coletaveis.erase(coletaveis.begin() + static_cast<long>(i));
+        const double antes = dinheiro;
+        receber(c.valor);
+        evento({"dinheiro", c.x, c.y, std::floor(dinheiro - antes)});
+        return OK;
+    }
+    return ERRO_INVALIDO;
+}
+
 char Pista::usar_habilidade(int tid, int idx) {
     TorreP t = torre(tid);
     if (!t || idx < 0 || idx >= static_cast<int>(t->st.habs.size()) || t->hab_rec[idx] > 0) return ERRO_INVALIDO;
@@ -641,6 +660,9 @@ void Pista::passo() {
     for (auto& t : lista) passo_torre(t);
     passo_projeteis();
     passo_pilhas();
+    for (Coletavel& c : coletaveis) c.vida -= DT;
+    coletaveis.erase(std::remove_if(coletaveis.begin(), coletaveis.end(), [](const Coletavel& c) { return c.vida <= 0; }),
+                     coletaveis.end());
     mover_bloons();
     bloons.erase(std::remove_if(bloons.begin(), bloons.end(), [](const BloonP& b) { return !b->vivo; }),
                  bloons.end());
@@ -1478,8 +1500,19 @@ void Pista::pagar_renda() {
     for (auto& [id, t] : torres) {
         for (const Ataque& at : t->st.ataques) {
             if (at.tipo == TipoAtaque::RENDA && at.valor) {
-                receber(at.valor);
-                evento({"dinheiro", t->x, t->y, std::floor(at.valor)});
+                // Fazenda de bananas: a renda cai no chao em 4 cachos e o jogador coleta. Banco (caminho 2,
+                // tier 3) e Mercado (caminho 3, tier 3) depositam direto, como as outras rendas.
+                const bool cai = t->chave == "fazenda" && t->caminhos[1] < 3 && t->caminhos[2] < 3;
+                if (!cai) {
+                    receber(at.valor);
+                    evento({"dinheiro", t->x, t->y, std::floor(at.valor)});
+                    continue;
+                }
+                const double vida = t->caminhos[1] >= 1 ? 30.0 : 15.0;  // Bananas Duradouras
+                for (int k = 0; k < 4; ++k) {
+                    const double a = rng.uniform(0, 2 * PI), r = rng.uniform(38, 70);
+                    soltar(t->x + std::cos(a) * r, t->y + std::sin(a) * r, at.valor / 4, vida, "banana");
+                }
             }
         }
     }
@@ -1489,8 +1522,9 @@ std::uint32_t Pista::hash() const {
     double soma_d = 0;
     for (auto& b : bloons) soma_d += b->d;
     char buf[256];
-    std::snprintf(buf, sizeof buf, "(%lld, %d, %zu, %zu, %lld, %d, %zu)", static_cast<long long>(dinheiro), vidas,
-                  bloons.size(), torres.size(), static_cast<long long>(soma_d), pops_total, projeteis.size());
+    std::snprintf(buf, sizeof buf, "(%lld, %d, %zu, %zu, %lld, %d, %zu, %zu)", static_cast<long long>(dinheiro), vidas,
+                  bloons.size(), torres.size(), static_cast<long long>(soma_d), pops_total, projeteis.size(),
+                  coletaveis.size());
     return crc32(buf);
 }
 
@@ -1559,6 +1593,8 @@ char Partida::aplicar(int jogador, const std::string& cmd) {
         } else if (c == 'O') {
             auto [tid, v] = dividir(':');
             erro = pista.opcao(std::stoi(tid), std::stoi(v));
+        } else if (c == 'C') {
+            erro = pista.coletar(std::stoi(corpo));
         } else if (c == 'B') {
             auto [tid, i] = dividir(':');
             erro = pista.usar_habilidade(std::stoi(tid), std::stoi(i));

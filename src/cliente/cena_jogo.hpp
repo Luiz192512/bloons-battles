@@ -101,6 +101,7 @@ private:
     std::set<int> mira_travada_;
     std::map<int, int> modo_heli_;  // 0 automatico, 1 segue o mouse, 2 travado no lugar, 3 patrulha
     int definindo_alvo_ = 0;
+    std::set<int> coleta_pedida_;  // bananas e caixas ja pedidas, para nao repetir o comando C
     // Sandbox: painel de envio de bloons no lugar da loja (F2 ou o botao da grade alterna)
     bool painel_bloons_ = false;
     int sb_qtd_ = 10, sb_rodada_ = 1;

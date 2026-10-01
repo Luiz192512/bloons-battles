@@ -163,6 +163,14 @@ struct Pilha {
     std::string visual;
 };
 
+// Dinheiro caido no mapa (bananas da Fazenda, caixas de suprimentos): so entra na conta quando o
+// jogador coleta (comando C); se o tempo acabar, some.
+struct Coletavel {
+    int id;
+    double x, y, valor, vida;
+    std::string visual;
+};
+
 struct Agendado {
     double t;
     std::string nome;
@@ -190,6 +198,8 @@ public:
     char vender(int tid);
     char mudar_modo(int tid, int modo);
     char mirar(int tid, double x, double y);
+    char coletar(int cid);
+    void soltar(double x, double y, double valor, double vida, const std::string& visual);
     char opcao(int tid, int valor);
     char usar_habilidade(int tid, int idx);
 
@@ -232,6 +242,7 @@ public:
     std::vector<BloonP> bloons;
     std::vector<std::unique_ptr<Projetil>> projeteis;
     std::vector<std::unique_ptr<Pilha>> pilhas;
+    std::vector<Coletavel> coletaveis;
     std::map<int, TorreP> torres;
     std::vector<Agendado> fila;
     double tempo = 0.0;

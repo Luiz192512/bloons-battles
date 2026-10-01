@@ -124,6 +124,14 @@ void RenderPista::desenhar(int selecionada) {
     });
     for (const Torre* t : ordem) desenhar_torre(*t, t->id == selecionada);
     for (auto& p : pista_.projeteis) arte::projetil(*p);
+    // dinheiro caido no chao: balanca, e pisca nos ultimos 3 s antes de sumir
+    for (const Coletavel& c : pista_.coletaveis) {
+        const double t = ui::tempo();
+        if (c.vida < 3.0 && std::fmod(t, 0.3) < 0.12) continue;
+        const float x = static_cast<float>(c.x), y = static_cast<float>(c.y) + 3 * std::sin(static_cast<float>(t) * 4 + c.id);
+        DrawEllipse(static_cast<int>(x), static_cast<int>(c.y) + 14, 14, 5, ui::com_alfa(ui::TINTA, 70));
+        arte::projetil_vivo(c.visual == "banana" ? "banana" : "moeda", x, y, 40, 0, t);
+    }
     desenhar_habilidades_em_uso();
     desenhar_efeitos();
 }

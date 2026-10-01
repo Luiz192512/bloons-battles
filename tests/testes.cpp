@@ -592,6 +592,33 @@ TESTE(b14_lenda_da_noite_e_pocao_de_encolher) {
     }
 }
 
+TESTE(b09_bananas_caem_e_sao_coletadas) {
+    Partida p = solo();
+    Pista& pi = p.pista(1);
+    pi.dinheiro = 1e6;
+    CHECA_IGUAL(p.aplicar(1, "Tfazenda@750,270"), OK);
+    const double antes = pi.dinheiro;
+    pi.pagar_renda();
+    CHECA_IGUAL(pi.dinheiro, antes);  // nada entra sem coletar
+    CHECA_IGUAL(static_cast<int>(pi.coletaveis.size()), 4);
+    double soma = 0;
+    for (auto& c : pi.coletaveis) soma += c.valor;
+    CHECA_IGUAL(soma, 80.0);
+    const int id = pi.coletaveis.front().id;
+    CHECA_IGUAL(p.aplicar(1, "C" + std::to_string(id)), OK);
+    CHECA_IGUAL(pi.dinheiro, antes + 20);
+    CHECA_IGUAL(p.aplicar(1, "C" + std::to_string(id)), ERRO_INVALIDO);  // ja coletada
+    for (int i = 0; i < 30 * 16; ++i) p.passo();
+    CHECA(pi.coletaveis.empty());  // as outras 3 venceram em 15 s
+    CHECA_IGUAL(pi.dinheiro, antes + 20);
+    // Mercado (caminho 3, tier 3) deposita direto
+    for (int k = 0; k < 3; ++k) CHECA_IGUAL(p.aplicar(1, "U1:2"), OK);
+    const double a2 = pi.dinheiro;
+    pi.pagar_renda();
+    CHECA(pi.coletaveis.empty());
+    CHECA(pi.dinheiro > a2);
+}
+
 TESTE(btd6_criticos_a_cada_n_tiros) {
     Partida p = solo();
     Pista& pi = p.pista(1);

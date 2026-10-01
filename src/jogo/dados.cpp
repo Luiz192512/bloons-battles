@@ -629,14 +629,14 @@ static DefTorre t_fazenda() {
             U("Central de Bananas", 115000, "5 caixas de $1.200 ($7.000 por rodada).", {{"valor", 5500}}),
         },
         {
-            U("Bananas Duradouras", 300, "Bananas duram 30 s.", J::object()),
+            U("Bananas Duradouras", 300, "As bananas ficam 30 s no chão (em vez de 15 s).", J::object()),
             U("Bananas Valiosas", 800, "Bananas valem 25% mais.", {{"valor_x", 1.25}}),
             U("Banco Macaco", 3650, "Banco: guarda o dinheiro e rende 15% de juros.", {{"valor_x", 1.15}}),
             U("Empréstimo do FMI", 7200, "Habilidade: empréstimo de $9.000 (paga depois com metade da renda).", {{"hab", H("Empréstimo", "emprestimo", 85, {{"valor", 9000}})}}),
             U("Macaconomia", 100000, "Habilidade: $9.000 sem dívida.", {{"hab", H("Macaconomia", "dinheiro", 60, {{"valor", 9000}})}}),
         },
         {
-            U("Coleta Fácil", 250, "Coleta mais fácil.", J::object()),
+            U("Coleta Fácil", 250, "O cursor coleta bananas de mais longe.", J::object()),
             U("Salvamento de Bananas", 400, "Vende por 80%.", {{"venda", 0.8}}),
             U("Mercado", 2700, "Dinheiro automático: $320 por rodada.", {{"valor", 240}}),
             U("Mercado Central", 15000, "$1.120 por rodada.", {{"valor", 800}}),
