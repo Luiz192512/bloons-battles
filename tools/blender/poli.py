@@ -444,6 +444,27 @@ def orientar(bm, direcao, origem=(0, 0, 0)):
     return bm
 
 
+def loft(aneis, cores, fecha_inicio=True, fecha_fim=True):
+    """Casca em quads ligando aneis fechados de pontos (todos com a mesma contagem).
+    cores = uma cor por trecho do anel. As pontas fecham em leque."""
+    bm = bmesh.new()
+    vs = [[bm.verts.new(p) for p in anel] for anel in aneis]
+    n = len(aneis[0])
+    for i in range(len(vs) - 1):
+        for k in range(n):
+            k2 = (k + 1) % n
+            f = bm.faces.new((vs[i][k], vs[i][k2], vs[i + 1][k2], vs[i + 1][k]))
+            f.material_index = INDICE[cores[k]]
+    for anel, fecha in ((vs[0], fecha_inicio), (vs[-1], fecha_fim)):
+        if not fecha:
+            continue
+        centro = bm.verts.new(sum((v.co for v in anel), Vector()) / n)
+        for k in range(n):
+            f = bm.faces.new((anel[k], anel[(k + 1) % n], centro))
+            f.material_index = INDICE[cores[k]]
+    return bm
+
+
 # ---------------------------------------------------------------- exportacao
 ORDEM = ["base", "corpo", "cauda", "cabeca", "torreta", "braco"]
 

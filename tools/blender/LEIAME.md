@@ -67,13 +67,13 @@ Como cada parte é feita:
   chanfrada (`caixa`), com quinas vivas.
 - Roupas, pelagem e cauda: tubos de quads com subdivisão (`membro`) e gaiolas (`gaiola`).
 
-Orçamento em triângulos, medido no `.glb` (decisão do dono: densidade alta):
+Orçamento em triângulos, medido no `.glb`: **teto de 10.000 por torre** (decisão do dono).
 
-| Classe | Orçamento | Piloto |
-|---|---|---|
-| Macaco com roupa e arma | até 6.000 | dardo: 5.760 |
-| Máquina ou estrutura pequena | até 2.500 | bomba: 1.984 |
-| Barco com macaco | até 8.000 | bucaneiro: 7.908 |
+| Modelo do piloto | Triângulos |
+|---|---|
+| dardo | 5.568 |
+| bomba | 1.984 |
+| bucaneiro | 8.872 |
 
 A exportação pelo Blender aberto (conector) com troca de contexto derrubou o Blender 5.2; por
 isso a geração roda sem interface.

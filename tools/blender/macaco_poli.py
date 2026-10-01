@@ -60,7 +60,7 @@ def _cabeca(c):
 
     def mascara(p):
         # dois arcos em volta dos olhos unidos ao focinho, so na frente da cabeca
-        olhos = min(((p.x - sx * 0.088) / 0.112) ** 2 + ((p.z - 0.792) / 0.104) ** 2 for sx in (-1, 1)) - 1
+        olhos = min(((p.x - sx * 0.080) / 0.126) ** 2 + ((p.z - 0.792) / 0.104) ** 2 for sx in (-1, 1)) - 1
         foc = (p.x / 0.190) ** 2 + ((p.z - 0.655) / 0.110) ** 2 - 1
         return max(min(olhos, foc), (p.y + 0.060) * 8)
 
@@ -71,13 +71,19 @@ def _cabeca(c):
 def _rosto(c):
     """Olhos, nariz e sorriso: pecas pequenas que entram na malha da cabeca."""
     pecas = []
+    # olho torneado em volta do eixo do olhar: a pupila sai redonda, sem depender da malha
+    perfil = [(math.sin(math.radians(g)), -math.cos(math.radians(g))) for g in (0, 17, 34, 58, 90, 135, 180)]
+    perfil[0] = (0, -1)
+    perfil[-1] = (0, 1)
     for sx in (-1, 1):
-        bm = poli.gaiola((0.060, 0.042, 0.070), cortes=1, cor="branco")
-        # pupila grande e centrada, levemente virada para dentro
-        pup = poli.faces_em(bm, (-0.18 * sx, -1, 0), 4)
-        poli.extrudir(bm, pup, desloc=(-0.006 * sx, -0.004, 0), escala=0.58, cor="tinta")
-        poli.mover(bm, (0.086 * sx, -0.190, 0.792))
-        pecas.append(poli.objeto(f"olho_{sx}", bm, c, nivel=1))
+        bm = poli.torno(perfil, seg=16, cores=["tinta", "tinta", "branco", "branco", "branco", "branco"])
+        for v in bm.verts:
+            v.co.x *= 0.060
+            v.co.y *= 0.072
+            v.co.z *= 0.042
+        # o polo da pupila aponta para a frente e um pouco para dentro
+        poli.orientar(bm, (0.10 * sx, 1, 0), (0.086 * sx, -0.190, 0.792))
+        pecas.append(poli.objeto(f"olho_{sx}", bm, c, nivel=0))
     bm = poli.gaiola((0.034, 0.020, 0.024), cortes=0, cor="tinta")
     poli.mover(bm, (0, -0.258, 0.690))
     pecas.append(poli.objeto("nariz", bm, c, nivel=1))
