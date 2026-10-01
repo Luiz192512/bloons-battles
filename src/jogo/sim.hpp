@@ -287,9 +287,12 @@ public:
     char aplicar(int jogador, const std::string& cmd);
     char enviar(int jogador, const std::string& chave);
     char iniciar_rodada();
+    // Sandbox: "b:<bloon>:<qtd>:<c|r|f...>", "r:<rodada>", "l" (limpa bloons), "t" (limpa torres), "h" (recarrega)
+    char comando_sandbox(const std::string& corpo);
     // BTD6: depois de vencer no solo, da para seguir jogando em freeplay (sem ultima rodada)
     bool continuar_freeplay();
     bool em_freeplay = false;
+    bool sandbox = false;
     void passo();
     double tempo_para_rodada() const;
     double tempo_para_eco() const;

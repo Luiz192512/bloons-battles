@@ -161,6 +161,10 @@ void CenaJogo::tecla(int k) {
         mostrar_log_ = !mostrar_log_;
         return;
     }
+    if (k == KEY_F2 && ctl_->partida->sandbox) {
+        painel_bloons_ = !painel_bloons_;
+        return;
+    }
     if (k == KEY_F9) {
         // depuracao das animacoes: repete o clipe na torre selecionada (so visual)
         depura_ = depura_ ? 0 : (ui::shift() ? 2 : 1);
@@ -250,6 +254,7 @@ void CenaJogo::clique(Vector2 pos) {
             som::tocar("rodada");
             return;
         }
+        if (ctl_->partida->sandbox && painel_bloons_) return;  // a loja esta escondida
         for (auto& [chave, r] : cards_) {
             if (ui::dentro(r, pos)) {
                 escolher(chave);
@@ -465,6 +470,82 @@ void CenaJogo::previa(Vector2 mouse) {
 }
 
 // ---------------------------------------------------------------- HUD
+// Sandbox: envia qualquer bloon ou rodada e limpa a pista (comandos X da Partida)
+void CenaJogo::painel_sandbox(Vector2 mouse) {
+    const float x0 = PAINEL_X + 8, w = 224;
+    auto botao = [&](Rectangle r, const std::string& txt, Color face, Color lab, int tam, Acao acao, bool ligado = false) {
+        const bool sobre = ui::dentro(r, mouse);
+        bloco(ui::mover(r, 0, sobre ? -1.0f : 0), ligado ? ui::VERDE : sobre ? ui::clarear(face, 0.15f) : face,
+              ligado ? ui::VERDE_ESCURO : lab, 9, 2);
+        ui::texto(txt, r.x + r.width / 2, r.y + r.height / 2 - 2, tam, ui::BRANCO, 2, Ancora::CENTER);
+        botoes_up_.push_back({r, std::move(acao)});
+        return sobre;
+    };
+    // quantidade
+    static const int QTDS[] = {1, 5, 10, 20, 50, 100};
+    auto passo_qtd = [this](int d) {
+        int i = 0;
+        while (i < 5 && QTDS[i] < sb_qtd_) ++i;
+        sb_qtd_ = QTDS[std::clamp(i + d, 0, 5)];
+    };
+    float y = GRADE_Y;
+    ui::texto("QUANTIDADE", x0 + 4, y + 15, 10, ui::BEGE, 0, Ancora::MIDLEFT);
+    botao({x0 + 96, y, 34, 30}, "-", ui::AZUL, ui::AZUL_ESCURO, 16, [passo_qtd] { passo_qtd(-1); });
+    ui::texto(std::to_string(sb_qtd_), x0 + 160, y + 14, 17, ui::BRANCO, 3, Ancora::CENTER);
+    botao({x0 + w - 34, y, 34, 30}, "+", ui::AZUL, ui::AZUL_ESCURO, 16, [passo_qtd] { passo_qtd(1); });
+    // propriedades
+    y += 36;
+    const char* nomes[3] = {"Camo", "Regen", "Fort"};
+    bool* flags[3] = {&sb_camo_, &sb_regen_, &sb_fort_};
+    for (int i = 0; i < 3; ++i) {
+        bool* f = flags[i];
+        botao({x0 + i * 76.0f, y, 72, 30}, nomes[i], ui::CINZA, ui::CINZA_ESCURO, 11, [f] { *f = !*f; }, *f);
+    }
+    // grade com todos os bloons e dirigiveis
+    y += 38;
+    const auto& tipos = bloons();
+    for (size_t i = 0; i < tipos.size(); ++i) {
+        const TipoBloon& tb = tipos[i];
+        const Rectangle r{x0 + (i % 4) * 56.5f, y + (i / 4) * 52.0f, 54, 49};
+        const bool sobre = ui::dentro(r, mouse);
+        ui::ret(ui::mover(r, 0, sobre ? 4.0f : 2.0f), rgb(22, 20, 26, 128), 9);
+        ui::ret(r, ui::TINTA, 9);
+        ui::ret(ui::inflar(r, -4, -4), sobre ? rgb(255, 246, 218) : ui::BEGE, 6);
+        const bool fort = sb_fort_ && tb.vida_fortificado > 0;
+        if (tb.moab) {
+            arte::dirigivel(tb, fort, 0, r.x + r.width / 2, r.y + r.height / 2, 0, 42 / arte::tamanho_dirigivel(tb).x);
+        } else {
+            arte::bloon(tb, sb_camo_, sb_regen_, fort, 0, r.x + r.width / 2, r.y + r.height / 2,
+                        15.0f / arte::raio_bloon_px(tb));
+        }
+        const std::string nome = tb.nome;
+        botoes_up_.push_back({r, [this, nome] {
+                                  comando("Xb:" + nome + ":" + std::to_string(sb_qtd_) + ":" +
+                                          (sb_camo_ ? "c" : "") + (sb_regen_ ? "r" : "") + (sb_fort_ ? "f" : ""));
+                              }});
+        if (sobre) dicas_.push_back({mouse, tb.rotulo, "Envia " + std::to_string(sb_qtd_) + " pela entrada."});
+    }
+    // rodada inteira
+    y += static_cast<float>((tipos.size() + 3) / 4) * 52.0f + 6;
+    ui::texto("RODADA", x0 + 4, y + 15, 10, ui::BEGE, 0, Ancora::MIDLEFT);
+    botao({x0 + 58, y, 30, 30}, "-", ui::AZUL, ui::AZUL_ESCURO, 16,
+          [this] { sb_rodada_ = std::max(1, sb_rodada_ - (ui::shift() ? 10 : 1)); });
+    ui::texto(std::to_string(sb_rodada_), x0 + 108, y + 14, 16, ui::BRANCO, 3, Ancora::CENTER);
+    botao({x0 + 128, y, 30, 30}, "+", ui::AZUL, ui::AZUL_ESCURO, 16,
+          [this] { sb_rodada_ = std::min(200, sb_rodada_ + (ui::shift() ? 10 : 1)); });
+    if (botao({x0 + 164, y, 60, 30}, "Enviar", ui::VERDE, ui::VERDE_ESCURO, 11,
+              [this] { comando("Xr:" + std::to_string(sb_rodada_)); }))
+        dicas_.push_back({mouse, "Enviar rodada", "Manda a rodada inteira. Shift nos botões pula de 10 em 10."});
+    // limpeza e recarga (a ultima celula da direita fica para o botao Torres/Bloons)
+    y += 36;
+    botao({x0, y, 108, 28}, "Limpar bloons", ui::VERMELHO, ui::VERMELHO_ESCURO, 10, [this] { comando("Xl"); });
+    botao({x0 + 116, y, 108, 28}, "Limpar torres", ui::VERMELHO, ui::VERMELHO_ESCURO, 10, [this] {
+        if (comando("Xt")) selecionada_ = 0;
+    });
+    y += 32;
+    botao({x0, y, 140, 28}, "Recarregar habilidades", ui::AZUL, ui::AZUL_ESCURO, 9, [this] { comando("Xh"); });
+}
+
 void CenaJogo::hud_topo() {
     Pista& p = pista();
     const std::string vidas = ui::formatar(std::max(0, p.vidas)), din = "$" + ui::formatar(p.dinheiro);
@@ -501,7 +582,7 @@ void CenaJogo::painel_lateral(Vector2 mouse) {
     arte::icone("rodada", pr.x + 12, pr.y + 12, 32);
     ui::texto("RODADA", pr.x + 50, pr.y + 13, 9, ui::BEGE, 0);
     const std::string rod = ctl_->online() ? std::to_string(std::max(1, p.rodada))
-                   : ctl_->partida->em_freeplay ? std::to_string(std::max(1, p.rodada))
+                   : (ctl_->partida->em_freeplay || p.sandbox) ? std::to_string(std::max(1, p.rodada))
                                                 : std::to_string(std::max(1, p.rodada)) + "/" + std::to_string(p.ultima_rodada);
     ui::texto(rod, pr.x + 48, pr.y + 36, 23, ui::BRANCO, 4, Ancora::MIDLEFT);
     const float dx = pr.x + pr.width - 12;
@@ -520,7 +601,20 @@ void CenaJogo::painel_lateral(Vector2 mouse) {
         ui::texto(nome, rp.x + rp.width / 2, rp.y + 9, 10, ui::BRANCO, 0, Ancora::CENTER);
     }
     Pista& pista_ = pista();
-    for (auto& [chave, r0] : cards_) {
+    if (p.sandbox) {
+        // ultima celula da grade (vazia na loja): alterna entre a loja e o painel de bloons
+        const Rectangle rt{GRADE_X + 2 * PASSO_X - 4, GRADE_Y + 7 * PASSO_Y, CARD_W, CARD_H};
+        const bool sobre = ui::dentro(rt, mouse);
+        bloco(ui::mover(rt, 0, sobre ? -2.0f : 0), sobre ? ui::clarear(ui::AZUL, 0.15f) : ui::AZUL, ui::AZUL_ESCURO, 10,
+              sobre ? 5.0f : 3.0f);
+        ui::tecla_centro("F2", rt.x + rt.width / 2, rt.y + 18 - (sobre ? 2 : 0), 8);
+        ui::texto(painel_bloons_ ? "Torres" : "Bloons", rt.x + rt.width / 2, rt.y + 40 - (sobre ? 2 : 0), 11, ui::BRANCO, 2,
+                  Ancora::CENTER);
+        botoes_up_.push_back({rt, [this] { painel_bloons_ = !painel_bloons_; }});
+        if (sobre) dicas_.push_back({mouse, "Sandbox", "Alterna entre a loja de torres e o painel de envio de bloons."});
+    }
+    if (p.sandbox && painel_bloons_) painel_sandbox(mouse);
+    else for (auto& [chave, r0] : cards_) {
         const DefTorre& dfn = definicao(chave);
         const int custo = pista_.custo(dfn.custo);
         const bool em_jogo = dfn.heroi && pista_.tem_heroi;

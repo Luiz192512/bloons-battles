@@ -433,6 +433,45 @@ TESTE(b29_bumerangue_troca_de_mao) {
     CHECA_IGUAL(p.aplicar(1, "O1:1"), ERRO_INVALIDO);  // so o Bumerangue tem mao
 }
 
+TESTE(b04_sandbox_dinheiro_vidas_e_comandos) {
+    Partida p("solo", "prado", 1, "sandbox");
+    Pista& pi = p.pista(1);
+    CHECA(p.sandbox);
+    CHECA_IGUAL(p.aplicar(1, "Tsuper@600,500"), OK);
+    for (int k = 0; k < 5; ++k) CHECA_IGUAL(p.aplicar(1, "U1:1"), OK);  // The Anti-Bloon sem juntar dinheiro
+    p.passo();
+    CHECA_IGUAL(pi.dinheiro, 9999999.0);
+    // envia bloons com propriedades e uma rodada inteira
+    CHECA_IGUAL(p.aplicar(1, "Xb:ceramica:3:cf"), OK);
+    CHECA_IGUAL(p.aplicar(1, "Xb:nao_existe:3"), ERRO_INVALIDO);
+    CHECA_IGUAL(p.aplicar(1, "Xb:vermelho:0"), ERRO_INVALIDO);
+    for (int i = 0; i < 30; ++i) p.passo();
+    CHECA(!pi.bloons.empty());
+    CHECA(pi.bloons.front()->camo && pi.bloons.front()->fort);
+    CHECA_IGUAL(p.aplicar(1, "Xl"), OK);
+    p.passo();
+    CHECA(pi.bloons.empty() && pi.fila.empty());
+    CHECA_IGUAL(p.aplicar(1, "Xr:40"), OK);
+    CHECA_IGUAL(p.rodada, 40);
+    CHECA(!pi.fila.empty());
+    // nada de derrota: mesmo vazando um BAD as vidas voltam
+    CHECA_IGUAL(p.aplicar(1, "Xt"), OK);
+    CHECA(pi.torres.empty());
+    for (int i = 0; i < 30 * 200 && !p.fim; ++i) p.passo();
+    CHECA(!p.fim);
+    CHECA_IGUAL(pi.vidas, 999999);
+    // habilidades recarregadas na hora
+    CHECA_IGUAL(p.aplicar(1, "Tsuper@600,500"), OK);
+    const int id = pi.torres.rbegin()->first;
+    for (int k = 0; k < 4; ++k) CHECA_IGUAL(p.aplicar(1, "U" + std::to_string(id) + ":1"), OK);
+    CHECA(pi.torres.at(id)->hab_rec[0] > 0);
+    CHECA_IGUAL(p.aplicar(1, "Xh"), OK);
+    CHECA_IGUAL(pi.torres.at(id)->hab_rec[0], 0.0);
+    // fora do Sandbox os comandos X nao existem
+    Partida n = solo();
+    CHECA_IGUAL(n.aplicar(1, "Xb:vermelho:5"), ERRO_INVALIDO);
+}
+
 TESTE(btd6_criticos_a_cada_n_tiros) {
     Partida p = solo();
     Pista& pi = p.pista(1);

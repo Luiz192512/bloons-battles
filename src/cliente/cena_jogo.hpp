@@ -21,6 +21,7 @@ public:
     void desenhar() override;
     void sair() override;
     void selecionar(int torre_id) { selecionada_ = torre_id; }  // usado pela demo
+    void mostrar_painel_bloons() { painel_bloons_ = true; }     // usado pelo --sandbox
     void abrir_pausa() { pausar(true); }
 
 private:
@@ -69,6 +70,7 @@ private:
     void previa(Vector2 mouse);
     void hud_topo();
     void painel_lateral(Vector2 mouse);
+    void painel_sandbox(Vector2 mouse);
     void dica(const Dica& d, float largura = 250);
     void painel_upgrade(const TorreP& t, Vector2 mouse);
     void linha_upgrade(const TorreP& t, int pth, float x, float y, float w, Vector2 mouse);
@@ -93,7 +95,11 @@ private:
     std::string colocando_;
     // Dartling: segue o cursor (comando A, no maximo 10 por segundo) ate o jogador travar a mira
     std::set<int> mira_travada_;
-    int definindo_alvo_ = 0;  // Morteiro esperando o clique no mapa que fixa o ponto de impacto
+    int definindo_alvo_ = 0;
+    // Sandbox: painel de envio de bloons no lugar da loja (F2 ou o botao da grade alterna)
+    bool painel_bloons_ = false;
+    int sb_qtd_ = 10, sb_rodada_ = 1;
+    bool sb_camo_ = false, sb_regen_ = false, sb_fort_ = false;  // Morteiro esperando o clique no mapa que fixa o ponto de impacto
     double mira_espera_ = 0;
     Vector2 mira_enviada_{-1, -1};
     std::pair<std::string, double> msg_{"", 0}, banner_{"", 0};

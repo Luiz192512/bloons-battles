@@ -85,6 +85,23 @@ App::App(const std::vector<std::string>& args) {
         } else if (args[i] == "--demo") {
             const bool batalha = i + 1 < args.size() && args[i + 1] == "batalha";
             cena_ = criar_demo(*this, batalha);
+        } else if (args[i] == "--sandbox") {
+            // Sandbox pronto para conferir o visual: os argumentos seguintes, ate o proximo "--", sao
+            // comandos da partida (ex.: Tsuper@600,500 U1:0 Xb:ceramica:20) ou o nome do mapa
+            std::string mapa = "prado";
+            std::vector<std::string> cmds;
+            while (i + 1 < args.size() && args[i + 1].rfind("--", 0) != 0) {
+                const std::string& a = args[++i];
+                if (a.find_first_of("@:") == std::string::npos && a.size() > 2) mapa = a;
+                else cmds.push_back(a);
+            }
+            auto ctl = std::make_unique<ControladorSolo>(mapa, "sandbox", "quincy", 1);
+            for (auto& c : cmds) ctl->enviar(c);
+            cena_ = std::make_unique<CenaJogo>(*this, std::move(ctl));
+        } else if (args[i] == "--sel" && i + 1 < args.size()) {
+            if (auto* j = dynamic_cast<CenaJogo*>(cena_.get())) j->selecionar(static_cast<int>(num(i + 1, 0)));
+        } else if (args[i] == "--bloons") {
+            if (auto* j = dynamic_cast<CenaJogo*>(cena_.get())) j->mostrar_painel_bloons();
         } else if (args[i] == "--captura" && i + 1 < args.size()) {
             captura_ = args[i + 1];
             captura_t_ = num(i + 2, 3);

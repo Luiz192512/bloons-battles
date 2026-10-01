@@ -1566,6 +1566,8 @@ const std::vector<Dificuldade> DIFICULDADES = {
     {"chimps", "CHIMPS", 1, 1.08, 100, 6, 1.25 / 1.1, 650, 1.0, true, true},
     {"metade", "Meio Dinheiro", 100, 1.08, 80, 3, 1.25 / 1.1, 325, 0.5},
     {"deflacao", "Deflação", 200, 0.85, 60, 31, 1.0 / 1.1, 20000, 0.0},
+    // Sandbox do BTD6: precos e velocidade do Medio, para testar torres a vontade
+    {"sandbox", "Sandbox", 999999, 1.0, 1000000000, 1, 1.0, 9999999, 1.0, false, false, true},
 };
 
 // Envios do modo Batalha (inspirados no Battles 2): custo, efeito na renda (eco) e desbloqueio

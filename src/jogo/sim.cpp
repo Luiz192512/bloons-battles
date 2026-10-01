@@ -1411,6 +1411,7 @@ Partida::Partida(const std::string& modo_, const std::string& chave_mapa, int se
         if (!d) throw std::out_of_range("dificuldade desconhecida: " + dif);
         dificuldade = dif;
         ultima_rodada = d->ultima_rodada;
+        sandbox = d->sandbox;
         rodada = d->primeira_rodada - 1;
         pistas[1] = std::make_unique<Pista>(1, mapa, seed, d->vidas, d->dinheiro_inicial, d->mult_custo);
         Pista& p = *pistas[1];
@@ -1469,6 +1470,8 @@ char Partida::aplicar(int jogador, const std::string& cmd) {
         } else if (c == 'B') {
             auto [tid, i] = dividir(':');
             erro = pista.usar_habilidade(std::stoi(tid), std::stoi(i));
+        } else if (c == 'X') {
+            erro = comando_sandbox(corpo);
         } else if (c == 'S') {
             erro = enviar(jogador, corpo);
         } else if (c == 'N') {
@@ -1497,6 +1500,61 @@ char Partida::enviar(int jogador, const std::string& chave) {
     for (int k = 0; k < env->qtd; ++k) alvo->agendar(env->tipo, 0.3 + k * env->espaco, env->camo, env->regen, env->fort);
     pista.evento({"envio", 0, 0, 0, 0, 0, env->nome});
     return OK;
+}
+
+char Partida::comando_sandbox(const std::string& corpo) {
+    if (!sandbox || corpo.empty()) return ERRO_INVALIDO;
+    Pista& p = *pistas[1];
+    std::vector<std::string> partes;
+    for (size_t ini = 0;;) {
+        const size_t k = corpo.find(':', ini);
+        partes.push_back(corpo.substr(ini, k == std::string::npos ? k : k - ini));
+        if (k == std::string::npos) break;
+        ini = k + 1;
+    }
+    const std::string& op = partes[0];
+    if (op == "b" && partes.size() >= 3) {
+        const TipoBloon* tp = achar_bloon(partes[1]);
+        const int qtd = std::stoi(partes[2]);
+        if (!tp || qtd < 1 || qtd > 200) return ERRO_INVALIDO;
+        const std::string mods = partes.size() > 3 ? partes[3] : "";
+        const bool camo = mods.find('c') != std::string::npos, regen = mods.find('r') != std::string::npos,
+                   fort = mods.find('f') != std::string::npos;
+        // dirigiveis saem mais espacados para nao empilhar na entrada
+        const double espaco = tp->moab ? 0.8 : 0.15;
+        for (int k = 0; k < qtd; ++k) p.agendar(tp->nome, 0.1 + k * espaco, camo, regen, fort);
+        return OK;
+    }
+    if (op == "r" && partes.size() == 2) {
+        const int r = std::stoi(partes[1]);
+        if (r < 1 || r > 1000) return ERRO_INVALIDO;
+        rodada = r;
+        p.mult_renda = mult_renda_da_rodada(rodada);
+        p.mult_vida = mult_vida_moab(rodada);
+        p.mult_vel = mult_velocidade(rodada) * p.mult_vel_dificuldade;
+        p.freeplay = rodada > 80;
+        for (auto& [t, g] : agenda_da_rodada(rodada)) p.agendar(g.tipo, t, g.camo, g.regen, g.fort);
+        return OK;
+    }
+    if (op == "l") {
+        p.fila.clear();
+        for (auto& b : p.bloons) b->vivo = false;
+        return OK;
+    }
+    if (op == "t") {
+        p.projeteis.clear();
+        p.pilhas.clear();
+        p.torres.clear();
+        p.tem_heroi = false;
+        p.buff_t = 0.0;
+        return OK;
+    }
+    if (op == "h") {
+        for (auto& [id, t] : p.torres)
+            for (double& r : t->hab_rec) r = 0.0;
+        return OK;
+    }
+    return ERRO_INVALIDO;
 }
 
 bool Partida::continuar_freeplay() {
@@ -1532,6 +1590,11 @@ void Partida::passo() {
 
 void Partida::passo_solo() {
     Pista& p = *pistas[1];
+    if (sandbox) {
+        // nada acaba no Sandbox: repoe o que foi gasto ou perdido a cada passo
+        p.vidas = 999999;
+        p.dinheiro = 9999999;
+    }
     if (p.vidas <= 0) {
         fim = true;
         vencedor = 0;
