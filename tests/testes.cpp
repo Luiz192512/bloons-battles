@@ -678,6 +678,32 @@ TESTE(b08_b10_sacrificios_do_templo_e_da_macacopolis) {
     CHECA(pi.torres.at(vila)->renda_sacrificio > 100);
 }
 
+TESTE(b11_cemiterio_do_necromante) {
+    Partida p("solo", "prado", 1, "sandbox");
+    Pista& pi = p.pista(1);
+    CHECA_IGUAL(p.aplicar(1, "Tmago@300,240"), OK);
+    for (int k = 0; k < 4; ++k) CHECA_IGUAL(p.aplicar(1, "U1:2"), OK);  // Necromante
+    const Torre& t = *pi.torres.at(1);
+    // sem bloons estourados nao ha zumbis, por mais que passem bloons
+    for (int i = 0; i < 30 * 5; ++i) p.passo();
+    int zumbis = 0;
+    for (auto& s : pi.pilhas) zumbis += s->visual == "zumbi";
+    CHECA_IGUAL(zumbis, 0);
+    CHECA_IGUAL(t.cemiterio, 0.0);
+    // os estouros no alcance enchem o cemiterio, e os zumbis gastam dele
+    CHECA_IGUAL(p.aplicar(1, "Xb:vermelho:30"), OK);
+    double pico = 0;
+    bool teve_zumbi = false;
+    for (int i = 0; i < 30 * 20; ++i) {
+        p.passo();
+        pico = std::max(pico, t.cemiterio);
+        for (auto& s : pi.pilhas) teve_zumbi |= s->visual == "zumbi";
+    }
+    CHECA(pico >= 1);
+    CHECA(teve_zumbi);
+    CHECA(t.cemiterio < pico);
+}
+
 TESTE(btd6_criticos_a_cada_n_tiros) {
     Partida p = solo();
     Pista& pi = p.pista(1);

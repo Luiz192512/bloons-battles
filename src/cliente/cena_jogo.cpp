@@ -851,7 +851,10 @@ void CenaJogo::cabecalho_upgrade(const Torre& t, float x, float y, float w) {
     const std::string& nome = t.dfn->nome;
     const int tam = nome.size() < 18 ? 18 : 15;
     ui::texto(caber(nome, tam, w - 150), x + 66, y + 16, tam, ui::BRANCO, 4, Ancora::MIDLEFT);
-    ui::texto("Estouros: " + ui::formatar(t.pops), x + 66, y + 40, 14, ui::TINTA, 0, Ancora::MIDLEFT, ui::Peso::TEXTO);
+    std::string linha = "Estouros: " + ui::formatar(t.pops);
+    if (t.necromante) linha += "  ·  Cemitério: " + ui::formatar(std::floor(t.cemiterio));
+    if (t.renda_sacrificio > 0) linha += "  ·  +$" + ui::formatar(std::floor(t.renda_sacrificio)) + "/rodada";
+    ui::texto(linha, x + 66, y + 40, 14, ui::TINTA, 0, Ancora::MIDLEFT, ui::Peso::TEXTO);
     std::string tag;
     if (t.dfn->heroi) tag = "Nv " + std::to_string(t.nivel);
     else tag = std::to_string(t.caminhos[0]) + "-" + std::to_string(t.caminhos[1]) + "-" + std::to_string(t.caminhos[2]);

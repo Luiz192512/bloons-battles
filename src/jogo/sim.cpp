@@ -270,6 +270,10 @@ void Pista::estourar(Bloon& b, double excesso, DType dtype, Torre* torre, Projet
     const double base = freeplay && b.tipo->nome == "ceramica" ? SUPER_CERAMICA_DINHEIRO : 1.0;
     receber((base + ouro) * mult_renda);
     pops_total += 1;
+    // cemiterio do Necromante: 500 bloons, ou 3.000 no Principe das Trevas (caminho 3, tier 5)
+    for (auto& n : necromantes)
+        if (quad(b.x - n->x) + quad(b.y - n->y) <= quad(n->alcance()))
+            n->cemiterio = std::min(n->caminhos[2] >= 5 ? 3000.0 : 500.0, n->cemiterio + 1);
     if (xp_por_estouro) xp(1.0);
     evento({"pop", b.x, b.y, 0, 0, 0, b.tipo->nome});
     const TipoBloon& tp = *b.tipo;
@@ -786,6 +790,13 @@ bool ataca(const Torre& t) {
 }  // namespace
 
 void Pista::recalcular_buffs() {
+    necromantes.clear();
+    for (auto& [id, t] : torres) {
+        t->necromante = false;
+        for (const Ataque& at : t->st.ataques)
+            if (at.tipo == TipoAtaque::PILHA && at.visual == "zumbi") t->necromante = true;
+        if (t->necromante) necromantes.push_back(t);
+    }
     // por torre alvo: fonte (chave da torre + indice do ataque) -> buffs recebidos dessa fonte.
     // Fontes iguais nao acumulam no BTD6 (duas Vilas nao dao 2x Jungle Drums): fica o melhor de cada
     // campo. Excecoes com "acumula" > 1: Shinobi Tactics (20) e Poplust (5).
@@ -1020,8 +1031,15 @@ void Pista::passo_torre(const TorreP& tp) {
                     Posicao pos = mapa.caminhos[ci].posicao(d);
                     double x = pos.x + rng.uniform(-10, 10);
                     double y = pos.y + rng.uniform(-10, 10);
-                    pilhas.push_back(std::unique_ptr<Pilha>(new Pilha{
-                        x, y, at.pilha_pierce + t.buff.pierce, atp, tp, at.pilha_vida, {}, true, at.visual}));
+                    double pierce = at.pilha_pierce + t.buff.pierce;
+                    if (at.visual == "zumbi") {
+                        // o zumbi sai do cemiterio: sem bloons guardados, nao ha o que reviver
+                        if (t.cemiterio < 1) continue;
+                        pierce = std::min(pierce, std::floor(t.cemiterio));
+                        t.cemiterio -= pierce;
+                    }
+                    pilhas.push_back(
+                        std::unique_ptr<Pilha>(new Pilha{x, y, pierce, atp, tp, at.pilha_vida, {}, true, at.visual}));
                     t.recargas[i] = cad;
                 }
             }

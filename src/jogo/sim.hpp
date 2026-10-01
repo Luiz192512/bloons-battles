@@ -121,6 +121,9 @@ struct Torre {
     double orbita = 0.0;
     Buffs buff;
     Buffs sacrificio;            // bonus permanente das torres sacrificadas (Templo do Sol)
+    // Necromante: bloons estourados no alcance enchem o cemiterio, e cada zumbi gasta o que usa de pierce
+    double cemiterio = 0;
+    bool necromante = false;
     double renda_sacrificio = 0;  // dinheiro por rodada das fazendas sacrificadas (Macacopolis)
     std::vector<std::pair<int, double>> pontos_trilha;
     Stats st;
@@ -264,6 +267,7 @@ public:
     double lentidao_global_t = 0.0, lentidao_global_f = 1.0;
     // Lenda da Noite: segundos de buraco negro aberto na saida e recarga ate poder abrir outro
     double buraco_t = 0.0, buraco_rec = 0.0;
+    std::vector<TorreP> necromantes;  // refeito junto com os buffs
     Pista* oponente = nullptr;
     int proximo_cam = 0;
 

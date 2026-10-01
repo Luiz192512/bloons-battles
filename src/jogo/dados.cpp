@@ -477,8 +477,8 @@ static DefTorre t_mago() {
             U("Magia Intensa", 300, "+5 pierce e projéteis 2x mais rápidos.", {{"pierce", 5}, {"vel", 2.0}}),
             U("Sentido Macaco", 300, "+10 de alcance e detecta camo.", {{"alcance", 40}, {"camo", true}}),
             U("Cintilar", 1500, "Remove camo em volta.", {{"alcance", 40}, {"novo", A("aura", {{"cad", 2.0}, {"dano", 0}, {"pierce", 500}, {"retira_camo", true}, {"raio_aura", 300}, {"dtype", "normal"}, {"visual", "nenhum"}})}}),
-            U("Necromante", 2800, "Bloons mortos voltam como aliados.", {{"novo", A("pilha", {{"cad", 2.0}, {"dano", 2}, {"pilha_pierce", 8}, {"pilha_vida", 6}, {"dtype", "normal"}, {"visual", "zumbi"}})}}),
-            U("Príncipe das Trevas", 26500, "4x mais rápido e mais alcance; zumbis mais fortes.", J::array({{{"cad", 0.25}, {"alcance", 80}}, {{"a", "zumbi"}, {"dano", 3}}})),
+            U("Necromante", 2800, "Os bloons estourados no alcance vão para o cemitério (até 500) e voltam como zumbis.", {{"novo", A("pilha", {{"cad", 2.0}, {"dano", 2}, {"pilha_pierce", 8}, {"pilha_vida", 6}, {"dtype", "normal"}, {"visual", "zumbi"}})}}),
+            U("Príncipe das Trevas", 26500, "4x mais rápido e mais alcance; zumbis mais fortes e cemitério de 3.000.", J::array({{{"cad", 0.25}, {"alcance", 80}}, {{"a", "zumbi"}, {"dano", 3}}})),
         },
     };
     t.categoria = "magica";
