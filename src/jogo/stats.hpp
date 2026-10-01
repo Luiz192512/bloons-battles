@@ -50,6 +50,7 @@ struct Ataque {
     double queima_dps = 0, queima_t = 0;
     double atordoa = 0.0, empurra = 0.0, fragiliza = 0;
     bool retira_camo = false, retira_regen = false;
+    bool encolhe = false;  // Pocao de Encolher: vira bloon vermelho (menos o B.A.D.)
     bool armadilha = false, prende_moab = false;  // Bloon Trap: pierce = capacidade em RBE, valor = $ por RBE
     double quica = 0;
     std::shared_ptr<const Ataque> frag;  // ataque dos fragmentos
@@ -90,6 +91,7 @@ struct Stats {
     double desconto = 0.0;
     double venda = 0.7;
     bool persegue = false;
+    bool buraco_negro = false;  // Lenda da Noite: buraco negro na saida quando um bloon vai vazar
     std::vector<J> habs;
     std::vector<Ataque> ataques;
 };

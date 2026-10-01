@@ -217,6 +217,16 @@ bool Pista::aplicar_dano(Bloon& b, double dano, const Ataque& at, Torre* torre, 
     }
     if (b.cong_t > 0 && dtype == DT_AFIADO) return true;
     if (at.critico) evento({"crit", b.x, b.y});
+    if (at.encolhe) {
+        // vira um bloon vermelho comum, sem filhos nem propriedades; o B.A.D. e imune
+        if (tp.nome == "bad" || tp.nome == "vermelho") return tp.nome != "bad";
+        b.tipo = &tipo_bloon("vermelho");
+        b.regen_orig = b.tipo;
+        b.vida = b.vida_max = 1;
+        b.fort = b.regen = false;
+        evento({"flash", b.x, b.y});
+        return true;
+    }
     if (at.fragiliza) b.frag = std::max(b.frag, at.fragiliza);
     // efeitos
     if (at.congela && (tp.congela || (tp.moab && at.moab_congela)))
@@ -1365,6 +1375,8 @@ void Pista::passo_pilhas() {
 
 // ---------------------------------------------------------------- movimento dos bloons
 void Pista::mover_bloons() {
+    if (buraco_t > 0) buraco_t -= DT;
+    if (buraco_rec > 0) buraco_rec -= DT;
     const double base = VELOCIDADE_BASE * DT * mult_vel;
     const double glob = lentidao_global_t > 0 ? lentidao_global_f : 1.0;
     // bloons filhos criados por dano continuo entram no fim da lista e andam neste passo
@@ -1404,6 +1416,20 @@ void Pista::mover_bloons() {
         const Caminho& cam = mapa.caminhos[b.cam];
         if (b.d >= cam.comprimento) {
             b.vivo = false;
+            // Lenda da Noite: o primeiro bloon que ia vazar abre o buraco negro, que engole tudo por 8 s
+            if (buraco_t <= 0 && buraco_rec <= 0) {
+                for (auto& [id, t] : torres)
+                    if (t->st.buraco_negro) {
+                        buraco_t = 8.0;
+                        buraco_rec = 120.0;
+                        evento({"habilidade", t->x, t->y, 0, 0, 0, "Buraco Negro"});
+                        break;
+                    }
+            }
+            if (buraco_t > 0) {
+                evento({"flash", b.x, b.y});
+                continue;
+            }
             int perda = rbe_restante(b);
             vidas -= perda;
             vazou += perda;

@@ -244,6 +244,8 @@ public:
     int vazou = 0;
     double buff_t = 0.0;
     double lentidao_global_t = 0.0, lentidao_global_f = 1.0;
+    // Lenda da Noite: segundos de buraco negro aberto na saida e recarga ate poder abrir outro
+    double buraco_t = 0.0, buraco_rec = 0.0;
     Pista* oponente = nullptr;
     int proximo_cam = 0;
 

@@ -548,6 +548,50 @@ TESTE(b12_turbilhao_lanca_laminas_em_espiral) {
     CHECA(pi.projeteis.empty());  // acabou junto com a habilidade
 }
 
+TESTE(b14_lenda_da_noite_e_pocao_de_encolher) {
+    {
+        Partida p("solo", "prado", 1, "medio");
+        Pista& pi = p.pista(1);
+        pi.dinheiro = 1e7;
+        const int vidas = pi.vidas;
+        CHECA_IGUAL(p.aplicar(1, "Tsuper@960,330"), OK);  // sem ataque (abaixo): nao estoura nada
+        for (int k = 0; k < 5; ++k) CHECA_IGUAL(p.aplicar(1, "U1:2"), OK);
+        const double fim = p.mapa.caminhos[0].comprimento;
+        pi.torres.at(1)->st.ataques.clear();
+        pi.torres.at(1)->ats.clear();
+        pi.torres.at(1)->recargas.clear();
+        // os bloons que chegam ao fim com o buraco aberto somem sem tirar vida
+        for (int k = 0; k < 5; ++k) pi.criar_bloon("ceramica", fim - 20 - k * 30);
+        for (int i = 0; i < 30 * 4; ++i) p.passo();
+        CHECA_IGUAL(pi.vidas, vidas);
+        CHECA(pi.buraco_rec > 100);
+        // fechado e recarregando: o proximo vaza
+        for (int i = 0; i < 30 * 8; ++i) p.passo();
+        pi.criar_bloon("vermelho", fim - 20);
+        for (int i = 0; i < 30; ++i) p.passo();
+        CHECA_IGUAL(pi.vidas, vidas - 1);
+    }
+    {
+        Partida p("solo", "prado", 1, "sandbox");
+        Pista& pi = p.pista(1);
+        CHECA_IGUAL(p.aplicar(1, "Talquimista@300,240"), OK);
+        for (int k = 0; k < 5; ++k) CHECA_IGUAL(p.aplicar(1, "U1:2"), OK);
+        const Torre& t = *pi.torres.at(1);
+        const Ataque* encolhe = nullptr;
+        for (auto& a : t.ats)
+            if (a->encolhe) encolhe = a.get();
+        CHECA(encolhe != nullptr);
+        BloonP moab = pi.criar_bloon("moab", 300, -1, false, false, true);
+        BloonP bad = pi.criar_bloon("bad", 300);
+        pi.aplicar_dano(*moab, 0, *encolhe, nullptr);
+        pi.aplicar_dano(*bad, 0, *encolhe, nullptr);
+        CHECA_IGUAL(moab->tipo->nome, std::string("vermelho"));
+        CHECA_IGUAL(moab->vida, 1.0);
+        CHECA(!moab->fort);
+        CHECA_IGUAL(bad->tipo->nome, std::string("bad"));
+    }
+}
+
 TESTE(btd6_criticos_a_cada_n_tiros) {
     Partida p = solo();
     Pista& pi = p.pista(1);

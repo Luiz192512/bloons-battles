@@ -510,7 +510,7 @@ static DefTorre t_super() {
             U("Ultravisão", 1200, "Detecta camo.", {{"camo", true}, {"alcance", 12}}),
             U("Cavaleiro das Trevas", 5600, "Lâminas: pierce 4, +2 em M.O.A.B.", {{"moab", 2}, {"pierce", 3}, {"raio_proj", 2}, {"visual", "escuro"}}),
             U("Campeão das Trevas", 55555, "2x mais rápido, 2 de dano, estoura tudo.", {{"alcance", 16}, {"cad", 0.5}, {"dano", 1}, {"moab", 1}, {"dtype", "normal"}}),
-            U("Lenda da Noite", 165650, "Buraco negro que evita vazamentos por 8 s.", J::object()),
+            U("Lenda da Noite", 165650, "Quando um bloon vai vazar, abre um buraco negro na saída que engole tudo por 8 s (recarga de 120 s).", {{"buraco_negro", true}}),
         },
     };
     t.categoria = "magica";
@@ -576,7 +576,7 @@ static DefTorre t_alquimista() {
             U("Poça de Ácido", 450, "Poças na trilha.", {{"novo", A("pilha", {{"cad", 3.0}, {"dano", 1}, {"pilha_pierce", 10}, {"pilha_vida", 8}, {"dtype", "normal"}, {"visual", "acido"}})}}),
             U("Chumbo em Ouro", 1000, "$50 extra por chumbo estourado.", {{"ouro_chumbo", 50}}),
             U("Borracha em Ouro", 2750, "Bloons dão o dobro de dinheiro ao estourar.", {{"ouro", 1.0}}),
-            U("Mestre Alquimista", 40000, "Poção que encolhe bloons em vermelhos.", J::object()),
+            U("Mestre Alquimista", 40000, "A cada 10 s, poção que encolhe bloons e dirigíveis (menos o B.A.D.) em vermelhos.", {{"novo", A("projetil", {{"cad", 10.0}, {"dano", 0}, {"pierce", 1}, {"vel", 600}, {"dist", 320}, {"dtype", "normal"}, {"splash", 60}, {"sdano", 0}, {"spierce", 20}, {"sdtype", "normal"}, {"encolhe", true}, {"alvo", "forte"}, {"visual", "pocao"}})}}),
         },
     };
     t.categoria = "magica";
