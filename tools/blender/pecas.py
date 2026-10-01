@@ -125,8 +125,8 @@ def estrela(m, nome, centro, raio, cor, normal=(0, -1, 0), pontas=5, esp=0.022, 
 
 # ---------------------------------------------------------------- cabeca
 def casca(m, nome, cor, piso, raios=(0.300, 0.268, 0.262), cortes=2, centro=CABECA):
-    """Casca que veste o cranio (lenco, capuz, capacete). piso(x, y) = altura minima, relativa
-    ao centro da cabeca: e a barra da peca."""
+    """Casca que veste o cranio (lenco, capacete). piso(x, y) = altura minima, relativa ao centro
+    da cabeca: e a barra da peca."""
     bm = poli.gaiola(raios, cortes=cortes, cor=cor)
     for v in bm.verts:
         v.co.z = max(v.co.z, piso(v.co.x, v.co.y))
@@ -151,14 +151,27 @@ def piso_lenco(x, y):
     return 0.150 - 0.34 * (y + 0.20)
 
 
-def piso_capuz(x, y):
-    """Aberto no rosto, fechado ate o pescoco dos lados e atras."""
-    t = min(1.0, max(0.0, (y + 0.10) / 0.16))
-    return 0.150 - 0.36 * t * t * (3 - 2 * t)
-
-
 def piso_capacete(x, y):
     return 0.105 - 0.20 * (y + 0.20)
+
+
+# secoes do capuz, do rosto para a nuca: (y, meia largura, topo, barra de baixo)
+CAPUZ = [(-0.205, 0.285, 0.975, 0.560), (-0.100, 0.365, 1.000, 0.545), (0.020, 0.425, 1.005, 0.535), (0.140, 0.400, 0.990, 0.530),
+         (0.240, 0.300, 0.950, 0.550), (0.310, 0.160, 0.900, 0.620)]
+
+
+def capuz(m, cor, barra=None, nome="capuz"):
+    """Capuz de verdade: casca em volta da cabeca toda (cobre as orelhas e desce ate os ombros),
+    aberta num oval em volta do rosto, com a borda enrolada e o bico caido para tras."""
+    n = 12
+    aneis = []
+    for y, a, zt, zb in CAPUZ:
+        zc, h = (zt + zb) / 2, (zt - zb) / 2
+        aneis.append([(a * math.cos(2 * math.pi * k / n), y, zc + h * math.sin(2 * math.pi * k / n)) for k in range(n)])
+    objs = [m.obj(nome, poli.loft(aneis, [cor] * n, fecha_inicio=False), nivel=1)]
+    objs.append(tubo(m, nome + "_borda", aneis[0] + aneis[0][:1], 0.030, barra or cor))
+    objs.append(tubo(m, nome + "_bico", [(0, 0.270, 0.900), (0, 0.420, 0.850), (0, 0.520, 0.700)], [0.090, 0.055, 0.004], cor))
+    return objs
 
 
 def faixa_testa(m, cor, nome="faixa_testa", pontas=True):
@@ -218,19 +231,26 @@ def cinto(m, cor, fivela="ouro", nome="cinto"):
     return objs
 
 
-def capa(m, cor, nome="capa", comp=0.50, largura=0.56, queda=0.24, borda=None):
-    """Capa ao vento: presa no pescoco, aberta em leque para tras. Fica quase deitada para aparecer
-    na vista do jogo, que olha de cima. comp = quanto vai para tras; queda = quanto desce."""
-    grade = []
+def capa(m, cor, nome="capa", comp=0.50, largura=0.56, queda=0.24, borda=None, gola=True):
+    """Capa de pano: cai dos ombros, abre em leque para tras e faz pregas. Termina quase deitada
+    para aparecer na vista do jogo, que olha de cima. comp = quanto vai para tras; queda = quanto desce."""
+    grade, colunas = [], [k / 3 - 1 for k in range(7)]
     for i in range(5):
         t = i / 4
-        w, yc, z = 0.16 + (largura - 0.16) * t ** 0.8, 0.135 + comp * t, 0.535 - queda * t
-        # as bordas abracam os ombros em cima e ondulam embaixo
-        grade.append([(w * s, yc - 0.12 * s * s * (1 - 0.7 * t) + 0.030 * t * math.cos(s * math.pi * 2),
-                       z + 0.035 * t * math.cos(s * math.pi * 2)) for s in (-1, -0.5, 0, 0.5, 1)])
-    objs = [folha(m, nome, grade, cor, esp=0.022)]
+        w = 0.17 + (largura - 0.17) * t ** 0.7
+        yc = 0.135 + comp * t ** 1.3                       # sai devagar do pescoco e so depois voa
+        z = 0.535 - queda * math.sin(t * math.pi / 2)      # cai logo no comeco, como pano pesado
+        linha = []
+        for s in colunas:
+            prega = 0.050 * t * math.cos(s * math.pi * 3)  # pregas que crescem para a barra
+            linha.append((w * s, yc - 0.12 * s * s * (1 - 0.7 * t) + prega * 0.5, z + prega - 0.05 * t * s * s))
+        grade.append(linha)
+    objs = [folha(m, nome, grade, cor, esp=0.020)]
     if borda:
-        objs.append(tubo(m, nome + "_borda", grade[-1], 0.022, borda))
+        objs.append(tubo(m, nome + "_borda", grade[-1], 0.020, borda))
+    if gola:  # gola no pescoco e o broche que prende a capa
+        objs.append(faixa(m, nome + "_gola", (0, -0.005, 0.548), 0.152, 0.134, 0.032, cor, n=12, inclina=-0.012))
+        objs.append(esfera(m, nome + "_broche", (0, -0.150, 0.535), (0.040, 0.026, 0.040), borda or "ouro", cortes=0))
     return objs
 
 
@@ -249,7 +269,7 @@ def tenis(m, cor, sola="branco", nome="tenis"):
 
 def aljava(m, corpo="marrom", penas=("vermelho", "amarelo", "vermelho"), detalhe="marrom_escuro", nome="aljava"):
     """Aljava atras do ombro direito, com as penas das flechas aparecendo por cima da cabeca."""
-    base, direcao = Vector((0.150, 0.215, 0.360)), Vector((0.42, 0.10, 1)).normalized()
+    base, direcao = Vector((0.170, 0.300, 0.360)), Vector((0.46, 0.14, 1)).normalized()
     objs = [cilindro(m, nome, base, direcao, [(0, 0), (0.060, 0.010), (0.070, 0.300), (0.078, 0.310), (0.078, 0.350), (0.060, 0.352), (0, 0.330)],
                      cores=[corpo, corpo, detalhe, detalhe, detalhe, "tinta"], seg=10)]
     lado = direcao.cross(Vector((0, 1, 0))).normalized()

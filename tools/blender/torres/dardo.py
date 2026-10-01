@@ -20,7 +20,7 @@ def _ponta(m):
     """Cor e tamanho da ponta de qualquer dardo da torre: o caminho 1 afia (regra da torre)."""
     if m.tier[1] >= 5:
         return "ciano", 1.25
-    return ("aco", 1.0 + 0.22 * m.tier[0]) if m.tier[0] else ("cinza", 1.0)
+    return ("aco", 1.0 + 0.08 * m.tier[0]) if m.tier[0] else ("cinza", 1.0)
 
 
 def _dardo_mao(m, longo=False):
@@ -39,7 +39,7 @@ def base(m):
 def reserva_1(m):
     """Um dardo de aco de reserva na mao esquerda."""
     x, y, z = pecas.MAO_ESQ
-    m.por("mao_livre", pecas.dardo(m, "reserva", (x, y - 0.02, z + 0.02), direcao=(-0.10, -1, 0.10), ponta="aco", ponta_escala=1.25,
+    m.por("mao_livre", pecas.dardo(m, "reserva", (x, y - 0.02, z + 0.02), direcao=(-0.10, -1, 0.10), ponta="aco", ponta_escala=1.08,
                                    penas=("cinza", "branco")))
 
 
@@ -48,7 +48,7 @@ def reserva_2(m):
     x, y, z = pecas.MAO_ESQ
     objs = []
     for k, (dx, dz) in enumerate(((-0.34, 0.16), (-0.10, 0.10), (0.14, 0.16))):
-        objs += pecas.dardo(m, f"reserva_{k}", (x, y - 0.02, z + 0.02), direcao=(dx, -1, dz), ponta="aco", ponta_escala=1.45,
+        objs += pecas.dardo(m, f"reserva_{k}", (x, y - 0.02, z + 0.02), direcao=(dx, -1, dz), ponta="aco", ponta_escala=1.16,
                             penas=("cinza", "branco"))
     objs.append(pecas.faixa(m, "bracelete", (x + 0.012, y + 0.030, z + 0.075), 0.062, 0.062, 0.020, "cinza_escuro", n=8))
     for k in range(5):
@@ -82,7 +82,7 @@ def _bola(m, raio, cor, espinho, pos, faixa=None):
     return objs
 
 
-def _catapulta(m, madeira, viga, pneu, cubo, raio_bola, bola, espinho, chapa=None, faixa=None):
+def _catapulta(m, madeira, viga, pneu, cubo, raio_bola, bola, espinho, braco, chapa=None, faixa=None):
     """Catapulta: carreta de vigas com quatro rodas (base) e o braco com a colher e a bola (torreta)."""
     b = []
     frente, tras, pe = CY - 0.30, CY + 0.30, CY - 0.10   # travessas e o pe dos montantes
@@ -102,16 +102,21 @@ def _catapulta(m, madeira, viga, pneu, cubo, raio_bola, bola, espinho, chapa=Non
     m.por("base", b)
 
     eixo, colher = Vector((0, pe, 0.210)), Vector((0, tras - 0.05, 0.300))
-    t = [pecas.tubo(m, "braco_catapulta", [eixo, (eixo + colher) / 2 + Vector((0, 0, 0.012)), colher], [0.036, 0.032, 0.030], viga)]
+    # braco grosso e de cor clara, para aparecer de cima entre as longarinas; contrapeso na frente
+    peso = eixo + Vector((0, -0.150, -0.050))
+    t = [pecas.tubo(m, "braco_catapulta", [peso, eixo, (eixo + colher) / 2 + Vector((0, 0, 0.012)), colher], [0.044, 0.050, 0.046, 0.042], braco)]
+    t.append(pecas.bloco(m, "contrapeso", (0.170, 0.120, 0.120), peso, chapa or "cinza", chanfro=0.020))
     t.append(pecas.tubo(m, "eixo_catapulta", [(-0.20, pe, 0.210), (0.20, pe, 0.210)], 0.026, chapa or viga, nivel=0))
     r = raio_bola
-    t += [pecas.cilindro(m, "colher", colher + Vector((0, 0.01, -0.035)), (0, 0, 1), [(0, 0), (r * 0.75, 0.004), (r * 1.05, 0.060), (r * 0.92, 0.062), (r * 0.66, 0.022), (0, 0.022)],
-                         cor=madeira, seg=10)]
+    t += [pecas.cilindro(m, "colher", colher + Vector((0, 0.01, -0.035)), (0, 0, 1), [(0, 0), (r * 0.85, 0.004), (r * 1.30, 0.070), (r * 1.16, 0.072), (r * 0.74, 0.022), (0, 0.022)],
+                         cor=braco, seg=10)]
     t += _bola(m, r, bola, espinho, colher + Vector((0, 0.01, r * 0.92)), faixa)
     m.por("torreta", t)
     m.pivo("torreta", eixo)
     m.pivo("base", (0, 0, 0))
-    m.tirar("mao_ataque")
+    # a mao do ataque segura a alavanca do disparo
+    m.por("mao_ataque", [pecas.tubo(m, "alavanca", [(MX, MY - 0.010, MZ + 0.130), (MX + 0.010, MY - 0.050, 0.250), (MX + 0.020, MY - 0.110, 0.060)], 0.020, viga),
+                         pecas.esfera(m, "alavanca_pomo", (MX, MY - 0.005, MZ + 0.160), 0.046, "vermelho", cortes=0)])
     m.tirar("mao_livre")
     m.ocupar("pes")   # os pes somem atras da maquina: o acessorio dos pes vai para a carreta
     m.matriz = Matrix.Translation((0, RECUO, 0))
@@ -131,17 +136,17 @@ def _capacete(m, cor, barra, topo=None, crista=None):
 
 
 def espinhopulta(m):
-    _catapulta(m, "marrom", "marrom_escuro", "tinta", "ouro", 0.105, "cinza", "aco")
+    _catapulta(m, "marrom", "marrom_escuro", "tinta", "ouro", 0.105, "cinza", "aco", "bege")
     _capacete(m, "marrom_escuro", "bege")
 
 
 def juggernaut(m):
-    _catapulta(m, "marrom", "marrom_escuro", "tinta", "cinza", 0.140, "cinza_escuro", "aco", chapa="cinza")
+    _catapulta(m, "marrom", "marrom_escuro", "tinta", "cinza", 0.140, "cinza_escuro", "aco", "aco", chapa="cinza")
     _capacete(m, "cinza", "cinza_escuro", topo="aco")
 
 
 def ultra_juggernaut(m):
-    _catapulta(m, "cinza_escuro", "tinta", "tinta", "ouro", 0.175, "tinta", "ouro", chapa="ouro", faixa="vermelho")
+    _catapulta(m, "cinza_escuro", "tinta", "tinta", "ouro", 0.175, "tinta", "ouro", "ouro", chapa="ouro", faixa="vermelho")
     _capacete(m, "ouro", "vermelho", crista="vermelho")
 
 
@@ -184,14 +189,14 @@ def tiro_triplo(m):
 
 
 def fa_clube(m):
+    # o traje do fa-clube troca o lenco e a bandoleira: fica so a capa (com gola) e a estrela
     m.por("costas", pecas.capa(m, "azul", borda="amarelo"))
-    m.somar("tronco", pecas.estrela(m, "emblema", (-0.030, -0.168, 0.345), 0.082, "ouro", normal=(0, -1, 0.15)))
+    m.por("tronco", pecas.estrela(m, "emblema", (0, -0.166, 0.360), 0.090, "ouro", normal=(0, -1, 0.15)))
 
 
 def fa_clube_plasma(m):
     m.por("costas", pecas.capa(m, "roxo", comp=0.56, largura=0.66, borda="ciano"))
-    m.tirar("tronco", prefixo="emblema")
-    m.somar("tronco", pecas.estrela(m, "emblema", (-0.030, -0.168, 0.345), 0.095, "ciano", normal=(0, -1, 0.15)))
+    m.por("tronco", pecas.estrela(m, "emblema", (0, -0.166, 0.360), 0.100, "ciano", normal=(0, -1, 0.15)))
     halo = [pecas.toro(m, "halo", (0, 0.0, 1.110), 0.215, 0.026, "ciano", seg=16, lados=5)]
     for k in range(4):
         a = math.radians(90 * k + 45)
@@ -226,12 +231,9 @@ def oculos(m):
 
 def _capuz(m, cor, barra=None, pena=None):
     m.tirar("pelagem")
-    objs = [pecas.casca(m, "capuz", cor, pecas.piso_capuz, raios=(0.302, 0.272, 0.266))]
-    objs.append(pecas.tubo(m, "capuz_bico", [(0, 0.130, 0.960), (0, 0.330, 0.930), (0, 0.450, 0.800)], [0.095, 0.060, 0.004], cor))
-    if barra:
-        objs.append(pecas.barra_casca(m, "capuz_barra", barra, pecas.piso_capuz, raios=(0.302, 0.272, 0.266)))
+    objs = pecas.capuz(m, cor, barra)
     if pena:
-        objs.append(pecas.cone(m, "capuz_pena", (0.215, -0.020, 0.900), (0.50, 0.15, 1), 0.050, 0.250, pena, seg=4, fechado=True))
+        objs.append(pecas.cone(m, "capuz_pena", (0.300, -0.020, 0.930), (0.50, 0.15, 1), 0.050, 0.250, pena, seg=4, fechado=True))
     m.por("chapeu", objs)
 
 
@@ -253,7 +255,7 @@ def mestre_da_besta(m):
     m.por("mao_ataque", pecas.besta(m, (MX, MY - 0.06, ZD + 0.01), escala=1.50, madeira="tinta", arco_cor="ouro", detalhe="ouro", ponta=cor,
                                     luneta=True, duplo=True))
     _capuz(m, "tinta", barra="ouro", pena="ouro")
-    m.por("costas", pecas.aljava(m, corpo="ouro", detalhe="tinta", penas=("ouro", "branco", "ouro")) + pecas.capa(m, "tinta", comp=0.40, largura=0.46, queda=0.26, borda="ouro"))
+    m.por("costas", pecas.aljava(m, corpo="ouro", detalhe="tinta", penas=("ouro", "branco", "ouro")) + pecas.capa(m, "tinta", comp=0.40, largura=0.50, queda=0.26, borda="ouro", gola=False))
 
 
 CAMINHOS = [

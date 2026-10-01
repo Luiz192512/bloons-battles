@@ -38,13 +38,13 @@ python tools/blender/conferir_variacoes.py dardo
 
 | Torre | Variações geradas | Máx. de triângulos | Malhas | Tamanho total | Pendências |
 |---|---|---|---|---|---|
-| dardo | 64 de 64 | 8.927 (2-5-0) | 6 | 12,5 MB | braço da catapulta pouco legível de cima; capa reta como uma tábua; capuz lê como touca |
+| dardo | 64 de 64 | 8.929 (2-0-5) | 6 | 12,7 MB | 0-0-1 e 3-1-0 mudam pouco a 48 px; o capuz é largo para cobrir as orelhas |
 | bomba | 1 de 64 (só a base) | 1.984 | 2 | 0,07 MB | upgrades entram na Parte B |
 | bucaneiro | 1 de 64 (só a base) | 8.868 | 5 | 0,23 MB | upgrades entram na Parte B; a base já usa 8.868 triângulos, sobra pouco para peças |
 
 As outras 19 torres ainda não foram começadas.
 
-Tamanho no repositório: o dardo ocupa 12,5 MB (de 139 a 247 KB por variação), abaixo do limite
+Tamanho no repositório: o dardo ocupa 12,7 MB (de 139 a 250 KB por variação), abaixo do limite
 de 30 MB por torre. Projetando para as 22 torres, o total fica entre 250 e 330 MB de `.glb`.
 
 Migração do piloto: a variante 0-0-0 de dardo, bomba e bucaneiro sai do montador com a mesma
@@ -60,17 +60,17 @@ Base: macaco padrão de topete, lenço azul (`tronco`) e um dardo na mão (`mao_
 |---|---|---|---|---|---|
 | 1 | 1 | Tiros Afiados | mao_livre | um dardo de aço de reserva na mão esquerda; a ponta do dardo da mão do ataque vira aço claro | dardo que fura mais |
 | 1 | 2 | Tiros Super Afiados | mao_livre | feixe de três dardos de aço e bracelete de espinhos | ainda mais perfuração |
-| 1 | 3 | Espinhopulta | base, torreta, chapeu | catapulta de madeira com quatro rodas (base) e braço com colher e bola de espinhos (torreta); o macaco vai para trás da máquina, sem dardo; capacete de couro | lança bolas de espinhos |
+| 1 | 3 | Espinhopulta | base, torreta, chapeu | catapulta de madeira com quatro rodas (base); braço claro e grosso com contrapeso, colher e bola de espinhos (torreta); o macaco vai para trás da máquina e segura a alavanca do disparo; capacete de couro | lança bolas de espinhos |
 | 1 | 4 | Juggernaut | base, torreta, chapeu | a mesma catapulta com chapas de aço, bola maior e escura; capacete de aço com ponta | bola gigante que fura chumbo |
 | 1 | 5 | Ultra-Juggernaut | base, torreta, chapeu | catapulta de aço escuro com ouro, bola enorme preta de espinhos dourados e faixa vermelha; capacete dourado com crista vermelha | a bola que se divide |
 | 2 | 1 | Tiros Rápidos | pes (alternativa: extra) | tênis vermelhos de sola branca; na catapulta, listras vermelhas na carreta | velocidade |
 | 2 | 2 | Tiros Muito Rápidos | chapeu (alternativa: tronco) | faixa vermelha na testa com pontas ao vento; com o chapéu ocupado, cachecol vermelho no lugar do lenço | mais velocidade |
 | 2 | 3 | Tiro Triplo | mao_ataque, tronco | leque de três dardos na mão; bandoleira amarela com dardos | três dardos por tiro |
-| 2 | 4 | Fã-Clube Super Macaco | costas, tronco | capa azul de borda amarela, aberta ao vento; estrela dourada no peito | fã de herói, habilidade |
+| 2 | 4 | Fã-Clube Super Macaco | costas, tronco | capa azul com pregas, gola e broche, de borda amarela; estrela dourada no peito no lugar do lenço e da bandoleira | fã de herói, habilidade |
 | 2 | 5 | Fã-Clube Macaco Plasma | costas, tronco, extra | capa roxa maior de borda ciano; estrela ciano; aro de energia sobre a cabeça; pontas dos dardos em ciano | plasma |
 | 3 | 1 | Dardos de Longo Alcance | mao_ataque (alternativas: costas, mao_livre) | dardo de haste comprida e penas maiores; com a mão ocupada, vai atravessado nas costas | alcança mais longe |
 | 3 | 2 | Visão Aprimorada | rosto | óculos redondos de aro dourado | enxerga camo |
-| 3 | 3 | Besta | mao_ataque, chapeu | besta curta de madeira; capuz roxo | tiro forte |
+| 3 | 3 | Besta | mao_ataque, chapeu | besta curta de madeira; capuz roxo que cobre as orelhas e emoldura o rosto | tiro forte |
 | 3 | 4 | Atirador Afiado | mao_ataque, chapeu, costas | besta maior com luneta; capuz com barra e pena amarelas; aljava | precisão, crítico |
 | 3 | 5 | Mestre da Besta | mao_ataque, chapeu, costas | besta grande preta e dourada de arco duplo; capuz preto com ouro; aljava dourada e capa curta preta | o melhor atirador |
 
@@ -85,14 +85,21 @@ Composições resolvidas:
 - **1-1-0**: empate, vale o caminho 1 como principal: dardo de reserva na mão esquerda, mais os
   tênis do caminho 2.
 
-O que não ficou bom (para o ajuste de design):
+Ajustes feitos depois da primeira revisão do dono:
 
-- A catapulta lê como "máquina de cerco" pela moldura e pela bola, mas o braço e a colher quase
-  não aparecem na vista do jogo, e a mão direita do macaco fica solta, sem segurar nada.
-- A capa é uma folha quase plana, deitada para aparecer de cima; de lado parece uma tábua.
-- O capuz deixa as orelhas de fora e não desce no rosto: lê mais como touca com pompom.
+- Catapulta: o braço ficou grosso e de cor clara (bege, aço ou ouro conforme o tier), ganhou
+  contrapeso na frente e colher mais larga, e a mão direita do macaco segura a alavanca do disparo.
+- Capa: deixou de ser uma folha plana. Cai dos ombros, abre em leque para trás e faz pregas, com
+  gola e broche no pescoço.
+- Capuz: virou capuz de verdade (`pecas.capuz`), uma casca em volta da cabeça toda, que cobre as
+  orelhas e abre num oval em volta do rosto.
+- Ponta de aço: cinza azulado em vez de quase branco, e só 8% maior por tier.
+- Caminho 2, tiers 4 e 5: o traje do fã-clube troca o lenço e a bandoleira pela capa com gola e
+  pela estrela; ficam a faixa da testa, a capa, a estrela e, no tier 5, o aro de energia.
+
+O que ainda não ficou bom (para o ajuste de design):
+
 - 0-0-1 muda pouco em relação a 0-0-0 a 48 px (só o dardo mais comprido).
 - 3-0-0 e 3-1-0 se distinguem só pelas listras vermelhas na carreta, que são pequenas a 48 px.
-- A ponta de aço é quase branca e grande; chama mais atenção do que o upgrade merece.
-- Nos tiers 4 e 5 do caminho 2, a faixa da testa, a bandoleira, a estrela e a capa se somam e o
-  macaco fica carregado de detalhes.
+- O capuz precisa ser largo para caber as orelhas, e a cabeça fica grande na vista do jogo.
+- A capa, vista de lado, ainda é fina; as pregas aparecem melhor de costas e de cima.

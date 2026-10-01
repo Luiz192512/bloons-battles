@@ -18,7 +18,7 @@ PALETA = {
     "marrom": (122, 78, 40), "marrom_escuro": (72, 44, 20), "bege": (238, 214, 160),
     "cinza": (120, 128, 140), "cinza_escuro": (58, 62, 72), "ouro": (240, 180, 40),
     # cores das variacoes (entram depois das do piloto, que nao mudam)
-    "aco": (206, 214, 226), "roxo": (132, 78, 196), "ciano": (90, 226, 240), "laranja": (245, 130, 40),
+    "aco": (168, 180, 198), "roxo": (132, 78, 196), "ciano": (90, 226, 240), "laranja": (245, 130, 40),
     "verde_escuro": (48, 120, 60), "rosa": (240, 120, 170),
 }
 INDICE = {nome: i for i, nome in enumerate(PALETA)}
