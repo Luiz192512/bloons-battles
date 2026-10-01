@@ -22,7 +22,8 @@ Sem nomes depois do `--`, gera as três torres do piloto. Saídas por torre:
 
 ## Regras de arte
 
-- Só formas redondas: esfera, cápsula, toro e cubo com cantos bem arredondados (`comum.py`).
+- Formas redondas (esfera, cápsula, toro, cubo com cantos arredondados) misturadas com pontudas
+  (`cone` e `lamina`): pontas de arma, penas, espinhos, cristas, proas e bandeiras (`comum.py`).
 - Cor chapada por peça, gravada como cor de vértice. O jogo não usa textura.
 - Todo macaco usa o mesmo corpo (`macaco.py`). Entre as torres mudam a cor e o estilo da
   pelagem (`lisa`, `topete`, `crista`, `tufos`, `barba`), a roupa e a arma. Só o Super Macaco

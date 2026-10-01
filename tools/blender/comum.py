@@ -3,7 +3,8 @@
 Convencoes:
 - Unidade: o macaco padrao tem 1,0 de altura. O modelo fica em pe na origem, com Z para cima,
   olhando para -Y (a frente do Blender).
-- So formas redondas: esfera, capsula, toro e cubo com cantos bem arredondados.
+- Formas redondas (esfera, capsula, toro, cubo de cantos arredondados) misturadas com pontudas
+  (cone e lamina), para pontas, penas, espinhos, cristas e bandeiras.
 - Cor chapada por peca, gravada como cor de vertice (o jogo nao usa textura).
 - Cada peca pertence a um grupo animavel (base, corpo, cabeca, braco, arma, torreta, cauda).
   Na exportacao, as pecas de um grupo viram uma malha so.
@@ -114,6 +115,41 @@ def cubo(nome, pos, tamanho, cor, grupo, canto=None, rot=(0, 0, 0)):
     mod.width = canto
     mod.segments = 8
     mod.limit_method = "NONE"
+    return _registrar(o, nome, cor, grupo)
+
+
+def _orientar(o, p1, p2):
+    p1, p2 = Vector(p1), Vector(p2)
+    o.rotation_mode = "QUATERNION"
+    o.rotation_quaternion = Vector((0, 0, 1)).rotation_difference((p2 - p1).normalized())
+    o.location = (p1 + p2) / 2
+    # arestas vivas continuam vivas mesmo com o sombreamento suave
+    mod = o.modifiers.new("aresta", "EDGE_SPLIT")
+    mod.split_angle = math.radians(40)
+
+
+def cone(nome, p1, p2, raio, cor, grupo, lados=24):
+    """Cone pontudo: base em p1 com o raio dado, ponta viva em p2."""
+    comp = (Vector(p2) - Vector(p1)).length
+    bpy.ops.mesh.primitive_cone_add(vertices=lados, radius1=raio, radius2=0, depth=comp, location=(0, 0, 0))
+    o = bpy.context.object
+    _orientar(o, p1, p2)
+    return _registrar(o, nome, cor, grupo)
+
+
+def lamina(nome, p1, p2, largura, espessura, cor, grupo, giro=0):
+    """Lamina chata e pontuda (pena, barbatana, bandeira): base em p1, ponta em p2. giro em graus."""
+    comp = (Vector(p2) - Vector(p1)).length
+    bpy.ops.mesh.primitive_cone_add(vertices=4, radius1=1, radius2=0, depth=comp, location=(0, 0, 0),
+                                    rotation=(0, 0, math.radians(45)))
+    o = bpy.context.object
+    bpy.ops.object.transform_apply(rotation=True)
+    cg, sg = math.cos(math.radians(giro)), math.sin(math.radians(giro))
+    for v in o.data.vertices:
+        x = v.co.x * largura / 2 / 0.7071
+        y = v.co.y * espessura / 2 / 0.7071
+        v.co.x, v.co.y = x * cg - y * sg, x * sg + y * cg
+    _orientar(o, p1, p2)
     return _registrar(o, nome, cor, grupo)
 
 

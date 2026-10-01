@@ -21,6 +21,13 @@ def construir():
     c.toro("anel", (0, 0.13, 0.374), 0.168, 0.020, c.OURO, "torreta", rot=(79, 0, 0))
     # pavio com brasa
     c.capsula("pavio", (0, 0.30, 0.50), (0.03, 0.34, 0.60), 0.014, c.BEGE, "torreta")
-    c.esfera("brasa", (0.035, 0.345, 0.615), 0.026, c.AMARELO, "torreta")
+    c.esfera("brasa", (0.035, 0.345, 0.615), 0.022, c.AMARELO, "torreta")
+    for k, (dx, dy, dz) in enumerate(((0, 0, 1), (1, 0, 0.2), (-1, 0, 0.2), (0, 1, 0.2), (0, -1, 0.2))):
+        c.cone(f"faisca_{k}", (0.035, 0.345, 0.615), (0.035 + dx * 0.065, 0.345 + dy * 0.065, 0.615 + dz * 0.065),
+               0.014, c.AMARELO if k else c.VERMELHO, "torreta", lados=8)
+    # calcos pontudos que seguram as rodas e cubos de roda em ponta
+    for lado, sx in (("e", -1), ("d", 1)):
+        c.cone(f"calco_{lado}", (0.245 * sx, -0.19, 0.0), (0.245 * sx, -0.10, 0.10), 0.05, c.MARROM_ESCURO, "base", lados=4)
+        c.cone(f"cubo_roda_{lado}", (0.28 * sx, 0.03, 0.15), (0.345 * sx, 0.03, 0.15), 0.035, c.OURO, "base")
 
     return {"base": (0, 0, 0), "torreta": (0, 0.05, 0.38)}

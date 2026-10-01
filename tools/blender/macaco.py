@@ -29,7 +29,7 @@ def macaco(pelo=PELO, pele=PELE, pelagem="lisa", origem=(0, 0, 0), escala=1.0, p
 
     # tronco e barriga
     c.esfera(f"{n}_tronco", P(0, 0, 0.38), (0.185 * e, 0.165 * e, 0.20 * e), pelo, "corpo")
-    c.esfera(f"{n}_barriga", P(0, -0.075, 0.36), (0.125 * e, 0.105 * e, 0.145 * e), pele, "corpo")
+    c.esfera(f"{n}_barriga", P(0, -0.095, 0.36), (0.118 * e, 0.095 * e, 0.140 * e), pele, "corpo")
 
     # braco esquerdo solto ao lado do corpo
     c.capsula(f"{n}_braco_e", P(-0.17, 0, 0.47), P(-0.25, -0.02, 0.27), 0.052 * e, pelo, "corpo")
@@ -43,7 +43,7 @@ def macaco(pelo=PELO, pele=PELE, pelagem="lisa", origem=(0, 0, 0), escala=1.0, p
     # cabeca grande, estilo boneco
     cab = P(0, -0.01, 0.74)
     c.esfera(f"{n}_cabeca", cab, (0.235 * e, 0.215 * e, 0.215 * e), pelo, "cabeca")
-    c.esfera(f"{n}_rosto", P(0, -0.105, 0.725), (0.175 * e, 0.125 * e, 0.150 * e), pele, "cabeca")
+    c.esfera(f"{n}_rosto", P(0, -0.125, 0.720), (0.165 * e, 0.120 * e, 0.140 * e), pele, "cabeca")
     c.esfera(f"{n}_focinho", P(0, -0.185, 0.665), (0.105 * e, 0.075 * e, 0.070 * e), pele, "cabeca")
     c.esfera(f"{n}_nariz", P(0, -0.252, 0.685), (0.026 * e, 0.016 * e, 0.018 * e), c.TINTA, "cabeca")
     c.capsula(f"{n}_boca", P(-0.045, -0.243, 0.640), P(0.045, -0.243, 0.640), 0.009 * e, c.TINTA, "cabeca")
@@ -53,25 +53,32 @@ def macaco(pelo=PELO, pele=PELE, pelagem="lisa", origem=(0, 0, 0), escala=1.0, p
         c.esfera(f"{n}_orelha_{lado}", P(0.245 * sx, 0.01, 0.755), (0.050 * e, 0.085 * e, 0.095 * e), pelo, "cabeca")
         c.esfera(f"{n}_orelha_dentro_{lado}", P(0.262 * sx, -0.012, 0.755), (0.030 * e, 0.060 * e, 0.065 * e), pele, "cabeca")
 
-    # pelagem: pecas de pelo por cima do corpo padrao
+    # pelagem: pecas de pelo por cima do corpo padrao, redondas na base e pontudas na ponta
     if pelagem == "topete":
-        for i, (x, y, z, r) in enumerate(((0, -0.06, 0.965, 0.060), (-0.055, -0.03, 0.950, 0.048),
-                                          (0.055, -0.03, 0.950, 0.048))):
-            c.esfera(f"{n}_topete_{i}", P(x, y, z), (r * e, r * 1.1 * e, r * 1.25 * e), escuro, "cabeca")
+        for i, (x, y, dx, dy, h) in enumerate(((0, -0.05, 0, -0.07, 0.16), (-0.075, -0.02, -0.07, -0.03, 0.12),
+                                               (0.075, -0.02, 0.07, -0.03, 0.12), (0, 0.05, 0, 0.05, 0.12))):
+            c.esfera(f"{n}_topete_base_{i}", P(x, y, 0.925), 0.050 * e, escuro, "cabeca")
+            c.cone(f"{n}_topete_{i}", P(x, y, 0.925), P(x + dx, y + dy, 0.925 + h), 0.048 * e, escuro, "cabeca")
     elif pelagem == "crista":
         for i in range(5):
-            c.esfera(f"{n}_crista_{i}", P(0, -0.10 + i * 0.055, 0.955 - abs(i - 2) * 0.012),
-                     (0.035 * e, 0.045 * e, 0.065 * e), escuro, "cabeca")
+            y = -0.11 + i * 0.058
+            c.cone(f"{n}_crista_{i}", P(0, y, 0.91 - abs(i - 2) * 0.012), P(0, y + 0.03, 1.06 - abs(i - 2) * 0.02),
+                   0.045 * e, escuro, "cabeca")
     elif pelagem == "tufos":
-        for i, sx in enumerate((-1, 1)):
-            c.esfera(f"{n}_tufo_{i}", P(0.20 * sx, -0.02, 0.63), (0.070 * e, 0.060 * e, 0.075 * e), escuro, "cabeca")
+        for sx in (-1, 1):
+            for k, (dz, comp) in enumerate(((0.0, 0.13), (-0.055, 0.11), (0.055, 0.10))):
+                c.cone(f"{n}_tufo_{sx}_{k}", P(0.17 * sx, -0.03, 0.655 + dz),
+                       P((0.17 + comp) * sx, -0.05, 0.625 + dz * 1.6), 0.045 * e, escuro, "cabeca")
     elif pelagem == "barba":
         c.esfera(f"{n}_barba", P(0, -0.165, 0.595), (0.125 * e, 0.075 * e, 0.075 * e), escuro, "cabeca")
+        c.cone(f"{n}_barba_ponta", P(0, -0.18, 0.58), P(0, -0.20, 0.44), 0.07 * e, escuro, "cabeca")
 
     # cauda enrolada para tras
     base_cauda = P(0, 0.13, 0.26)
     c.arco(f"{n}_cauda", base_cauda + Vector((0, 0.16, 0.0)) * e, 0.16 * e, 180, 20, 0.032 * e, pelo, "cauda",
            plano="YZ", n=8, afina=0.75)
+    c.cone(f"{n}_cauda_ponta", base_cauda + Vector((0, 0.310, 0.055)) * e, base_cauda + Vector((0, 0.255, 0.135)) * e,
+           0.034 * e, escuro, "cauda")
 
     return {
         "corpo": P(0, 0, 0.30),
