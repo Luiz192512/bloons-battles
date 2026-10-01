@@ -347,6 +347,36 @@ TESTE(b01_dartling_atira_no_ponto_mirado) {
     CHECA(!b->vivo);
 }
 
+TESTE(b02_morteiro_bombardeia_o_ponto_fixo) {
+    Partida p = solo();
+    Pista& pi = p.pista(1);
+    pi.dinheiro = 1e6;
+    CHECA_IGUAL(p.aplicar(1, "Tmorteiro@700,300"), OK);
+    for (int k = 0; k < 2; ++k) CHECA_IGUAL(p.aplicar(1, "U1:2"), OK);  // mais preciso
+    // ponto fixo longe da trilha: o bloon atravessa a entrada sem levar nada
+    CHECA_IGUAL(p.aplicar(1, "A1@1000,650"), OK);
+    BloonP a = pi.criar_bloon("vermelho", 20);
+    for (int i = 0; i < 90; ++i) p.passo();
+    CHECA(a->vivo);
+    // toda bomba cai perto do ponto fixo, e nao no bloon
+    int bombas = 0;
+    for (int i = 0; i < 150; ++i) {
+        p.passo();
+        for (auto& pr : pi.projeteis) {
+            ++bombas;
+            CHECA(std::abs(pr->x - 1000) < 80 && std::abs(pr->y - 650) < 80);
+        }
+    }
+    CHECA(bombas > 0);
+    // ponto fixo em cima de um bloon parado na trilha: ele estoura
+    BloonP b = pi.criar_bloon("vermelho", 300);
+    b->atord_t = 60;
+    p.passo();
+    CHECA_IGUAL(p.aplicar(1, "A1@" + std::to_string(static_cast<int>(b->x)) + "," + std::to_string(static_cast<int>(b->y))), OK);
+    for (int i = 0; i < 300 && b->vivo; ++i) p.passo();
+    CHECA(!b->vivo);
+}
+
 TESTE(btd6_criticos_a_cada_n_tiros) {
     Partida p = solo();
     Pista& pi = p.pista(1);

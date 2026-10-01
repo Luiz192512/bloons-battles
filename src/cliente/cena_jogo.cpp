@@ -148,6 +148,7 @@ void CenaJogo::pausar(bool v) {
 void CenaJogo::tecla(int k) {
     if (k == KEY_ESCAPE) {
         if (!colocando_.empty() || selecionada_ || op_grande_) {
+            definindo_alvo_ = 0;
             colocando_.clear();
             selecionada_ = 0;
             op_grande_ = false;
@@ -185,6 +186,8 @@ void CenaJogo::tecla(int k) {
     if (k == KEY_TAB && selecionada_) {
         if (TorreP t = pista().torre(selecionada_); t && t->chave == "dartling")
             alternar_mira(t->id);
+        else if (t && t->chave == "morteiro")
+            definindo_alvo_ = definindo_alvo_ == t->id ? 0 : t->id;
         else if (t)
             comando("M" + std::to_string(t->id) + ":" + std::to_string((t->modo + 1) % 4));
         return;
@@ -256,6 +259,11 @@ void CenaJogo::clique(Vector2 pos) {
         return;
     }
     const int x = static_cast<int>(pos.x), y = static_cast<int>(pos.y);
+    if (definindo_alvo_) {
+        comando("A" + std::to_string(definindo_alvo_) + "@" + std::to_string(x) + "," + std::to_string(y));
+        definindo_alvo_ = 0;
+        return;
+    }
     if (!colocando_.empty()) {
         const std::string chave = colocando_;
         if (comando("T" + chave + "@" + std::to_string(x) + "," + std::to_string(y)))
@@ -389,6 +397,18 @@ void CenaJogo::desenhar() {
     TorreP sel = selecionada_ ? pista().torre(selecionada_) : nullptr;
     render_.desenhar(selecionada_);
     if (sel) circulo_alcance(static_cast<float>(sel->x), static_cast<float>(sel->y), sel->alcance(), true);
+    if (sel && sel->chave == "morteiro" && (sel->tem_mira || definindo_alvo_ == sel->id)) {
+        // marca do ponto de impacto: no ponto fixo, ou seguindo o cursor enquanto o jogador escolhe
+        const bool esc = definindo_alvo_ == sel->id && mouse.x < PAINEL_X;
+        const Vector2 c = esc ? mouse : Vector2{static_cast<float>(sel->mx), static_cast<float>(sel->my)};
+        const Color cor = esc ? ui::AMARELO : ui::VERMELHO;
+        DrawRing(c, 20, 24, 0, 360, 48, ui::TINTA);
+        DrawRing(c, 21, 23, 0, 360, 48, cor);
+        DrawLineEx({c.x - 30, c.y}, {c.x - 12, c.y}, 4, cor);
+        DrawLineEx({c.x + 12, c.y}, {c.x + 30, c.y}, 4, cor);
+        DrawLineEx({c.x, c.y - 30}, {c.x, c.y - 12}, 4, cor);
+        DrawLineEx({c.x, c.y + 12}, {c.x, c.y + 30}, 4, cor);
+    }
     if (!colocando_.empty() && mouse.x < PAINEL_X) previa(mouse);
     hud_topo();
     if (ctl_->online()) {
@@ -669,6 +689,15 @@ void CenaJogo::rodape_upgrade(const Torre& t, float x, float y, float w, Vector2
         botoes_up_.push_back({ra, [this, id] { alternar_mira(id); }});
         if (ui::dentro(ra, mouse))
             dicas_.push_back({mouse, "Mira da Dartling", "Segue o cursor. Clique ou Tab para travar onde está."});
+    } else if (t.chave == "morteiro") {
+        // o Morteiro bombardeia um ponto fixo, escolhido com um clique no mapa
+        const bool esperando = definindo_alvo_ == id;
+        ui::texto("ALVO", cx, ra.y + 12, 10, rgb(207, 239, 191), 0, Ancora::CENTER, ui::Peso::TEXTO);
+        ui::texto(esperando ? "Clique no mapa" : t.tem_mira ? "Ponto fixo" : "Definir alvo", cx, ra.y + 28, 13,
+                  esperando ? ui::AMARELO : ui::BRANCO, 3, Ancora::CENTER);
+        botoes_up_.push_back({ra, [this, id] { definindo_alvo_ = definindo_alvo_ == id ? 0 : id; }});
+        if (ui::dentro(ra, mouse))
+            dicas_.push_back({mouse, "Alvo do Morteiro", "Clique aqui (ou Tab) e depois no mapa para fixar onde as bombas caem."});
     } else {
         ui::texto("ALVO", cx, ra.y + 12, 10, rgb(207, 239, 191), 0, Ancora::CENTER, ui::Peso::TEXTO);
         ui::texto(NOMES_MODO[t.modo], cx, ra.y + 28, 13, ui::BRANCO, 3, Ancora::CENTER);

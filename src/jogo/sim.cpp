@@ -379,7 +379,7 @@ char Pista::mudar_modo(int tid, int m) {
 
 char Pista::mirar(int tid, double x, double y) {
     TorreP t = torre(tid);
-    if (!t || !(t->chave == "dartling")) return ERRO_INVALIDO;
+    if (!t || !(t->chave == "dartling" || t->chave == "morteiro")) return ERRO_INVALIDO;
     if (!(x >= 0 && x <= LARGURA_MAPA && y >= 0 && y <= ALTURA_MAPA)) return ERRO_INVALIDO;
     t->mx = x;
     t->my = y;
@@ -886,9 +886,12 @@ void Pista::passo_torre(const TorreP& tp) {
             }
             continue;
         }
-        // Dartling com ponto mirado (cursor do jogador): atira nessa direcao, haja ou nao bloon nela
-        const bool no_ponto = t.tem_mira && t.chave == "dartling" &&
-                              (tipo == TipoAtaque::PROJETIL || tipo == TipoAtaque::HITSCAN) && !at.busca;
+        // torre com ponto escolhido pelo jogador: a Dartling atira na direcao do cursor e o Morteiro
+        // bombardeia o ponto fixo, haja ou nao bloon ali
+        const bool no_ponto =
+            t.tem_mira &&
+            ((t.chave == "dartling" && (tipo == TipoAtaque::PROJETIL || tipo == TipoAtaque::HITSCAN) && !at.busca) ||
+             (t.chave == "morteiro" && tipo == TipoAtaque::MORTEIRO));
         Bloon* a = no_ponto ? nullptr : alvo(t, at, alcance);
         if (no_ponto ? bloons.empty() : !a) continue;
         t.recargas[i] = cad;
@@ -909,8 +912,8 @@ void Pista::passo_torre(const TorreP& tp) {
         } else if (tipo == TipoAtaque::MORTEIRO) {
             for (int k = 0; k < static_cast<int>(at.n); ++k) {
                 const double im = at.impreciso;
-                double x = a->x + rng.uniform(-im, im);
-                double y = a->y + rng.uniform(-im, im);
+                double x = mira.x + rng.uniform(-im, im);
+                double y = mira.y + rng.uniform(-im, im);
                 auto p = std::make_unique<Projetil>(nid(), x, y, 0, atc, tp);
                 p->vx = p->vy = 0.0;
                 p->fusivel = 0.7;

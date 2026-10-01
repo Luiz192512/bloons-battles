@@ -93,6 +93,7 @@ private:
     std::string colocando_;
     // Dartling: segue o cursor (comando A, no maximo 10 por segundo) ate o jogador travar a mira
     std::set<int> mira_travada_;
+    int definindo_alvo_ = 0;  // Morteiro esperando o clique no mapa que fixa o ponto de impacto
     double mira_espera_ = 0;
     Vector2 mira_enviada_{-1, -1};
     std::pair<std::string, double> msg_{"", 0}, banner_{"", 0};
