@@ -49,6 +49,8 @@ void RenderPista::consumir_eventos() {
         const std::string& tipo = e.tipo;
         if (tipo == "pop") {
             if (++pops <= 40) efeitos_.push_back({"pop", e, 0, 0.3});
+        } else if (tipo == "crit") {
+            efeitos_.push_back({"crit", e, 0, 0.6});
         } else if (tipo == "explosao") {
             efeitos_.push_back({"explosao", e, 0, 0.45});
             if (sons_) som::tocar("explosao", 90);
@@ -211,6 +213,10 @@ void RenderPista::desenhar_efeitos() {
         if (f.tipo == "pop") {
             // estouro do design: estrela branca que cresce e some, com confete (fase 0..1 do efeito)
             arte::efeito("estouro", x, y, 46, k * 0.7);
+        } else if (f.tipo == "crit") {
+            // acerto critico: texto laranja que sobe e some (como o CRIT do BTD6)
+            const unsigned char a = static_cast<unsigned char>(255 * (k < 0.6f ? 1.0f : (1.0f - k) / 0.4f));
+            ui::texto("CRIT", x, y - 26 - 22 * k, 22, {255, 150, 30, a}, 4, ui::Ancora::CENTER);
         } else if (f.tipo == "explosao") {
             const float raio = static_cast<float>(d.v);
             arte::efeito("explosao", x, y, std::max(48.0f, raio * 2.6f), k * 0.9);

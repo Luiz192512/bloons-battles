@@ -216,6 +216,7 @@ bool Pista::aplicar_dano(Bloon& b, double dano, const Ataque& at, Torre* torre, 
         return true;
     }
     if (b.cong_t > 0 && dtype == DT_AFIADO) return true;
+    if (at.critico) evento({"crit", b.x, b.y});
     if (at.fragiliza) b.frag = std::max(b.frag, at.fragiliza);
     // efeitos
     if (at.congela && (tp.congela || (tp.moab && at.moab_congela)))
@@ -958,6 +959,7 @@ AtaqueP Pista::critico(Torre& t, size_t i, const AtaqueP& at) {
     falta = sortear();
     auto c = std::make_shared<Ataque>(*at);
     c->dano = at->crit_dano > 0 ? at->crit_dano : at->dano + at->crit_mais;
+    c->critico = true;
     return c;
 }
 

@@ -70,6 +70,7 @@ struct Ataque {
     // critico: a cada crit_cada tiros (sorteado ate crit_max, se maior), o tiro da crit_dano no lugar do
     // dano normal, ou soma crit_mais (Sharp Shooter, Crossbow Master, Robo Monkey)
     double crit_cada = 0, crit_max = 0, crit_dano = 0, crit_mais = 0;
+    bool critico = false;  // copia do ataque feita para um tiro critico (mostra CRIT ao acertar)
     // pocao do Alquimista: em vez de aura, joga "buffs" numa torre por vez (Berserker Brew, AMD).
     // valor = tiros que dura, dur = segundos (<= 0: sem limite), pocao_max = teto de tiros ao
     // acumular (0 = substitui), pocao_bloq = segundos ate a mesma torre poder receber outra

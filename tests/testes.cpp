@@ -377,6 +377,29 @@ TESTE(b02_morteiro_bombardeia_o_ponto_fixo) {
     CHECA(!b->vivo);
 }
 
+TESTE(b03_tiro_critico_avisa_o_cliente) {
+    Partida p = solo();
+    Pista& pi = p.pista(1);
+    pi.dinheiro = 1e6;
+    CHECA_IGUAL(p.aplicar(1, "Tdardo@230,250"), OK);
+    for (int k = 0; k < 4; ++k) CHECA_IGUAL(p.aplicar(1, "U1:2"), OK);  // Sharp Shooter
+    Torre& t = *pi.torres.at(1);
+    auto conta = [&] {
+        int n = 0;
+        for (auto& e : pi.eventos) n += e.tipo == "crit";
+        return n;
+    };
+    BloonP b = pi.criar_bloon("ceramica", 100);
+    pi.eventos.clear();
+    pi.aplicar_dano(*b, 1, *t.ats[0], &t);
+    CHECA_IGUAL(conta(), 0);  // tiro comum nao mostra CRIT
+    AtaqueP c = t.ats[0];
+    for (int k = 0; k < 20 && !c->critico; ++k) c = pi.critico(t, 0, t.ats[0]);
+    CHECA(c->critico);
+    pi.aplicar_dano(*b, 1, *c, &t);
+    CHECA_IGUAL(conta(), 1);
+}
+
 TESTE(btd6_criticos_a_cada_n_tiros) {
     Partida p = solo();
     Pista& pi = p.pista(1);
