@@ -8,13 +8,15 @@ jogando (forma e comportamento do disparo, visual de cada tier e interface).
 ## 0. Resumo
 
 Foram testadas no BTD6 as 22 torres que o clone também tem, cada uma nos 3 caminhos até o
-tier 5, e ainda o Beast Handler (tiers 4). O backlog da seção 6 tem **2 itens P0, 14 P1 e 11 P2**.
+tier 5, e ainda o Beast Handler (tiers 4). O backlog da seção 6 tem **3 itens P0, 15 P1 e 11 P2**.
 O clone já reproduz bem a maior parte dos disparos (divisão do Ultra-Juggernaut, glaives em
 órbita, leque do Triple Shot, cipós na trilha, zumbis, anéis de fogo e de tachinhas). As lacunas
 estão em modos de alvo, feedback visual e mecânicas especiais de upgrade.
 
 As 10 lacunas de maior impacto:
 
+0. **Projéteis erram alvos distantes** (B28, P0): o Bucaneiro, por exemplo, só acerta um bloon
+   vermelho que cruza a linha de tiro até 120 px, com alcance de 240.
 1. **Dartling não mira no cursor** (B01, P0): no BTD6 a mira é o que define a torre.
 2. **Mortar sem "Set Target"** (B02, P0): o clone mira no bloon; no BTD6 o jogador fixa o ponto.
 3. **Modos de alvo próprios de cada torre ausentes** (B05, B06, B15, B19): rotas do Ás, Heli
@@ -125,6 +127,34 @@ Macacos. Capturas em `docs/design/capturas/clone-vs-btd6/`. O que foi visto:
   ou usar o `--demo`. Reforça o item B04.
 - **AUTO:** o botão de rodada automática não ligou com o clique enviado pela automação. Pode ser
   só o clique; vale testar à mão.
+
+### 3.2 Dois erros apontados pelo dono e confirmados no código
+
+**Projéteis erram alvos distantes (B28, P0).** Em `src/jogo/sim.cpp`, o disparo calcula o ângulo
+para a posição atual do bloon (`atan2(a->y - t.y, a->x - t.x)`) e o projétil segue reto, sem
+antecipar o movimento. Como os bloons do clone são rápidos em relação aos projéteis (vermelho a
+95 px/s, dardo a 900 px/s, dardo do Bucaneiro a 700 px/s), o bloon sai do lugar antes de o
+projétil chegar. Conta feita com os números do código, para um bloon cruzando a linha de tiro:
+
+| Bloon | Bucaneiro (700 px/s, alcance 240) acerta até | Dardo (900 px/s) acerta até |
+|---|---|---|
+| Vermelho | 120 px | 150 px |
+| Azul | 80 px | 120 px |
+| Verde | 70 px | 90 px |
+| Cerâmica | 50 px | 70 px |
+| Amarelo e rosa | 30 px | 40 px |
+
+Ou seja, o Bucaneiro erra todo tiro em bloon vermelho na metade de fora do próprio alcance, e
+quase todo tiro em amarelo ou rosa. Vale para todo ataque do tipo projétil sem `busca` (Dardo,
+Bucaneiro, Ninja, Engenheiro, Super, Druida). Quando o bloon anda na direção do tiro o projétil
+acerta, por isso o erro depende da posição da torre. No BTD6 as torres também miram onde o bloon
+está, mas os projéteis são muito mais rápidos em relação aos bloons e o erro quase não aparece.
+
+**Bumerangue sem troca de mão (B29, P1).** Em `Pista::mover_bumerangue` a curva é sempre para o
+mesmo lado (`ang + 2.2 * DT`, comentário "curva suave para a direita"). No BTD6 o painel do
+Boomerang tem um botão de mão (o ícone branco de mão ao lado do retrato, visível em
+`real_ui_painel_lado_esquerdo.jpg`) que inverte o lado do arco. Na primeira versão deste
+documento o ícone foi descrito só como "selo branco", sem identificar a função.
 
 ### Dart Monkey (Macaco Dardo)
 
@@ -431,6 +461,8 @@ O avião é grande: o sprite cobre duas faixas da pista.
 |---|---|---|---|---|---|
 | B01 | P0 | Dartling aponta para o cursor (modo Normal) e pode travar a direção (Locked) | `src/jogo/sim.cpp`: `Pista::alvo` e o laço de disparo; `src/cliente/cena_jogo.cpp`: seletor de alvo; `src/cliente/conexao.cpp`: comando novo para mandar a posição do cursor na Batalha | M | sim |
 | B02 | P0 | Mortar com ponto de impacto fixo: botão "Set Target" no painel e clique no mapa | `src/jogo/sim.cpp`: ramo `TipoAtaque::MORTEIRO`; `src/cliente/cena_jogo.cpp`: botão no painel; `src/cliente/conexao.cpp`: comando | M | sim |
+| B28 | P0 | Projéteis miram a posição atual do bloon e erram alvos distantes ou rápidos (ver 3.2). Corrigir antecipando o alvo no disparo ou aumentando a velocidade dos projéteis | `src/jogo/sim.cpp`: cálculo de `ang` no laço de disparo e `Pista::disparar`; `src/jogo/dados.cpp`: `vel` dos ataques | M | não |
+| B29 | P1 | Boomerang: botão no painel para trocar a mão (lado do arco) | `src/jogo/sim.cpp`: `Pista::mover_bumerangue`; `src/jogo/sim.hpp`: campo na `Torre`; `src/cliente/cena_jogo.cpp`: botão; `src/cliente/conexao.cpp`: comando | P | não |
 | B03 | P1 | Texto "CRIT" nos acertos críticos | `src/jogo/sim.cpp`: `critico` emite um evento novo; `src/cliente/render.cpp`: texto flutuante | P | não |
 | B04 | P1 | Modo Sandbox no solo: dinheiro e vidas infinitos, painel para mandar qualquer bloon ou rodada, apagar bloons e torres | `src/cliente/cenas_menu.cpp`: opção no Jogo Solo; `src/cliente/cena_jogo.cpp`: painel; `src/jogo/sim.cpp`: o modo "rico" do robô (`tools/analise/partida.cpp`) já tem a base | G | não |
 | B05 | P1 | Ás: pista de pouso como torre e rotas no painel (Circle, Infinite, Figure Eight, Centered Path com mira arrastável) | `src/jogo/sim.cpp`: `Mov::ORBITA`; `src/jogo/dados.cpp`: torre "as"; `src/cliente/sprites.cpp`: sprite da pista | M | em parte (Rota Centralizada) |
