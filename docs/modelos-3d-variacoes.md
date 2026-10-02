@@ -65,6 +65,7 @@ mesmo. Vale para o Dardo (caminho 3, tiers 3 a 5), o Sniper (caminho 1, tiers 3 
 | alquimista | 64 de 64 | 8.488 (5-0-2) | 5 | 12,3 MB | 0-1-0 e 0-2-0 mudam só a cor do frasco e a fumaça, pouco visíveis a 48 px; o monstro (0-4-0, 0-5-0) é só traje roxo, garras e chifres, sem mudar o corpo |
 | druida | 64 de 64 | 8.168 (0-5-2) | 5 | 10,7 MB | a barba quase não aparece; a nuvem do 5-0-0 é pequena; verde sobre grama perde contraste; 0-1-0 (farpas no cajado) quase não se vê |
 | fazenda | 64 de 64 | 2.113 (2-0-5) | 1 | 3,9 MB | os cachos de banana quase não aparecem de cima; 0-1-0 (cesto) e 0-0-1 (caixote) são pequenos a 48 px; modelo simples, com folga grande no orçamento |
+| espinhos | 64 de 64 | 1.474 (0-5-2) | 1 | 3,9 MB | a super mina do 5-0-0 é uma só e parece menor que as três do 4-0-0; 0-1-0 e 0-2-0 (engrenagens na lateral) aparecem pouco de cima; 0-0-1 (calha mais comprida) muda pouco |
 
 Primárias, Militares e Mágicas concluídas (18 torres). Suporte ainda não foi começado.
 
@@ -560,3 +561,26 @@ Base: construção sem macaco. Canteiro redondo de terra com duas bananeiras, tu
 | 3 | 3 | Mercado | base | barraca de toldo listrado vermelho e branco | mercado |
 | 3 | 4 | Mercado Central | base | duas barracas | mercado central |
 | 3 | 5 | Wall Street dos Macacos | base | prédio alto de vidro azul com antena dourada, entre as barracas | bolsa |
+
+## Espinhos (Fábrica de Espinhos)
+
+Base: máquina sem macaco. Caixa da fábrica de teto vermelho, com funil em cima, calha na frente
+e uma pilha de espinhos de aço na saída, tudo na malha `base`. A fábrica lê os três tiers.
+
+| Caminho | Tier | Upgrade (nome no clone) | Encaixe | Peça | O que comunica |
+|---|---|---|---|---|---|
+| 1 | 1 | Pilhas Maiores | base (parâmetro) | pilha maior, com mais espinhos | pilha maior |
+| 1 | 2 | Espinhos Incandescentes | base (parâmetro) | espinhos laranja, em brasa | estoura chumbo |
+| 1 | 3 | Bolas Espinhosas | base | fábrica azul; três bolas espinhosas cinza na saída | bolas |
+| 1 | 4 | Minas Espinhosas | base | teto amarelo com faixas de aviso; três minas vermelhas de pontas amarelas | minas |
+| 1 | 5 | Super Minas | base | fábrica preta; uma mina grande preta de pontas vermelhas | super mina |
+| 2 | 1 | Produção Rápida | base (parâmetro) | engrenagem amarela na lateral | produz mais rápido |
+| 2 | 2 | Produção Mais Rápida | base (parâmetro) | segunda engrenagem | mais rápido ainda |
+| 2 | 3 | Triturador de M.O.A.B. | base | fábrica verde escura com rolo triturador de dentes de aço na frente | tritura dirigível |
+| 2 | 4 | Tempestade de Espinhos | base | teto amarelo com quatro lançadores | espinhos na trilha toda |
+| 2 | 5 | Tapete de Espinhos | base | fábrica vermelha de teto preto com oito lançadores | tapete |
+| 3 | 1 | Alcance Longo | base (parâmetro) | calha mais comprida | alcança mais longe |
+| 3 | 2 | Espinhos Inteligentes | base (parâmetro) | antena com luz ciano | começa rápido |
+| 3 | 3 | Espinhos Duradouros | base | fábrica marrom com reforços nos cantos; espinhos maiores | duram mais |
+| 3 | 4 | Espinhos Mortais | base | fábrica preta de teto vermelho; espinhos vermelhos | mais dano |
+| 3 | 5 | Perma-Espinho | base | fábrica branca e dourada; espinhos dourados grandes | permanente |
