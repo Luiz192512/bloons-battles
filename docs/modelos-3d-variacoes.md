@@ -69,10 +69,13 @@ mesmo. Vale para o Dardo (caminho 3, tiers 3 a 5), o Sniper (caminho 1, tiers 3 
 | vila | 64 de 64 | 1.142 (5-0-2) | 1 | 2,1 MB | 1-0-0 (mastro mais alto) muda pouco de cima; os prédios do caminho 3 são caixas simples; modelo simples, com folga grande no orçamento |
 | engenheiro | 64 de 64 | 7.690 (4-0-2) | 5 | 12,1 MB | as sentinelas verdes somem um pouco na grama; a terceira sentinela (4-0-0, 5-0-0) fica atrás do macaco; a engrenagem das costas (3-0-0) quase não aparece na vista do jogo |
 
-Primárias, Militares e Mágicas concluídas (18 torres). Suporte ainda não foi começado.
+As 22 torres estão concluídas: 1.408 variações, todas dentro do teto de 10.000 triângulos e de 6
+malhas, com cor por vértice e o `.json` na ordem do `.glb` (`conferir_variacoes.py` passa nas 22).
+Total em `assets/modelos`: 193 MB.
 
-Tamanho no repositório: o dardo ocupa 12,7 MB (de 139 a 250 KB por variação), abaixo do limite
-de 30 MB por torre. Projetando para as 22 torres, o total fica entre 250 e 330 MB de `.glb`.
+Tamanho no repositório: os macacos ficam entre 10 e 15 MB por torre e as máquinas e construções
+entre 2 e 6 MB, todos abaixo do limite de 30 MB por torre. O total das 22 torres é de 193 MB de
+`.glb`.
 
 Migração do piloto: a variante 0-0-0 de dardo, bomba e bucaneiro sai do montador com a mesma
 contagem de triângulos e o mesmo tamanho de arquivo do piloto. Nas folhas de revisão, bomba e
