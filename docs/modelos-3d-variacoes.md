@@ -53,6 +53,7 @@ python tools/blender/conferir_variacoes.py dardo
 | dartling | 64 de 64 | 7.262 (5-2-0) | 6 | 10,4 MB | os canos finos são de seção quadrada; as mãos do macaco não chegam às manoplas; a barba quase não aparece; 0-1-0 e 0-2-0 (mira e motor) são pequenos a 48 px |
 | mago | 64 de 64 | 8.404 (0-2-5) | 5 | 11,2 MB | 0-0-1 (dois orbes pequenos no cajado) quase não se vê; o chapéu cobre a testa na vista do jogo |
 | super | 64 de 64 | 9.176 (0-2-5) | 5 | 12,9 MB | o enquadramento é largo por causa do templo, então a base fica pequena na folha; 1-0-2 difere de 1-0-0 só pela tira ciano da viseira; o disco do sol esconde a capa |
+| ninja | 64 de 64 | 9.744 (5-2-0) | 5 | 11,4 MB | o capuz largo esconde a cabeça toda na vista do jogo; 2-0-0 (shuriken maior) e 0-0-1 (miolo ciano) mudam pouco; os estrepes são pequenos a 48 px |
 
 Primárias e Militares concluídas (13 torres). Mágicas e Suporte ainda não foram começadas.
 
@@ -457,3 +458,26 @@ dardo na mão. Rosto, capa, luvas e aura leem os três tiers.
 | 3 | 3 | Cavaleiro das Trevas | tronco, chapeu, mao_ataque, costas | armadura e capa pretas com roxo; capacete de chifres; lâmina giratória na mão | lâminas |
 | 3 | 4 | Campeão das Trevas | mao_ataque, costas | lâminas maiores, uma em cada mão | campeão |
 | 3 | 5 | Lenda da Noite | chapeu, costas, extra | chifres roxos maiores; capa roxa de borda ciano; aro escuro com pontas no chão | buraco negro |
+
+## Ninja (Macaco Ninja)
+
+Base: macaco padrão de capuz preto de barra vermelha (`chapeu`), cinto vermelho (`tronco`) e uma
+shuriken de quatro pontas na mão (`mao_ataque`). A shuriken lê os três tiers.
+
+| Caminho | Tier | Upgrade (nome no clone) | Encaixe | Peça | O que comunica |
+|---|---|---|---|---|---|
+| 1 | 1 | Disciplina Ninja | pes | sandálias vermelhas | velocidade |
+| 1 | 2 | Shurikens Afiadas | shuriken (parâmetro) | shuriken maior, de seis pontas | fura mais |
+| 1 | 3 | Tiro Duplo | mao_livre, chapeu | segunda shuriken na mão esquerda; capuz azul | duas por vez |
+| 1 | 4 | Bloonjitsu | mao_ataque, chapeu, tronco | leque de três shurikens na mão; capuz e traje brancos | cinco por vez |
+| 1 | 5 | Grão-Mestre Ninja | costas, chapeu | shurikens douradas; roda de seis shurikens nas costas; capa branca | grão-mestre |
+| 2 | 1 | Distração | mao_livre (alternativa: extra) | bomba de fumaça na mão esquerda; ou no chão | distrai |
+| 2 | 2 | Contraespionagem | rosto | viseira verde | tira camo |
+| 2 | 3 | Táticas Shinobi | costas, chapeu | estandarte verde nas costas; capuz verde escuro | apoia outros ninjas |
+| 2 | 4 | Sabotagem Bloon | costas, tronco | dois estandartes; traje verde escuro | sabotagem |
+| 2 | 5 | Grande Sabotador | costas, chapeu, tronco | traje preto de barra verde; estandartes ciano | grande sabotador |
+| 3 | 1 | Shuriken Teleguiada | shuriken (parâmetro) | miolo ciano aceso na shuriken | teleguiada |
+| 3 | 2 | Estrepes | extra | cinco estrepes de aço no chão, na frente | estrepes |
+| 3 | 3 | Bomba de Luz | mao_livre, tronco | bomba branca na mão esquerda; cinto de bombas | atordoa |
+| 3 | 4 | Bomba Grudenta | mao_livre, chapeu, costas | bomba rosa maior com pinos; capuz laranja; mochila | gruda em dirigível |
+| 3 | 5 | Mestre Bombardeiro | mao_livre, chapeu | bomba roxa ainda maior de pinos dourados; capuz laranja de barra dourada | mestre bombardeiro |
