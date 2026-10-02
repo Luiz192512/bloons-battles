@@ -51,6 +51,7 @@ python tools/blender/conferir_variacoes.py dardo
 | heli | 64 de 64 | 2.176 (0-2-5) | 2 | 4,4 MB | o corpo verde some um pouco na grama; os canhões e o tambor ficam sob o nariz e aparecem pouco de cima; no helicóptero de dois rotores a malha `torreta` tem um pivô só |
 | morteiro | 64 de 64 | 8.726 (0-5-2) | 6 | 11,7 MB | o tubo da base é pequeno perto do macaco; 0-0-1 (mira ao lado do tubo) quase não se vê a 48 px; o macaco não encosta no morteiro |
 | dartling | 64 de 64 | 7.262 (5-2-0) | 6 | 10,4 MB | os canos finos são de seção quadrada; as mãos do macaco não chegam às manoplas; a barba quase não aparece; 0-1-0 e 0-2-0 (mira e motor) são pequenos a 48 px |
+| mago | 64 de 64 | 9.484 (0-2-5) | 5 | 11,6 MB | perto do teto (9.484); 0-0-1 (dois orbes pequenos no cajado) quase não se vê; o chapéu cobre a testa na vista do jogo |
 
 Primárias e Militares concluídas (13 torres). Mágicas e Suporte ainda não foram começadas.
 
@@ -408,3 +409,26 @@ de quatro canos (`torreta`) sobre tripé (`base`). A arma lê os três tiers.
 | 3 | 3 | Chumbinho | torreta, tronco | cano único de boca larga; bandoleira amarela | chumbinho |
 | 3 | 4 | Sistema de Negação de Área | torreta, tronco, chapeu | quatro canos grossos de aço; capacete cinza | quatro canos |
 | 3 | 5 | Zona de Exclusão Bloon | torreta, tronco, chapeu | seis canos grossos dourados; capacete preto com ouro | seis canos |
+
+## Mago (Macaco Mago)
+
+Base: macaco padrão de chapéu pontudo azul de fita dourada (`chapeu`), túnica azul com barra
+(`tronco`) e cajado de madeira com orbe azul (`mao_ataque`). O cajado lê os três tiers.
+
+| Caminho | Tier | Upgrade (nome no clone) | Encaixe | Peça | O que comunica |
+|---|---|---|---|---|---|
+| 1 | 1 | Magia Guiada | cajado (parâmetro) | orbe roxo, um pouco maior | magia teleguiada |
+| 1 | 2 | Explosão Arcana | cajado (parâmetro) | orbe maior com anel dourado em volta | mais dano |
+| 1 | 3 | Maestria Arcana | cajado, chapeu, tronco | traje roxo; cajado dourado com garras e orbe grande | maestria |
+| 1 | 4 | Espinho Arcano | cajado, costas | espinho dourado sobre o orbe; capa roxa | espinho arcano |
+| 1 | 5 | Arquimago | cajado, costas, chapeu | orbe ciano com espinho branco; capa branca; estrela no chapéu | arquimago |
+| 2 | 1 | Bola de Fogo | mao_livre | bola de fogo com chama na mão esquerda | fogo |
+| 2 | 2 | Muralha de Fogo | extra | fileira de chamas no chão, na frente | muralha |
+| 2 | 3 | Sopro do Dragão | cajado, chapeu, tronco | traje vermelho; cajado escuro com orbe laranja em chamas | lança-chamas |
+| 2 | 4 | Invocar Fênix | extra, costas | fênix laranja pousada num poleiro ao lado; capa laranja | fênix |
+| 2 | 5 | Lorde Fênix | extra, costas | fênix dourada maior; capa dourada | fênix permanente |
+| 3 | 1 | Magia Intensa | cajado (parâmetro) | dois orbes ciano pequenos ao lado do orbe | magia mais forte |
+| 3 | 2 | Sentido Macaco | rosto | monóculo roxo de aro dourado | vê camo |
+| 3 | 3 | Cintilar | chapeu | seis faíscas ciano em volta do chapéu | tira camo |
+| 3 | 4 | Necromante | cajado, chapeu, tronco, costas, extra | traje preto de fita verde; cajado preto com orbe verde; três lápides em volta | cemitério |
+| 3 | 5 | Príncipe das Trevas | chapeu, tronco, costas, extra | fitas e capa roxas; coroa no chapéu; cinco lápides | príncipe das trevas |

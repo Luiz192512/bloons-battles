@@ -341,11 +341,13 @@ def chapeu_aba(m, cor, fita=None, aba=0.37, copa=0.15, raio=0.235, z=0.880, tomb
     return [cilindro(m, nome, (0, 0.010 + tomba * 0.12, z - tomba * 0.03), (0, tomba, 1), perfil, cores=cores, seg=14)]
 
 
-def chapeu_cone(m, cor, fita=None, aba=0.36, altura=0.42, raio=0.225, z=0.885, nome="chapeu"):
-    """Chapeu pontudo de aba (mago, bruxo), com a ponta caida para tras."""
-    objs = [cilindro(m, nome + "_aba", (0, 0.010, z), (0, 0.08, 1), [(0, 0), (aba, 0.004), (aba, 0.024), (raio, 0.034), (raio, 0.075), (0, 0.075)],
+def chapeu_cone(m, cor, fita=None, aba=0.34, altura=0.42, raio=0.225, z=0.885, tomba=0.30, nome="chapeu"):
+    """Chapeu pontudo de aba (mago, bruxo), tombado para tras para o rosto aparecer de cima."""
+    c = Vector((0, 0.010 + tomba * 0.12, z - tomba * 0.03))
+    eixo = Vector((0, tomba, 1)).normalized()
+    objs = [cilindro(m, nome + "_aba", c, eixo, [(0, 0), (aba, 0.004), (aba, 0.024), (raio, 0.034), (raio, 0.075), (0, 0.075)],
                      cores=[cor, cor, cor, fita or cor, cor], seg=14)]
-    objs.append(tubo(m, nome + "_copa", [(0, 0.015, z + 0.060), (0, 0.060, z + altura * 0.55), (0, 0.190, z + altura)], [raio * 0.80, raio * 0.42, 0.004], cor))
+    objs.append(tubo(m, nome + "_copa", [c + eixo * 0.060, c + eixo * altura * 0.55 + Vector((0, 0.030, 0)), c + eixo * altura + Vector((0, 0.130, -0.020))], [raio * 0.80, raio * 0.42, 0.004], cor))
     return objs
 
 
@@ -464,4 +466,56 @@ def glaive(m, nome, pos, raio=0.130, normal=(0, 0, 1), lamina="aco", miolo="verm
         a = 2 * math.pi * k / laminas
         objs.append(cone(m, f"{nome}_lamina_{k}", (raio * math.cos(a), raio * math.sin(a), 0), (math.cos(a + 0.9), math.sin(a + 0.9), 0),
                          raio * 0.24, raio * 0.70, lamina, seg=4, matriz=mat))
+    return objs
+
+
+# ---------------------------------------------------------------- cajados, frascos e magia
+def cajado(m, cor="marrom", orbe="azul", raio=0.070, altura=0.960, garra=None, nome="cajado"):
+    """Cajado em pe na mao do ataque, com um orbe no alto; garra = cor de tres pontas que seguram o orbe.
+    Devolve (pecas, topo), com topo = centro do orbe."""
+    x, y = MAO[0] + 0.010, MAO[1] - 0.030
+    topo = Vector((x, y, altura + raio * 0.6))
+    objs = [tubo(m, nome, [(x, y, 0.020), (x, y, altura * 0.5), (x, y, altura)], [0.022, 0.020, 0.026], cor)]
+    objs.append(esfera(m, nome + "_orbe", topo, raio, orbe, cortes=1))
+    if garra:
+        for k in range(3):
+            a = 2 * math.pi * k / 3 + 0.5
+            d = Vector((math.cos(a), math.sin(a), 0))
+            objs.append(cone(m, f"{nome}_garra_{k}", topo + d * raio * 0.95 - Vector((0, 0, raio * 0.7)), d * 0.25 + Vector((0, 0, 1)), raio * 0.32, raio * 1.9, garra, seg=4))
+    return objs, topo
+
+
+def frasco(m, nome, pos, liquido, escala=1.0, vidro="aco", rolha="marrom"):
+    """Frasco de pocao: bojo redondo com o liquido colorido, gargalo e rolha."""
+    perfil = [(0, 0), (0.050, 0.008), (0.072, 0.050), (0.060, 0.100), (0.026, 0.130), (0.026, 0.180), (0.036, 0.184), (0.036, 0.200), (0, 0.204)]
+    perfil = [(r * escala, h * escala) for r, h in perfil]
+    return cilindro(m, nome, pos, (0, 0, 1), perfil, cores=[liquido, liquido, liquido, vidro, vidro, rolha, rolha, rolha], seg=10)
+
+
+def chama(m, nome, pos, altura, cores=("laranja", "amarelo"), raio=None):
+    """Chama: uma lingua grande e duas menores."""
+    r = raio or altura * 0.38
+    objs = [cone(m, nome, pos, (0, 0, 1), r, altura, cores[0], seg=5, fechado=True)]
+    for k, dx in enumerate((-1, 1)):
+        objs.append(cone(m, f"{nome}_{k}", Vector(pos) + Vector((dx * r * 0.55, 0, 0)), (dx * 0.35, 0, 1), r * 0.60, altura * 0.62, cores[1], seg=4, fechado=True))
+    return objs
+
+
+def chifres(m, cor, comp=0.200, abre=0.9, nome="chifre"):
+    """Dois chifres curvos no alto da cabeca."""
+    objs = []
+    for sx in (-1, 1):
+        objs.append(tubo(m, f"{nome}_{sx}", [(0.150 * sx, 0.0, 0.900), ((0.150 + comp * 0.6 * abre) * sx, 0.010, 0.900 + comp * 0.55), ((0.150 + comp * 0.7 * abre) * sx, 0.0, 0.900 + comp * 1.2)],
+                         [0.050, 0.036, 0.004], cor))
+    return objs
+
+
+def aro_chao(m, nome, raio, cor, pontas=None, n=8, tubo_r=0.028, altura=0.150):
+    """Aro no chao em volta da torre (aura), com pontas opcionais de outra cor."""
+    objs = [toro(m, nome, (0, 0, 0.024), raio, tubo_r, cor, seg=20, lados=4)]
+    if pontas:
+        for k in range(n):
+            a = 2 * math.pi * (k + 0.5) / n
+            d = Vector((math.cos(a), math.sin(a), 0))
+            objs.append(cone(m, f"{nome}_ponta_{k}", d * raio, d * 0.4 + Vector((0, 0, 1)), 0.045, altura, pontas, seg=4, fechado=True))
     return objs
