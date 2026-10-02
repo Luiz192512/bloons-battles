@@ -93,7 +93,7 @@ Base: macaco padrão de topete, lenço azul (`tronco`) e um dardo na mão (`mao_
 | 2 | 5 | Fã-Clube Macaco Plasma | costas, tronco, extra | capa roxa maior de borda ciano; estrela ciano; aro de energia sobre a cabeça; pontas dos dardos em ciano | plasma |
 | 3 | 1 | Dardos de Longo Alcance | mao_ataque (alternativas: costas, mao_livre) | dardo de haste comprida e penas maiores; com a mão ocupada, vai atravessado nas costas | alcança mais longe |
 | 3 | 2 | Visão Aprimorada | rosto | óculos redondos de aro dourado | enxerga camo |
-| 3 | 3 | Besta | mao_ataque, chapeu | besta curta de madeira; capuz roxo que cobre as orelhas e emoldura o rosto | tiro forte |
+| 3 | 3 | Besta | mao_ataque, chapeu | besta curta de madeira; capuz roxo justo, que emoldura o rosto | tiro forte |
 | 3 | 4 | Atirador Afiado | mao_ataque, chapeu, costas | besta maior com luneta; capuz com barra e pena amarelas; aljava | precisão, crítico |
 | 3 | 5 | Mestre da Besta | mao_ataque, chapeu, costas | besta grande preta e dourada de arco duplo; capuz preto com ouro; aljava dourada e capa curta preta | o melhor atirador |
 
