@@ -57,7 +57,7 @@ mesmo. Vale para o Dardo (caminho 3, tiers 3 a 5), o Sniper (caminho 1, tiers 3 
 | bucaneiro | 64 de 64 | 9.304 (0-1-4) | 6 | 14,5 MB | a pilha de balas de uva (0-1-0, 0-2-0) fica atrás da vela na vista do jogo; as torres do destróier aparecem pouco; orçamento apertado, a base já usa 8.868 |
 | as | 64 de 64 | 1.123 (0-2-5) | 2 | 3,1 MB | o abacaxi (0-1-0) é pequeno a 48 px; as bombas do 0-3-0 ficam sob a asa; modelo simples, com folga grande no orçamento |
 | heli | 64 de 64 | 2.176 (0-2-5) | 2 | 4,4 MB | o corpo verde some um pouco na grama; os canhões e o tambor ficam sob o nariz e aparecem pouco de cima; no helicóptero de dois rotores a malha `torreta` tem um pivô só |
-| morteiro | 64 de 64 | 8.726 (0-5-2) | 6 | 11,7 MB | o tubo da base é pequeno perto do macaco; 0-0-1 (mira ao lado do tubo) quase não se vê a 48 px; na bateria de cinco tubos (0-5-x) a pilha de projéteis encosta na borda do quadro |
+| morteiro | 64 de 64 | 8.726 (0-5-2) | 6 | 11,7 MB | o tubo da base é pequeno perto do macaco; 0-0-1 (mira ao lado do tubo) quase não se vê a 48 px |
 | dartling | 64 de 64 | 7.270 (5-2-0) | 6 | 10,4 MB | os canos finos são de seção quadrada; só a mão direita segura a arma, a esquerda fica solta; a barba quase não aparece; 0-1-0 e 0-2-0 (mira e motor) são pequenos a 48 px |
 | mago | 64 de 64 | 8.404 (0-2-5) | 5 | 11,2 MB | 0-0-1 (dois orbes pequenos no cajado) quase não se vê; o chapéu cobre a testa na vista do jogo |
 | super | 64 de 64 | 9.176 (0-2-5) | 5 | 12,9 MB | o enquadramento é largo por causa do templo, então a base fica pequena na folha; 1-0-2 difere de 1-0-0 só pela tira ciano da viseira; o disco do sol esconde a capa |
@@ -399,7 +399,7 @@ acompanha a grossura do tubo e o número de tubos.
 | 2 | 2 | Recarga Veloz | base (parâmetro) | pilha de seis projéteis | mais recarga |
 | 2 | 3 | Projéteis Pesados | base, torreta, tronco | projéteis de aço com ponta dourada; tubo cinza; bandoleira | estoura tudo |
 | 2 | 4 | Bateria de Artilharia | torreta, tronco, chapeu | três tubos verdes numa placa larga; capacete e colete verdes | bateria |
-| 2 | 5 | Choque e Pavor | torreta, tronco, chapeu | cinco tubos pretos de anéis vermelhos; traje preto | choque e pavor |
+| 2 | 5 | Choque e Pavor | torreta, tronco, chapeu | cinco tubos pretos de anéis vermelhos, quatro nos cantos e um maior no centro; traje preto | choque e pavor |
 | 3 | 1 | Precisão Aumentada | torreta (parâmetro) | mira com lente ciano ao lado do tubo | precisão, vê camo |
 | 3 | 2 | Coisas Queimando | torreta (parâmetro) | chama na boca do tubo; projétil laranja na mão | deixa fogo |
 | 3 | 3 | Sinalizador | torreta, rosto | antena com luz vermelha; óculos laranja | tira camo |

@@ -45,14 +45,19 @@ def _morteiro(m):
         cor, anel = {3: ("cinza_escuro", "vermelho"), 4: ("marrom_escuro", "laranja"), 5: ("vermelho", "amarelo")}[t3]
     n = {4: 3, 5: 5}.get(t2, 1) if p == 1 else 1
     desloc = [Vector(((k - (n - 1) / 2) * raio * 2.2, 0.050 * abs(k - (n - 1) / 2), 0)) for k in range(n)]
+    grosso = [1.0] * n
+    if n == 5:   # bateria de cinco: quatro tubos nos cantos e um maior no centro; o ultimo e o canto de tras, a direita
+        d = raio * 2.1
+        desloc = [Vector((0, 0, 0)), Vector((-d, -d, 0)), Vector((d, -d, 0)), Vector((-d, d, 0)), Vector((d, d, 0))]
+        grosso = [1.55, 1.0, 1.0, 1.0, 1.0]
 
-    largura = raio * 2.2 * (n - 1) / 2 + raio * 2.4
+    largura = (raio * 2.2 * (n - 1) / 2 if n != 5 else raio * 2.1) + raio * 2.4
     # o macaco fica ao lado do ultimo tubo, com a mao esquerda apoiada nele
     ultimo = PE + desloc[-1]
     mao = pecas.MAO_ESQ
     m.matriz = Matrix.Translation((ultimo.x + raio * 0.75 - mao[0], ultimo.y - 0.067 + raio * 0.30 - mao[1], 0))
     b = [pecas.cilindro(m, "placa", PE - Vector((0, 0, 0.050)), (0, 0, 1), [(0, 0), (largura, 0.004), (largura, 0.040), (largura * 0.8, 0.056), (0, 0.056)], cor="cinza", seg=12,
-                        matriz=Matrix.Translation(PE) @ Matrix.Diagonal((1, 0.75 if n > 1 else 1, 1, 1)) @ Matrix.Translation(-PE))]
+                        matriz=Matrix.Translation(PE) @ Matrix.Diagonal((1, 0.75 if n == 3 else 1, 1, 1)) @ Matrix.Translation(-PE))]
     meio = PE + EIXO * comp * 0.60
     for sx in (-1, 1):   # bipe
         b.append(pecas.tubo(m, f"bipe_{sx}", [meio + Vector((sx * raio, 0, 0)), Vector((PE.x + sx * (largura + 0.060), meio.y - 0.200, 0.010))], 0.016, "cinza", nivel=0))
@@ -71,7 +76,7 @@ def _morteiro(m):
 
     t = []
     for k, d in enumerate(desloc):
-        t.append(_tubo(m, f"tubo_{k}", PE + d, raio, comp, cor, anel))
+        t.append(_tubo(m, f"tubo_{k}", PE + d, raio * grosso[k], comp * (1.0 + 0.25 * (grosso[k] - 1)), cor, anel))
     boca = PE + EIXO * comp
     if t3 >= 1:   # Precisao Aumentada: mira ao lado do tubo
         t.append(pecas.cilindro(m, "mira", PE + EIXO * comp * 0.45 + Vector((-raio - 0.040 - largura + raio * 2.4, 0, 0)), EIXO, [(0, 0), (0.026, 0.004), (0.026, 0.150), (0.038, 0.156), (0.038, 0.210), (0, 0.200)],
