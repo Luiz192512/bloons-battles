@@ -67,6 +67,7 @@ mesmo. Vale para o Dardo (caminho 3, tiers 3 a 5), o Sniper (caminho 1, tiers 3 
 | fazenda | 64 de 64 | 2.113 (2-0-5) | 1 | 3,9 MB | os cachos de banana quase não aparecem de cima; 0-1-0 (cesto) e 0-0-1 (caixote) são pequenos a 48 px; modelo simples, com folga grande no orçamento |
 | espinhos | 64 de 64 | 1.474 (0-5-2) | 1 | 3,9 MB | a super mina do 5-0-0 é uma só e parece menor que as três do 4-0-0; 0-1-0 e 0-2-0 (engrenagens na lateral) aparecem pouco de cima; 0-0-1 (calha mais comprida) muda pouco |
 | vila | 64 de 64 | 1.142 (5-0-2) | 1 | 2,1 MB | 1-0-0 (mastro mais alto) muda pouco de cima; os prédios do caminho 3 são caixas simples; modelo simples, com folga grande no orçamento |
+| engenheiro | 64 de 64 | 7.690 (4-0-2) | 5 | 12,1 MB | as sentinelas verdes somem um pouco na grama; a terceira sentinela (4-0-0, 5-0-0) fica atrás do macaco; a engrenagem das costas (3-0-0) quase não aparece na vista do jogo |
 
 Primárias, Militares e Mágicas concluídas (18 torres). Suporte ainda não foi começado.
 
@@ -608,3 +609,27 @@ mastro e bandeira vermelha, tudo na malha `base`. A vila lê os três tiers.
 | 3 | 3 | Cidade Macaco | base | duas cabanas e um prédio azul | cidade |
 | 3 | 4 | Metrópole Macaco | base | dois prédios mais altos | metrópole |
 | 3 | 5 | Macacópolis | base | três prédios, o maior de teto e antena dourados | macacópolis |
+
+## Engenheiro (Macaco Engenheiro)
+
+Base: macaco padrão de capacete laranja de obra (`chapeu`), macacão azul de barra amarela
+(`tronco`), pistola de pregos (`mao_ataque`) e chave inglesa (`mao_livre`). As ferramentas e as
+sentinelas leem os três tiers.
+
+| Caminho | Tier | Upgrade (nome no clone) | Encaixe | Peça | O que comunica |
+|---|---|---|---|---|---|
+| 1 | 1 | Torreta Sentinela | extra (parâmetro) | uma sentinela verde ao lado | sentinela |
+| 1 | 2 | Engenharia Rápida | extra (parâmetro) | duas sentinelas | mais sentinelas |
+| 1 | 3 | Engrenagens | costas | engrenagem amarela grande nas costas | mais rápido |
+| 1 | 4 | Especialista em Sentinelas | extra | três sentinelas maiores, uma de cada cor, com luz | especializadas |
+| 1 | 5 | Campeão das Sentinelas | extra, costas | três sentinelas douradas de cano ciano; engrenagem dourada | campeãs |
+| 2 | 1 | Área de Serviço Maior | extra (parâmetro) | antena com luz ciano no capacete | alcance |
+| 2 | 2 | Desconstrução | mao_livre (parâmetro) | chave inglesa maior, vermelha | dano em dirigível |
+| 2 | 3 | Espuma Purificadora | mao_ataque, costas | canhão de espuma branco e ciano; tanque branco | tira camo e regeneração |
+| 2 | 4 | Overclock | costas, chapeu | mochila de jato ciano; capacete de barra e ponta ciano | acelera torres |
+| 2 | 5 | Ultraimpulso | costas, chapeu, rosto | mochila e capacete dourados; viseira ciano | ultraimpulso |
+| 3 | 1 | Pregos Enormes | mao_ataque (parâmetro) | prego 60% maior na ponta da pistola | fura mais |
+| 3 | 2 | Pino | tronco (parâmetro) | cinto atravessado com pregos | prega os bloons |
+| 3 | 3 | Arma Dupla | mao_livre | segunda pistola no lugar da chave | duas armas |
+| 3 | 4 | Armadilha Bloon | extra | armadilha redonda de dentes de aço e miolo verde, no chão | armadilha |
+| 3 | 5 | Armadilha XXXL | extra, chapeu, mao_ataque | armadilha maior de aro e dentes dourados; pistolas e capacete dourados | armadilha gigante |
