@@ -5,6 +5,7 @@
 #include <cstdio>
 
 #include "cliente/arte.hpp"
+#include "cliente/modelos3d.hpp"
 #include "cliente/som.hpp"
 
 namespace bl {
@@ -734,7 +735,8 @@ void CenaJogo::painel_lateral(Vector2 mouse) {
         ui::ret(f, face, 7);
         DrawRectangleRec({f.x + 2, f.y, f.width - 4, 3}, cor_categoria(dfn));  // faixa de categoria
         const unsigned char alfa = em_jogo ? 140 : pode ? 255 : 115;
-        arte::torre_icone(chave, {}, r.x + r.width / 2, r.y + 23, 40, alfa);
+        if (dfn.heroi || !m3d::torre(chave, {0, 0, 0}, r.x + r.width / 2, r.y + 33, 24, 90, anim::TipoMira::FIXA, alfa))
+            arte::torre_icone(chave, {}, r.x + r.width / 2, r.y + 23, 40, alfa);
         // rodape do preco
         const Rectangle rod_r{f.x, r.y + r.height - 20, f.width, 17.5f};
         const Color fundo = em_jogo ? ui::VERDE_ESCURO : pode ? ui::MADEIRA_ESCURA : ui::VERMELHO_ESCURO;
@@ -850,7 +852,9 @@ void CenaJogo::cabecalho_upgrade(const Torre& t, float x, float y, float w) {
     const Vector2 c{x + 27, y + 27};
     DrawCircleV(c, 27, ui::TINTA);
     DrawCircleV(c, 24, ui::PAINEL_VERDE_ESC);
-    arte::torre_icone(t.chave, arte::visual(t), c.x, c.y + 2, 48);
+    // retrato: o modelo 3D de frente, na combinacao de upgrades da torre
+    if (t.dfn->heroi || !m3d::torre(t.chave, t.caminhos, c.x, c.y + 13, 30, 90, anim::TipoMira::FIXA))
+        arte::torre_icone(t.chave, arte::visual(t), c.x, c.y + 2, 48);
     const std::string& nome = t.dfn->nome;
     const int tam = nome.size() < 18 ? 18 : 15;
     ui::texto(caber(nome, tam, w - 150), x + 66, y + 16, tam, ui::BRANCO, 4, Ancora::MIDLEFT);

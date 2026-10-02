@@ -81,7 +81,7 @@ if(BLOONS_CLIENTE)
     set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
     set(BUILD_GAMES OFF CACHE BOOL "" FORCE)
     set(CUSTOMIZE_BUILD ON CACHE BOOL "" FORCE)
-    set(SUPPORT_MODULE_RMODELS OFF CACHE BOOL "" FORCE)
+    set(SUPPORT_MODULE_RMODELS ON CACHE BOOL "" FORCE)  # torres em 3D (.glb)
     # o F12 da raylib multiplica pela escala de DPI e sai com faixa preta: o jogo faz a propria captura
     set(SUPPORT_SCREEN_CAPTURE OFF CACHE BOOL "" FORCE)
     set(SUPPORT_GIF_RECORDING OFF CACHE BOOL "" FORCE)
@@ -115,6 +115,7 @@ if(BLOONS_CLIENTE)
     src/cliente/anim.cpp
     src/cliente/vitrine.cpp
     src/cliente/render.cpp
+    src/cliente/modelos3d.cpp
     src/cliente/som.cpp
     src/cliente/conexao.cpp
     src/cliente/controle.cpp

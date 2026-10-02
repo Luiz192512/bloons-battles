@@ -5,6 +5,7 @@
 #include <ctime>
 
 #include "cliente/arte.hpp"
+#include "cliente/modelos3d.hpp"
 #include "cliente/cena_jogo.hpp"
 #include "cliente/cenas_menu.hpp"
 #include "cliente/som.hpp"
@@ -118,6 +119,7 @@ App::~App() {
     cena_.reset();
     proxima_.reset();
     arte::liberar();
+    m3d::liberar();
     ui::liberar_fontes();
     som::liberar();
     CloseWindow();

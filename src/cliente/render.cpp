@@ -5,6 +5,7 @@
 #include <map>
 
 #include "cliente/arte.hpp"
+#include "cliente/modelos3d.hpp"
 #include "cliente/som.hpp"
 #include "cliente/ui.hpp"
 #include "rlgl.h"
@@ -194,16 +195,26 @@ void RenderPista::desenhar_torre(const Torre& t, bool sel) {
     };
     if (sel) anel_chao(ui::AMARELO, 6);
     if (t.turbo < 1.0) anel_chao(rgb(255, 170, 40), sel ? 14.0f : 6.0f);
+    // modelo 3D quando a pasta assets/modelos existe; senao, o sprite 2D
+    auto desenhar = [&](const std::string& chave, const std::array<int, 3>& cam, float tm) {
+        const bool heroi = t.dfn->heroi && chave == t.chave;
+        if (!heroi && m3d::disponivel() && t.dfn->mov == Mov::FIXO)  // sombra no chao (quem voa ja tem a base desenhada)
+            DrawEllipse(static_cast<int>(x), static_cast<int>(y + tm * 0.22f), tm * 0.36f, tm * 0.17f, ui::com_alfa(ui::TINTA, 70));
+        // o Templo do Sol e uma construcao: nao gira com a mira
+        const anim::TipoMira mira = chave == "super" && cam[0] >= 4 ? anim::TipoMira::FIXA : anim::tipo_mira(chave);
+        if (heroi || !m3d::torre(chave, cam, x, y + tm * 0.2f, tm * 0.95f, static_cast<float>(t.ang), mira))
+            arte::torre_mapa(chave, chave == t.chave ? arte::visual(t) : arte::Visual{}, x, y, tm, &q);
+    };
     if (t.disfarce == "super" || t.disfarce == "plasma") {
         // Fa-Clube: o Dardo vira Super Macaco; no Plasma, com um anel roxo (arte propria ainda nao existe)
         if (t.disfarce == "plasma") anel_chao(rgb(190, 90, 255), 10);
-        arte::torre_mapa("super", {}, x, y, tam * 1.1f, &q);
+        desenhar("super", {0, 0, 0}, tam * 1.1f);
     } else if (t.disfarce == "monstro") {
         // Transformacao: desenho provisorio, a propria torre maior com um anel roxo
         anel_chao(rgb(150, 60, 220), 10);
-        arte::torre_mapa(t.chave, arte::visual(t), x, y, tam * 1.3f, &q);
+        desenhar(t.chave, t.caminhos, tam * 1.3f);
     } else {
-        arte::torre_mapa(t.chave, arte::visual(t), x, y, tam, &q);
+        desenhar(t.chave, t.caminhos, tam);
     }
     if (t.dfn->heroi) ui::tecla_centro(std::to_string(t.nivel), x + tam * 0.3f, pe - 4);
 }
