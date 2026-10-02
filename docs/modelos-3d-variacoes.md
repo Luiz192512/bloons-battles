@@ -44,6 +44,7 @@ python tools/blender/conferir_variacoes.py dardo
 | tachinha | 64 de 64 | 3.381 (2-0-5) | 2 | 5,3 MB | 0-0-1 e 0-0-2 (10 e 12 bicos) quase não se distinguem de 0-0-0 a 48 px; a engrenagem do topo lê como uma flor; 0-5-0 fica confuso de tantas lâminas |
 | gelo | 64 de 64 | 8.468 (0-5-2) | 6 | 10,9 MB | os pingentes das costas (2-0-0) aparecem pouco de cima; azul claro, branco e ciano se misturam a 48 px; o tanque do canhão some atrás do corpo |
 | cola | 64 de 64 | 7.898 (0-2-5) | 5 | 11,0 MB | 0-1-0 (gota maior) quase não se vê a 48 px; 0-3-0 e 0-4-0 se parecem de cima (o tanque fica atrás do corpo); 3-0-0 difere de 2-0-0 só pela máscara e pela pistola maior |
+| sniper | 64 de 64 | 8.262 (0-2-5) | 5 | 10,8 MB | capacete e capuz verdes somem na grama; 1-0-0, 0-0-1 e 0-0-2 (ponteira e carregadores) são pequenos a 48 px |
 | bucaneiro | 1 de 64 (só a base) | 8.868 | 5 | 0,23 MB | upgrades entram na Parte B; a base já usa 8.868 triângulos, sobra pouco para peças |
 
 Primárias concluídas (dardo, bumerangue, bomba, tachinha, gelo, cola). Militares, Mágicas e Suporte ainda não foram começadas.
@@ -238,3 +239,26 @@ faixa da pistola, gota, tanque, poça, balde): amarelo, laranja (1), verde (2 e 
 | 3 | 3 | Cola de M.O.A.B. | mao_ataque, chapeu | lançador de cola no ombro, com globo na boca; capacete laranja | cola dirigível |
 | 3 | 4 | Cola Implacável | mao_ataque, chapeu, tronco | lançador maior de anéis vermelhos; capacete vermelho de ponta; colete | atordoa |
 | 3 | 5 | Super Cola | mao_ataque, chapeu, costas | lançador preto e dourado; capacete preto; dois tanques dourados | para tudo |
+
+## Sniper (Macaco Atirador)
+
+Base: macaco padrão de pelo liso, capacete verde (`chapeu`) e rifle comprido com luneta
+(`mao_ataque`). O rifle lê os três tiers e vale em qualquer combinação.
+
+| Caminho | Tier | Upgrade (nome no clone) | Encaixe | Peça | O que comunica |
+|---|---|---|---|---|---|
+| 1 | 1 | Jaqueta Metálica | rifle (parâmetro) | ponteira de aço na boca do cano | estoura chumbo |
+| 1 | 2 | Calibre Grosso | rifle (parâmetro) | cano mais grosso | mais dano |
+| 1 | 3 | Precisão Mortal | rifle, chapeu | rifle maior com luneta grande; capuz verde | tiro certeiro |
+| 1 | 4 | Mutilar M.O.A.B. | rifle, costas | freio de boca e bipé; capa verde | atordoa dirigível |
+| 1 | 5 | Aleijar M.O.A.B. | rifle, chapeu, costas, tronco | rifle preto e vermelho, ainda maior; capuz, capa e colete pretos com vermelho | aleija dirigível |
+| 2 | 1 | Óculos de Visão Noturna | rosto | óculos de aro verde | detecta camo |
+| 2 | 2 | Tiro de Estilhaços | rifle (parâmetro) | boca em leque de três pontas laranja | estilhaços |
+| 2 | 3 | Bala Ricochete | chapeu, tronco | boina vermelha; bandoleira | ricochete |
+| 2 | 4 | Lançamento de Suprimentos | extra | caixa de suprimentos com paraquedas ao lado | dinheiro |
+| 2 | 5 | Atirador de Elite | chapeu, extra, costas | boina preta com ouro; caixa dourada; capa azul; rifle preto e dourado | elite |
+| 3 | 1 | Disparo Rápido | rifle (parâmetro) | carregador amarelo | cadência |
+| 3 | 2 | Disparo Mais Rápido | rifle (parâmetro) | segundo carregador | mais cadência |
+| 3 | 3 | Semiautomático | rifle, chapeu | tambor de munição; faixa vermelha na testa | semiautomático |
+| 3 | 4 | Rifle Automático | rifle, tronco | rifle cinza; colete com cinto de munição dourado | automático |
+| 3 | 5 | Defensor de Elite | rifle, chapeu, tronco, extra | dois tambores dourados; capacete e braços blindados com ombreiras douradas | defesa de elite |
