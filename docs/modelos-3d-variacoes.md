@@ -55,6 +55,7 @@ python tools/blender/conferir_variacoes.py dardo
 | super | 64 de 64 | 9.176 (0-2-5) | 5 | 12,9 MB | o enquadramento é largo por causa do templo, então a base fica pequena na folha; 1-0-2 difere de 1-0-0 só pela tira ciano da viseira; o disco do sol esconde a capa |
 | ninja | 64 de 64 | 9.744 (5-2-0) | 5 | 11,4 MB | o capuz largo esconde a cabeça toda na vista do jogo; 2-0-0 (shuriken maior) e 0-0-1 (miolo ciano) mudam pouco; os estrepes são pequenos a 48 px |
 | alquimista | 64 de 64 | 8.488 (5-0-2) | 5 | 12,3 MB | 0-1-0 e 0-2-0 mudam só a cor do frasco e a fumaça, pouco visíveis a 48 px; o monstro (0-4-0, 0-5-0) é só traje roxo, garras e chifres, sem mudar o corpo |
+| druida | 64 de 64 | 8.168 (0-5-2) | 5 | 10,7 MB | a barba quase não aparece; a nuvem do 5-0-0 é pequena; verde sobre grama perde contraste; 0-1-0 (farpas no cajado) quase não se vê |
 
 Primárias e Militares concluídas (13 torres). Mágicas e Suporte ainda não foram começadas.
 
@@ -505,3 +506,26 @@ Base: macaco padrão de tufos, óculos de proteção (`rosto`), avental branco d
 | 3 | 3 | Chumbo em Ouro | frasco, extra | poção dourada; duas pepitas de ouro no chão | ouro |
 | 3 | 4 | Borracha em Ouro | chapeu, extra | cartola preta de fita dourada; quatro pepitas | mais ouro |
 | 3 | 5 | Mestre Alquimista | costas, tronco, frasco | traje e capa roxos com ouro; poção rosa | encolhe bloons |
+
+## Druida
+
+Base: macaco padrão de barba, coroa de folhas (`chapeu`), túnica verde escura (`tronco`) e
+cajado de madeira com um broto verde na ponta (`mao_ataque`). O cajado lê os três tiers.
+
+| Caminho | Tier | Upgrade (nome no clone) | Encaixe | Peça | O que comunica |
+|---|---|---|---|---|---|
+| 1 | 1 | Espinhos Duros | cajado (parâmetro) | ponta de aço no alto do cajado | espinho duro |
+| 1 | 2 | Coração do Trovão | cajado (parâmetro) | raio amarelo saindo da ponta | raios |
+| 1 | 3 | Druida da Tempestade | tronco, extra | túnica azul; tornado de anéis ao lado | tornado |
+| 1 | 4 | Bola de Relâmpago | cajado | orbe ciano grande no cajado | bola de relâmpago |
+| 1 | 5 | Monarca das Tempestades | extra, costas, chapeu | nuvem escura com raios sobre a cabeça; capa roxa; coroa dourada | supertempestade |
+| 2 | 1 | Enxame de Espinhos | cajado (parâmetro) | coroa de farpas verdes abaixo do broto | mais espinhos |
+| 2 | 2 | Coração de Carvalho | tronco (alternativa: extra) | bolota no peito; ou muda de carvalho no chão | tira regeneração |
+| 2 | 3 | Druida da Selva | chapeu, mao_livre | flores na coroa; cipó enrolado no braço esquerdo | cipós |
+| 2 | 4 | Recompensa da Selva | extra | cesto de bananas ao lado | dinheiro |
+| 2 | 5 | Espírito da Floresta | chapeu, costas, extra | galhos na cabeça; capa de folhas; aro de cipós no chão | cipós na trilha |
+| 3 | 1 | Alcance Druídico | cajado (parâmetro) | cajado mais alto | alcance |
+| 3 | 2 | Coração da Vingança | rosto | óculos vermelhos | vingança |
+| 3 | 3 | Druida da Ira | tronco, cajado | túnica vermelha; orbe vermelho | ira |
+| 3 | 4 | Luxúria de Estouros | chapeu, extra | coroa vermelha com chifres; aro laranja no chão | fortalece druidas |
+| 3 | 5 | Avatar da Ira | tronco, chapeu, extra | túnica preta com vermelho; chifres maiores; chama na cabeça; aro com pontas | avatar da ira |
