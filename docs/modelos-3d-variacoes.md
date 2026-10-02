@@ -52,6 +52,7 @@ python tools/blender/conferir_variacoes.py dardo
 | morteiro | 64 de 64 | 8.726 (0-5-2) | 6 | 11,7 MB | o tubo da base é pequeno perto do macaco; 0-0-1 (mira ao lado do tubo) quase não se vê a 48 px; o macaco não encosta no morteiro |
 | dartling | 64 de 64 | 7.262 (5-2-0) | 6 | 10,4 MB | os canos finos são de seção quadrada; as mãos do macaco não chegam às manoplas; a barba quase não aparece; 0-1-0 e 0-2-0 (mira e motor) são pequenos a 48 px |
 | mago | 64 de 64 | 8.404 (0-2-5) | 5 | 11,2 MB | 0-0-1 (dois orbes pequenos no cajado) quase não se vê; o chapéu cobre a testa na vista do jogo |
+| super | 64 de 64 | 9.176 (0-2-5) | 5 | 12,9 MB | o enquadramento é largo por causa do templo, então a base fica pequena na folha; 1-0-2 difere de 1-0-0 só pela tira ciano da viseira; o disco do sol esconde a capa |
 
 Primárias e Militares concluídas (13 torres). Mágicas e Suporte ainda não foram começadas.
 
@@ -432,3 +433,27 @@ Base: macaco padrão de chapéu pontudo azul de fita dourada (`chapeu`), túnica
 | 3 | 3 | Cintilar | chapeu | seis faíscas ciano em volta do chapéu | tira camo |
 | 3 | 4 | Necromante | cajado, chapeu, tronco, costas, extra | traje preto de fita verde; cajado preto com orbe verde; três lápides em volta | cemitério |
 | 3 | 5 | Príncipe das Trevas | chapeu, tronco, costas, extra | fitas e capa roxas; coroa no chapéu; cinco lápides | príncipe das trevas |
+
+## Super (Super Macaco)
+
+Base: o macaco padrão, o único maior (escala 1,25 no corpo inteiro e em tudo que ele veste), de
+topete, traje azul com estrela dourada (`tronco`), capa azul de borda amarela (`costas`) e um
+dardo na mão. Rosto, capa, luvas e aura leem os três tiers.
+
+| Caminho | Tier | Upgrade (nome no clone) | Encaixe | Peça | O que comunica |
+|---|---|---|---|---|---|
+| 1 | 1 | Rajadas Laser | rosto (parâmetro) | viseira vermelha | laser |
+| 1 | 2 | Rajadas de Plasma | rosto (parâmetro) | viseira roxa | plasma |
+| 1 | 3 | Avatar do Sol | tronco, chapeu, costas, rosto | traje e capa amarelos; coroa dourada; disco do sol com raios atrás da cabeça; viseira amarela | avatar do sol |
+| 1 | 4 | Templo do Sol | base | templo dourado de três degraus; o macaco fica de pé no alto; disco maior | templo |
+| 1 | 5 | Verdadeiro Deus Sol | base, tronco, costas | templo de quatro degraus com obeliscos; traje e capa brancos com ouro | deus sol |
+| 2 | 1 | Super Alcance | costas (parâmetro) | capa mais longa e mais larga | alcance |
+| 2 | 2 | Alcance Épico | extra (parâmetro) | aro amarelo de energia no chão | alcance épico |
+| 2 | 3 | Robô Macaco | chapeu, mao_livre, extra, tronco, rosto | capacete, braços e peitoral de metal com luz verde; sem capa | robô |
+| 2 | 4 | Terror Tecnológico | costas, tronco | armadura verde escura; mochila e dois canhões de ombro | aniquilação |
+| 2 | 5 | O Anti-Bloon | costas, chapeu | armadura preta de luz vermelha; canhões maiores; chifres vermelhos | anti-bloon |
+| 3 | 1 | Repulsão | mao_livre, extra (parâmetro) | luvas laranja grandes nas duas mãos | empurra |
+| 3 | 2 | Ultravisão | rosto (parâmetro) | óculos ciano (ou tira ciano na viseira) | vê camo |
+| 3 | 3 | Cavaleiro das Trevas | tronco, chapeu, mao_ataque, costas | armadura e capa pretas com roxo; capacete de chifres; lâmina giratória na mão | lâminas |
+| 3 | 4 | Campeão das Trevas | mao_ataque, costas | lâminas maiores, uma em cada mão | campeão |
+| 3 | 5 | Lenda da Noite | chapeu, costas, extra | chifres roxos maiores; capa roxa de borda ciano; aro escuro com pontas no chão | buraco negro |
