@@ -34,11 +34,19 @@ python tools/blender/conferir_variacoes.py dardo
 - As peças podem ler os tiers para se ajustar. Isso é regra da torre, não caso solto: no dardo,
   toda ponta de dardo ou de virote fica de aço quando o caminho 1 tem tier.
 
+## Macaco de capuz não tem orelhas
+
+Decisão do dono (02/10/2026): todo personagem de capuz usa a cabeça sem orelhas, para o capuz
+encaixar justo no crânio. `pecas.capuz` chama `m.sem_orelhas()`, que troca a cabeça do macaco
+padrão pela versão sem orelhas (`macaco_poli._cabeca(..., orelhas=False)`); o resto do corpo é o
+mesmo. Vale para o Dardo (caminho 3, tiers 3 a 5), o Sniper (caminho 1, tiers 3 e 5) e o Ninja
+(todas as variações). Capacete, chapéu, coroa e faixa continuam com as orelhas de fora.
+
 ## Estado
 
 | Torre | Variações geradas | Máx. de triângulos | Malhas | Tamanho total | Pendências |
 |---|---|---|---|---|---|
-| dardo | 64 de 64 | 8.929 (2-0-5) | 6 | 12,7 MB | 0-0-1 e 3-1-0 mudam pouco a 48 px; o capuz é largo para cobrir as orelhas |
+| dardo | 64 de 64 | 9.057 (2-0-5) | 6 | 12,7 MB | 0-0-1 e 3-1-0 mudam pouco a 48 px |
 | bumerangue | 64 de 64 | 8.876 (5-2-0) | 5 | 10,8 MB | 1-0-0 muda pouco (só o gume e as pontas de aço); o bumerangue lê como um arco; a mochila do 0-4-0 some na vista do jogo |
 | bomba | 64 de 64 | 6.152 (2-0-5) | 2 | 6,0 MB | 1-0-0 muda pouco (cano 10% mais grosso); 4-0-0 e 5-0-0 se parecem de cima (o 5 é preto com cinta vermelha) |
 | tachinha | 64 de 64 | 3.381 (2-0-5) | 2 | 5,3 MB | 0-0-1 e 0-0-2 (10 e 12 bicos) quase não se distinguem de 0-0-0 a 48 px; a engrenagem do topo lê como uma flor; 0-5-0 fica confuso de tantas lâminas |
@@ -53,7 +61,7 @@ python tools/blender/conferir_variacoes.py dardo
 | dartling | 64 de 64 | 7.262 (5-2-0) | 6 | 10,4 MB | os canos finos são de seção quadrada; as mãos do macaco não chegam às manoplas; a barba quase não aparece; 0-1-0 e 0-2-0 (mira e motor) são pequenos a 48 px |
 | mago | 64 de 64 | 8.404 (0-2-5) | 5 | 11,2 MB | 0-0-1 (dois orbes pequenos no cajado) quase não se vê; o chapéu cobre a testa na vista do jogo |
 | super | 64 de 64 | 9.176 (0-2-5) | 5 | 12,9 MB | o enquadramento é largo por causa do templo, então a base fica pequena na folha; 1-0-2 difere de 1-0-0 só pela tira ciano da viseira; o disco do sol esconde a capa |
-| ninja | 64 de 64 | 9.744 (5-2-0) | 5 | 11,4 MB | o capuz largo esconde a cabeça toda na vista do jogo; 2-0-0 (shuriken maior) e 0-0-1 (miolo ciano) mudam pouco; os estrepes são pequenos a 48 px |
+| ninja | 64 de 64 | 9.872 (5-2-0) | 5 | 11,6 MB | 2-0-0 (shuriken maior) e 0-0-1 (miolo ciano) mudam pouco; os estrepes são pequenos a 48 px |
 | alquimista | 64 de 64 | 8.488 (5-0-2) | 5 | 12,3 MB | 0-1-0 e 0-2-0 mudam só a cor do frasco e a fumaça, pouco visíveis a 48 px; o monstro (0-4-0, 0-5-0) é só traje roxo, garras e chifres, sem mudar o corpo |
 | druida | 64 de 64 | 8.168 (0-5-2) | 5 | 10,7 MB | a barba quase não aparece; a nuvem do 5-0-0 é pequena; verde sobre grama perde contraste; 0-1-0 (farpas no cajado) quase não se vê |
 
@@ -116,7 +124,6 @@ O que ainda não ficou bom (para o ajuste de design):
 
 - 0-0-1 muda pouco em relação a 0-0-0 a 48 px (só o dardo mais comprido).
 - 3-0-0 e 3-1-0 se distinguem só pelas listras vermelhas na carreta, que são pequenas a 48 px.
-- O capuz precisa ser largo para caber as orelhas, e a cabeça fica grande na vista do jogo.
 - A capa, vista de lado, ainda é fina; as pregas aparecem melhor de costas e de cima.
 
 ## Bumerangue (Macaco Bumerangue)

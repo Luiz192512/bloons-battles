@@ -225,7 +225,7 @@ def _capuz(m, cor, barra=None, pena=None):
     m.tirar("pelagem")
     objs = pecas.capuz(m, cor, barra)
     if pena:
-        objs.append(pecas.cone(m, "capuz_pena", (0.300, -0.020, 0.930), (0.50, 0.15, 1), 0.050, 0.250, pena, seg=4, fechado=True))
+        objs.append(pecas.cone(m, "capuz_pena", (0.215, -0.020, 0.930), (0.50, 0.15, 1), 0.050, 0.250, pena, seg=4, fechado=True))
     m.por("chapeu", objs)
 
 

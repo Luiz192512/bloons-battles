@@ -112,4 +112,7 @@ Torre nova no montador:
 4. O caminho cruzado só entra com os tiers 1 e 2, no primeiro encaixe que o principal não ocupou.
    Se a peça do principal esconder um encaixe sem usá-lo, declare com `m.ocupar(encaixe)`.
 
+Macaco de capuz não tem orelhas: `pecas.capuz` troca a cabeça pela versão sem orelhas
+(`m.sem_orelhas()`), para o capuz encaixar justo.
+
 As regras completas e o estado de cada torre estão em `docs/modelos-3d-variacoes.md`.

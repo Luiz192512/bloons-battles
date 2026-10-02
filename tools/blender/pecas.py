@@ -155,14 +155,17 @@ def piso_capacete(x, y):
     return 0.105 - 0.20 * (y + 0.20)
 
 
-# secoes do capuz, do rosto para a nuca: (y, meia largura, topo, barra de baixo)
-CAPUZ = [(-0.205, 0.285, 0.975, 0.560), (-0.100, 0.365, 1.000, 0.545), (0.020, 0.425, 1.005, 0.535), (0.140, 0.400, 0.990, 0.530),
-         (0.240, 0.300, 0.950, 0.550), (0.310, 0.160, 0.900, 0.620)]
+# secoes do capuz, do rosto para a nuca: (y, meia largura, topo, barra de baixo). Justo no cranio:
+# o macaco de capuz usa a cabeca sem orelhas
+CAPUZ = [(-0.205, 0.262, 0.975, 0.560), (-0.100, 0.300, 0.995, 0.545), (0.020, 0.315, 1.000, 0.535), (0.140, 0.300, 0.985, 0.530),
+         (0.240, 0.240, 0.950, 0.550), (0.300, 0.140, 0.900, 0.620)]
 
 
 def capuz(m, cor, barra=None, nome="capuz"):
-    """Capuz de verdade: casca em volta da cabeca toda (cobre as orelhas e desce ate os ombros),
-    aberta num oval em volta do rosto, com a borda enrolada e o bico caido para tras."""
+    """Capuz de verdade: casca justa em volta da cabeca toda, ate os ombros, aberta num oval em
+    volta do rosto, com a borda enrolada e o bico caido para tras. Troca a cabeca do macaco pela
+    versao sem orelhas."""
+    m.sem_orelhas()
     n = 12
     aneis = []
     for y, a, zt, zb in CAPUZ:
@@ -170,7 +173,7 @@ def capuz(m, cor, barra=None, nome="capuz"):
         aneis.append([(a * math.cos(2 * math.pi * k / n), y, zc + h * math.sin(2 * math.pi * k / n)) for k in range(n)])
     objs = [m.obj(nome, poli.loft(aneis, [cor] * n, fecha_inicio=False), nivel=1)]
     objs.append(tubo(m, nome + "_borda", aneis[0] + aneis[0][:1], 0.030, barra or cor))
-    objs.append(tubo(m, nome + "_bico", [(0, 0.270, 0.900), (0, 0.420, 0.850), (0, 0.520, 0.700)], [0.090, 0.055, 0.004], cor))
+    objs.append(tubo(m, nome + "_bico", [(0, 0.250, 0.900), (0, 0.390, 0.850), (0, 0.480, 0.700)], [0.085, 0.052, 0.004], cor))
     return objs
 
 
@@ -269,7 +272,7 @@ def tenis(m, cor, sola="branco", nome="tenis"):
 
 def aljava(m, corpo="marrom", penas=("vermelho", "amarelo", "vermelho"), detalhe="marrom_escuro", nome="aljava"):
     """Aljava atras do ombro direito, com as penas das flechas aparecendo por cima da cabeca."""
-    base, direcao = Vector((0.170, 0.300, 0.360)), Vector((0.46, 0.14, 1)).normalized()
+    base, direcao = Vector((0.150, 0.260, 0.360)), Vector((0.46, 0.12, 1)).normalized()
     objs = [cilindro(m, nome, base, direcao, [(0, 0), (0.060, 0.010), (0.070, 0.300), (0.078, 0.310), (0.078, 0.350), (0.060, 0.352), (0, 0.330)],
                      cores=[corpo, corpo, detalhe, detalhe, detalhe, "tinta"], seg=10)]
     lado = direcao.cross(Vector((0, 1, 0))).normalized()

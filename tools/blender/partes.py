@@ -67,7 +67,9 @@ def _macaco_malhas(c, pelo, pele):
     if k not in _cache_macaco:
         objs = {"corpo": macaco_poli._corpo(c, pelo, pele), "braco": macaco_poli._braco(c, pelo, pele),
                 "cauda": macaco_poli._cauda(c, pelo),
-                "cabeca": poli.juntar("cabeca", [macaco_poli._cabeca(c, pelo, pele)] + macaco_poli._rosto(c), c)}
+                "cabeca": poli.juntar("cabeca", [macaco_poli._cabeca(c, pelo, pele)] + macaco_poli._rosto(c), c),
+                # a cabeca que vai por baixo de capuz: sem orelhas, para o capuz encaixar justo
+                "cabeca_sem_orelhas": poli.juntar("cabeca", [macaco_poli._cabeca(c, pelo, pele, orelhas=False)] + macaco_poli._rosto(c), c)}
         _cache_macaco[k] = {}
         for g, o in objs.items():
             me = o.data
@@ -94,6 +96,8 @@ class Montagem:
     def macaco(self, pelagem="topete", pelo="pelo", pele="pele", pelo_escuro="pelo_escuro"):
         self.cores = {"pelo": pelo, "pele": pele, "pelo_escuro": pelo_escuro}
         for g, me in _macaco_malhas(self.c, pelo, pele).items():
+            if g == "cabeca_sem_orelhas":
+                continue
             o = bpy.data.objects.new(g, me.copy())
             self.c.collection.objects.link(o)
             self.fixas[g] = o
@@ -105,6 +109,14 @@ class Montagem:
         self._principal = False   # trocar o pelo nao ocupa o encaixe
         self.por("pelagem", macaco_poli._pelagem(self.c, estilo, self.cores["pelo_escuro"]))
         self._principal = antes
+
+    def sem_orelhas(self):
+        """Troca a cabeca pela versao sem orelhas (usada por baixo de capuz)."""
+        me = _macaco_malhas(self.c, self.cores["pelo"], self.cores["pele"])["cabeca_sem_orelhas"]
+        antiga = self.fixas["cabeca"].data
+        self.fixas["cabeca"].data = me.copy()
+        if antiga.users == 0:
+            bpy.data.meshes.remove(antiga)
 
     def mover_macaco(self, matriz):
         self.matriz = matriz @ self.matriz

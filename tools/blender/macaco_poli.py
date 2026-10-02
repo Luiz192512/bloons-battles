@@ -45,14 +45,17 @@ def _braco(c, pelo="pelo", pele="pele"):
     return o
 
 
-def _cabeca(c, pelo="pelo", pele="pele"):
+def _cabeca(c, pelo="pelo", pele="pele", orelhas=True):
+    """A cabeca do macaco. orelhas=False e a cabeca que vai por baixo de capuz (decisao do dono:
+    sem orelhas o capuz encaixa justo)."""
     bm = bmesh.new()
     poli.bloco_esfera(bm, (0, 0.0, 0.735), (0.262, 0.232, 0.222))            # cranio largo
     poli.bloco_esfera(bm, (0, -0.150, 0.655), (0.150, 0.110, 0.098))         # focinho
     for sx in (-1, 1):
         poli.bloco_esfera(bm, (0.105 * sx, -0.120, 0.660), (0.090, 0.085, 0.080))   # bochechas
         poli.bloco_esfera(bm, (0.082 * sx, -0.150, 0.800), (0.075, 0.060, 0.070))   # arco das sobrancelhas
-        poli.bloco_esfera(bm, (0.292 * sx, 0.020, 0.760), (0.108, 0.052, 0.116))    # orelha em disco
+        if orelhas:
+            poli.bloco_esfera(bm, (0.292 * sx, 0.020, 0.760), (0.108, 0.052, 0.116))    # orelha em disco
     o = poli.remalhar("cabeca", bm, c, faces=800, voxel=0.010, suave=6)
 
     def orelha(p):
