@@ -57,7 +57,7 @@ python tools/blender/conferir_variacoes.py dardo
 | alquimista | 64 de 64 | 8.488 (5-0-2) | 5 | 12,3 MB | 0-1-0 e 0-2-0 mudam só a cor do frasco e a fumaça, pouco visíveis a 48 px; o monstro (0-4-0, 0-5-0) é só traje roxo, garras e chifres, sem mudar o corpo |
 | druida | 64 de 64 | 8.168 (0-5-2) | 5 | 10,7 MB | a barba quase não aparece; a nuvem do 5-0-0 é pequena; verde sobre grama perde contraste; 0-1-0 (farpas no cajado) quase não se vê |
 
-Primárias e Militares concluídas (13 torres). Mágicas e Suporte ainda não foram começadas.
+Primárias, Militares e Mágicas concluídas (18 torres). Suporte ainda não foi começado.
 
 Tamanho no repositório: o dardo ocupa 12,7 MB (de 139 a 250 KB por variação), abaixo do limite
 de 30 MB por torre. Projetando para as 22 torres, o total fica entre 250 e 330 MB de `.glb`.
