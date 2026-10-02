@@ -50,8 +50,9 @@ python tools/blender/conferir_variacoes.py dardo
 | as | 64 de 64 | 1.123 (0-2-5) | 2 | 3,1 MB | o abacaxi (0-1-0) é pequeno a 48 px; as bombas do 0-3-0 ficam sob a asa; modelo simples, com folga grande no orçamento |
 | heli | 64 de 64 | 2.176 (0-2-5) | 2 | 4,4 MB | o corpo verde some um pouco na grama; os canhões e o tambor ficam sob o nariz e aparecem pouco de cima; no helicóptero de dois rotores a malha `torreta` tem um pivô só |
 | morteiro | 64 de 64 | 8.726 (0-5-2) | 6 | 11,7 MB | o tubo da base é pequeno perto do macaco; 0-0-1 (mira ao lado do tubo) quase não se vê a 48 px; o macaco não encosta no morteiro |
+| dartling | 64 de 64 | 7.262 (5-2-0) | 6 | 10,4 MB | os canos finos são de seção quadrada; as mãos do macaco não chegam às manoplas; a barba quase não aparece; 0-1-0 e 0-2-0 (mira e motor) são pequenos a 48 px |
 
-Primárias concluídas (dardo, bumerangue, bomba, tachinha, gelo, cola). Militares, Mágicas e Suporte ainda não foram começadas.
+Primárias e Militares concluídas (13 torres). Mágicas e Suporte ainda não foram começadas.
 
 Tamanho no repositório: o dardo ocupa 12,7 MB (de 139 a 250 KB por variação), abaixo do limite
 de 30 MB por torre. Projetando para as 22 torres, o total fica entre 250 e 330 MB de `.glb`.
@@ -384,3 +385,26 @@ morteiro lê os três tiers.
 | 3 | 3 | Sinalizador | torreta, rosto | antena com luz vermelha; óculos laranja | tira camo |
 | 3 | 4 | Projéteis Estilhaçantes | torreta, chapeu, tronco | tubo marrom de anéis laranja com chama maior; capacete laranja e colete | queima mais |
 | 3 | 5 | Bloonflagração | torreta, chapeu, tronco | tubo vermelho com chama grande; traje vermelho e amarelo | fogo intenso |
+
+## Dartling (Atirador Dartling)
+
+Base: macaco padrão de barba, faixa verde na testa (`chapeu`), em pé atrás de uma metralhadora
+de quatro canos (`torreta`) sobre tripé (`base`). A arma lê os três tiers.
+
+| Caminho | Tier | Upgrade (nome no clone) | Encaixe | Peça | O que comunica |
+|---|---|---|---|---|---|
+| 1 | 1 | Disparo Focado | torreta (parâmetro) | canos 25% mais longos | tiro concentrado |
+| 1 | 2 | Choque Laser | torreta (parâmetro) | ponta ciano acesa na boca | choque |
+| 1 | 3 | Canhão Laser | torreta, rosto | canhão azul de cano único com bobinas ciano; viseira ciano | laser |
+| 1 | 4 | Acelerador de Plasma | torreta, rosto, tronco | canhão roxo maior, três bobinas e garras de foco; colete roxo | plasma |
+| 1 | 5 | Raio da Perdição | torreta, rosto, tronco | canhão preto e vermelho, o maior, com quatro bobinas; viseira vermelha | raio da perdição |
+| 2 | 1 | Mira Avançada | torreta (parâmetro) | mira de lente ciano em cima da arma | vê camo |
+| 2 | 2 | Giro de Cano Rápido | torreta (parâmetro) | motor amarelo na lateral | gira mais rápido |
+| 2 | 3 | Cápsulas de Foguete Hidra | torreta, chapeu | casulo verde com seis foguetes; capacete verde | foguetes |
+| 2 | 4 | Tempestade de Foguetes | torreta, chapeu, tronco | dois casulos; colete verde | chuva de foguetes |
+| 2 | 5 | M.A.D. | torreta, chapeu, tronco | dois mísseis grandes pretos de nariz vermelho; traje preto | mega mísseis |
+| 3 | 1 | Giro Mais Rápido | torreta (parâmetro) | seis canos em vez de quatro | cadência |
+| 3 | 2 | Dardos Poderosos | torreta (parâmetro) | canos mais grossos, de aço | mais força |
+| 3 | 3 | Chumbinho | torreta, tronco | cano único de boca larga; bandoleira amarela | chumbinho |
+| 3 | 4 | Sistema de Negação de Área | torreta, tronco, chapeu | quatro canos grossos de aço; capacete cinza | quatro canos |
+| 3 | 5 | Zona de Exclusão Bloon | torreta, tronco, chapeu | seis canos grossos dourados; capacete preto com ouro | seis canos |
