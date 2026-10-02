@@ -14,7 +14,8 @@ Regras de composicao (montar):
   aplicados em ordem, do 1 ate o atingido (cumulativos);
 - o caminho cruzado so chega aos tiers 1 e 2; cada tier soma um acessorio, na primeira
   alternativa cujo encaixe o principal nao ocupou;
-- as funcoes de peca podem ler m.tier para ajustar a propria peca (por exemplo a ponta do dardo).
+- as funcoes de peca podem ler m.tier para ajustar a propria peca (por exemplo a ponta do dardo);
+- quando a mesma funcao e declarada em tiers seguidos, ela roda uma vez so e resolve pelo m.tier.
 """
 import importlib
 import json
@@ -204,8 +205,13 @@ def montar(c, chave, a, b, c3):
     torre.base(m)
     p = principal(tier)
     m._principal = True
+    feita = None
     for t in range(1, tier[p] + 1):
-        _aplicar(m, torre.CAMINHOS[p][t], cruzado=False)
+        peca = torre.CAMINHOS[p][t]
+        if callable(peca) and peca is feita:
+            continue   # a mesma funcao serve a varios tiers e le m.tier: roda uma vez so
+        _aplicar(m, peca, cruzado=False)
+        feita = peca
     m._principal = False
     for q in range(3):
         if q != p:

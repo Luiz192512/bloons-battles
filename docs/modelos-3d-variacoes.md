@@ -51,7 +51,7 @@ python tools/blender/conferir_variacoes.py dardo
 | heli | 64 de 64 | 2.176 (0-2-5) | 2 | 4,4 MB | o corpo verde some um pouco na grama; os canhões e o tambor ficam sob o nariz e aparecem pouco de cima; no helicóptero de dois rotores a malha `torreta` tem um pivô só |
 | morteiro | 64 de 64 | 8.726 (0-5-2) | 6 | 11,7 MB | o tubo da base é pequeno perto do macaco; 0-0-1 (mira ao lado do tubo) quase não se vê a 48 px; o macaco não encosta no morteiro |
 | dartling | 64 de 64 | 7.262 (5-2-0) | 6 | 10,4 MB | os canos finos são de seção quadrada; as mãos do macaco não chegam às manoplas; a barba quase não aparece; 0-1-0 e 0-2-0 (mira e motor) são pequenos a 48 px |
-| mago | 64 de 64 | 9.484 (0-2-5) | 5 | 11,6 MB | perto do teto (9.484); 0-0-1 (dois orbes pequenos no cajado) quase não se vê; o chapéu cobre a testa na vista do jogo |
+| mago | 64 de 64 | 8.404 (0-2-5) | 5 | 11,2 MB | 0-0-1 (dois orbes pequenos no cajado) quase não se vê; o chapéu cobre a testa na vista do jogo |
 
 Primárias e Militares concluídas (13 torres). Mágicas e Suporte ainda não foram começadas.
 
