@@ -54,6 +54,7 @@ python tools/blender/conferir_variacoes.py dardo
 | mago | 64 de 64 | 8.404 (0-2-5) | 5 | 11,2 MB | 0-0-1 (dois orbes pequenos no cajado) quase não se vê; o chapéu cobre a testa na vista do jogo |
 | super | 64 de 64 | 9.176 (0-2-5) | 5 | 12,9 MB | o enquadramento é largo por causa do templo, então a base fica pequena na folha; 1-0-2 difere de 1-0-0 só pela tira ciano da viseira; o disco do sol esconde a capa |
 | ninja | 64 de 64 | 9.744 (5-2-0) | 5 | 11,4 MB | o capuz largo esconde a cabeça toda na vista do jogo; 2-0-0 (shuriken maior) e 0-0-1 (miolo ciano) mudam pouco; os estrepes são pequenos a 48 px |
+| alquimista | 64 de 64 | 8.488 (5-0-2) | 5 | 12,3 MB | 0-1-0 e 0-2-0 mudam só a cor do frasco e a fumaça, pouco visíveis a 48 px; o monstro (0-4-0, 0-5-0) é só traje roxo, garras e chifres, sem mudar o corpo |
 
 Primárias e Militares concluídas (13 torres). Mágicas e Suporte ainda não foram começadas.
 
@@ -481,3 +482,26 @@ shuriken de quatro pontas na mão (`mao_ataque`). A shuriken lê os três tiers.
 | 3 | 3 | Bomba de Luz | mao_livre, tronco | bomba branca na mão esquerda; cinto de bombas | atordoa |
 | 3 | 4 | Bomba Grudenta | mao_livre, chapeu, costas | bomba rosa maior com pinos; capuz laranja; mochila | gruda em dirigível |
 | 3 | 5 | Mestre Bombardeiro | mao_livre, chapeu | bomba roxa ainda maior de pinos dourados; capuz laranja de barra dourada | mestre bombardeiro |
+
+## Alquimista
+
+Base: macaco padrão de tufos, óculos de proteção (`rosto`), avental branco de barra roxa
+(`tronco`) e um frasco de poção roxa na mão (`mao_ataque`). O frasco lê os três tiers.
+
+| Caminho | Tier | Upgrade (nome no clone) | Encaixe | Peça | O que comunica |
+|---|---|---|---|---|---|
+| 1 | 1 | Poções Maiores | frasco (parâmetro) | frasco 35% maior | poção maior |
+| 1 | 2 | Mistura Ácida | mao_livre (alternativa: extra) | segundo frasco, verde, na mão esquerda; ou no chão | ácido para as torres |
+| 1 | 3 | Poção do Berserker | frasco, tronco | frasco vermelho maior; cinto de frascos | fortalece torres |
+| 1 | 4 | Estimulante Forte | frasco, costas | frasco laranja; tanque nas costas | poção mais forte |
+| 1 | 5 | Poção Permanente | frasco, costas, tronco | frasco dourado; dois tanques; avental de barra dourada | permanente |
+| 2 | 1 | Ácido Forte | frasco (parâmetro) | poção verde | ácido |
+| 2 | 2 | Poções Perecíveis | frasco (parâmetro) | poção vermelha com fumaça preta no gargalo | dano em dirigível |
+| 2 | 3 | Mistura Instável | frasco, pelagem | poção amarela com faíscas; cabelo arrepiado em crista | explode |
+| 2 | 4 | Tônico Transformador | mao_livre, extra, chapeu, tronco | braços e peito roxos, garras e chifres curtos | vira monstro |
+| 2 | 5 | Transformação Total | costas, rosto, chapeu, tronco | peito maior, chifres longos, capa preta e viseira verde | transforma os vizinhos |
+| 3 | 1 | Arremesso Rápido | tronco (alternativa: pes) | cinto atravessado com três frascos; ou botas roxas | cadência |
+| 3 | 2 | Poça de Ácido | extra | poça verde no chão, na frente | poça na trilha |
+| 3 | 3 | Chumbo em Ouro | frasco, extra | poção dourada; duas pepitas de ouro no chão | ouro |
+| 3 | 4 | Borracha em Ouro | chapeu, extra | cartola preta de fita dourada; quatro pepitas | mais ouro |
+| 3 | 5 | Mestre Alquimista | costas, tronco, frasco | traje e capa roxos com ouro; poção rosa | encolhe bloons |
