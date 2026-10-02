@@ -49,6 +49,7 @@ python tools/blender/conferir_variacoes.py dardo
 | bucaneiro | 64 de 64 | 9.304 (0-1-4) | 6 | 14,5 MB | a pilha de balas de uva (0-1-0, 0-2-0) fica atrás da vela na vista do jogo; as torres do destróier aparecem pouco; orçamento apertado, a base já usa 8.868 |
 | as | 64 de 64 | 1.123 (0-2-5) | 2 | 3,1 MB | o abacaxi (0-1-0) é pequeno a 48 px; as bombas do 0-3-0 ficam sob a asa; modelo simples, com folga grande no orçamento |
 | heli | 64 de 64 | 2.176 (0-2-5) | 2 | 4,4 MB | o corpo verde some um pouco na grama; os canhões e o tambor ficam sob o nariz e aparecem pouco de cima; no helicóptero de dois rotores a malha `torreta` tem um pivô só |
+| morteiro | 64 de 64 | 8.726 (0-5-2) | 6 | 11,7 MB | o tubo da base é pequeno perto do macaco; 0-0-1 (mira ao lado do tubo) quase não se vê a 48 px; o macaco não encosta no morteiro |
 
 Primárias concluídas (dardo, bumerangue, bomba, tachinha, gelo, cola). Militares, Mágicas e Suporte ainda não foram começadas.
 
@@ -359,3 +360,27 @@ rotor de duas pás (`torreta`, gira no jogo). Tudo lê os três tiers.
 | 3 | 3 | Empurrão de M.O.A.B. | base, torreta | aríete de aço no nariz e dois mísseis; rotor de três pás | empurra dirigível |
 | 3 | 4 | Defesa Comanche | base, torreta | casco azul mais fino; rotor de quatro pás | comanche |
 | 3 | 5 | Comandante Comanche | base | aríete dourado e dois helicópteros pequenos de escolta | comanda a escolta |
+
+## Morteiro (Macaco Morteiro)
+
+Base: macaco padrão de pelo liso, capacete cinza de barra vermelha (`chapeu`) e um projétil na
+mão (`mao_ataque`), em pé atrás do morteiro: placa e bipé (`base`) e o tubo (`torreta`). O
+morteiro lê os três tiers.
+
+| Caminho | Tier | Upgrade (nome no clone) | Encaixe | Peça | O que comunica |
+|---|---|---|---|---|---|
+| 1 | 1 | Explosão Maior | torreta (parâmetro) | tubo 18% mais grosso | explosão maior |
+| 1 | 2 | Destruidor de Bloons | torreta (parâmetro) | tubo 30% mais grosso, de anéis vermelhos | mais dano |
+| 1 | 3 | Choque de Projéteis | torreta, tronco | tubo maior de anéis amarelos; colete | atordoa |
+| 1 | 4 | A Grande | torreta, base, tronco, chapeu | tubo enorme preto e dourado sobre carreta com rodas; capacete e colete pretos | a grande |
+| 1 | 5 | A Maior de Todas | torreta, base, tronco, chapeu | tubo ainda maior, vermelho e dourado; capacete dourado | a maior |
+| 2 | 1 | Recarga Rápida | base (parâmetro) | pilha de três projéteis ao lado | recarga |
+| 2 | 2 | Recarga Veloz | base (parâmetro) | pilha de seis projéteis | mais recarga |
+| 2 | 3 | Projéteis Pesados | base, torreta, tronco | projéteis de aço com ponta dourada; tubo cinza; bandoleira | estoura tudo |
+| 2 | 4 | Bateria de Artilharia | torreta, tronco, chapeu | três tubos verdes numa placa larga; capacete e colete verdes | bateria |
+| 2 | 5 | Choque e Pavor | torreta, tronco, chapeu | cinco tubos pretos de anéis vermelhos; traje preto | choque e pavor |
+| 3 | 1 | Precisão Aumentada | torreta (parâmetro) | mira com lente ciano ao lado do tubo | precisão, vê camo |
+| 3 | 2 | Coisas Queimando | torreta (parâmetro) | chama na boca do tubo; projétil laranja na mão | deixa fogo |
+| 3 | 3 | Sinalizador | torreta, rosto | antena com luz vermelha; óculos laranja | tira camo |
+| 3 | 4 | Projéteis Estilhaçantes | torreta, chapeu, tronco | tubo marrom de anéis laranja com chama maior; capacete laranja e colete | queima mais |
+| 3 | 5 | Bloonflagração | torreta, chapeu, tronco | tubo vermelho com chama grande; traje vermelho e amarelo | fogo intenso |
