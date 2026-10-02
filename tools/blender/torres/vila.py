@@ -1,4 +1,4 @@
-"""Vila dos Macacos: construcao sem macaco. Cabana redonda de telhado em cone, com porta e bandeira (malha base).
+"""Vila dos Macacos: construcao sem macaco. Cabana redonda de telhado em cone, com porta (malha base), e o mastro com a bandeira (malha torreta).
 
 Caminho 1 (treino): mastro alto e tambores; do tier 3 em diante, alvo de treino, segunda cabana e balista.
 Caminho 2 (inteligencia): antena e radar; do tier 3 em diante, predio de agencia e fortaleza.
@@ -40,6 +40,7 @@ def _vila(m):
     parede, telhado = "bege", "laranja"
     if treino:
         telhado = {3: "azul", 4: "azul", 5: "vermelho"}[t1]
+    movel, pivo = [], (0, 0, 0)   # malha propria (torreta): o mastro com a bandeira, para o jogo poder tremular
     b = [pecas.cilindro(m, "chao", (0, 0, 0), (0, 0, 1), [(0, 0), (0.660, 0.004), (0.660, 0.024), (0, 0.030)], cor="marrom", seg=18)]
     topo = 0.950   # altura do alto do telhado, onde vai o mastro
     if intel:   # predio de agencia e fortaleza
@@ -61,7 +62,8 @@ def _vila(m):
             b += _predio(m, f"predio_{k}", (x, y), (0.240, 0.220, alt), "azul" if k == 0 else "cinza", "ouro" if (t3 == 5 and k == 0) else "cinza_escuro", faixa="ciano" if t3 >= 4 else "branco")
         topo = alturas[0] + 0.040
         if t3 == 5:
-            b.append(pecas.cone(m, "antena_cidade", (0.200, 0.260, 0.860), (0, 0, 1), 0.030, 0.240, "ouro", seg=5))
+            movel.append(pecas.cone(m, "antena_cidade", (0.200, 0.260, 0.860), (0, 0, 1), 0.030, 0.240, "ouro", seg=5))
+            pivo = (0.200, 0.260, 0.860)
     else:
         b += _cabana(m, "cabana", (0, 0.060), 0.340, parede, telhado, alto=0.300)
         topo = 0.300 + 0.340 * 1.45
@@ -71,8 +73,9 @@ def _vila(m):
     # mastro com bandeira (mais alto com Raio Maior)
     if not (comercio and t3 == 5):
         alto = 0.200 + (0.220 if t1 >= 1 else 0)
-        b.append(pecas.tubo(m, "mastro", [(cx, cy, topo - 0.040), (cx, cy, topo + alto)], 0.014, "marrom_escuro", nivel=0))
-        b.append(pecas.cone(m, "bandeira", (cx, cy, topo + alto - 0.060), (1, 0.1, 0), 0.060, 0.240 + (0.080 if t1 >= 1 else 0), "vermelho" if not intel else "azul", seg=4, fechado=True))
+        pivo = (cx, cy, topo - 0.040)
+        movel.append(pecas.tubo(m, "mastro", [(cx, cy, topo - 0.040), (cx, cy, topo + alto)], 0.014, "marrom_escuro", nivel=0))
+        movel.append(pecas.cone(m, "bandeira", (cx, cy, topo + alto - 0.060), (1, 0.1, 0), 0.060, 0.240 + (0.080 if t1 >= 1 else 0), "vermelho" if not intel else "azul", seg=4, fechado=True))
     # caminho 1: tambores, alvo de treino e balista
     if t1 >= 2:
         for k, x in enumerate((-0.380, -0.520)):
@@ -106,6 +109,8 @@ def _vila(m):
         b.append(pecas.bloco(m, "balcao", (0.320, 0.110, 0.130), (0, -0.400, 0.090), "marrom", chanfro=0.014))
     m.por("base", b)
     m.pivo("base", (0, 0, 0))
+    m.por("torreta", movel)
+    m.pivo("torreta", pivo)
 
 
 def base(m):

@@ -57,16 +57,16 @@ mesmo. Vale para o Dardo (caminho 3, tiers 3 a 5), o Sniper (caminho 1, tiers 3 
 | bucaneiro | 64 de 64 | 9.304 (0-1-4) | 6 | 14,5 MB | a pilha de balas de uva (0-1-0, 0-2-0) fica atrás da vela na vista do jogo; as torres do destróier aparecem pouco; orçamento apertado, a base já usa 8.868 |
 | as | 64 de 64 | 1.123 (0-2-5) | 2 | 3,1 MB | o abacaxi (0-1-0) é pequeno a 48 px; as bombas do 0-3-0 ficam sob a asa; modelo simples, com folga grande no orçamento |
 | heli | 64 de 64 | 2.176 (0-2-5) | 2 | 4,4 MB | o corpo verde some um pouco na grama; os canhões e o tambor ficam sob o nariz e aparecem pouco de cima; no helicóptero de dois rotores a malha `torreta` tem um pivô só |
-| morteiro | 64 de 64 | 8.726 (0-5-2) | 6 | 11,7 MB | o tubo da base é pequeno perto do macaco; 0-0-1 (mira ao lado do tubo) quase não se vê a 48 px; o macaco não encosta no morteiro |
-| dartling | 64 de 64 | 7.262 (5-2-0) | 6 | 10,4 MB | os canos finos são de seção quadrada; as mãos do macaco não chegam às manoplas; a barba quase não aparece; 0-1-0 e 0-2-0 (mira e motor) são pequenos a 48 px |
+| morteiro | 64 de 64 | 8.726 (0-5-2) | 6 | 11,7 MB | o tubo da base é pequeno perto do macaco; 0-0-1 (mira ao lado do tubo) quase não se vê a 48 px; na bateria de cinco tubos (0-5-x) a pilha de projéteis encosta na borda do quadro |
+| dartling | 64 de 64 | 7.270 (5-2-0) | 6 | 10,4 MB | os canos finos são de seção quadrada; só a mão direita segura a arma, a esquerda fica solta; a barba quase não aparece; 0-1-0 e 0-2-0 (mira e motor) são pequenos a 48 px |
 | mago | 64 de 64 | 8.404 (0-2-5) | 5 | 11,2 MB | 0-0-1 (dois orbes pequenos no cajado) quase não se vê; o chapéu cobre a testa na vista do jogo |
 | super | 64 de 64 | 9.176 (0-2-5) | 5 | 12,9 MB | o enquadramento é largo por causa do templo, então a base fica pequena na folha; 1-0-2 difere de 1-0-0 só pela tira ciano da viseira; o disco do sol esconde a capa |
 | ninja | 64 de 64 | 9.872 (5-2-0) | 5 | 11,6 MB | 2-0-0 (shuriken maior) e 0-0-1 (miolo ciano) mudam pouco; os estrepes são pequenos a 48 px |
 | alquimista | 64 de 64 | 8.488 (5-0-2) | 5 | 12,3 MB | 0-1-0 e 0-2-0 mudam só a cor do frasco e a fumaça, pouco visíveis a 48 px; o monstro (0-4-0, 0-5-0) é só traje roxo, garras e chifres, sem mudar o corpo |
 | druida | 64 de 64 | 8.168 (0-5-2) | 5 | 10,7 MB | a barba quase não aparece; a nuvem do 5-0-0 é pequena; verde sobre grama perde contraste; 0-1-0 (farpas no cajado) quase não se vê |
-| fazenda | 64 de 64 | 2.113 (2-0-5) | 1 | 3,9 MB | os cachos de banana quase não aparecem de cima; 0-1-0 (cesto) e 0-0-1 (caixote) são pequenos a 48 px; modelo simples, com folga grande no orçamento |
-| espinhos | 64 de 64 | 1.474 (0-5-2) | 1 | 3,9 MB | a super mina do 5-0-0 é uma só e parece menor que as três do 4-0-0; 0-1-0 e 0-2-0 (engrenagens na lateral) aparecem pouco de cima; 0-0-1 (calha mais comprida) muda pouco |
-| vila | 64 de 64 | 1.142 (5-0-2) | 1 | 2,1 MB | 1-0-0 (mastro mais alto) muda pouco de cima; os prédios do caminho 3 são caixas simples; modelo simples, com folga grande no orçamento |
+| fazenda | 64 de 64 | 2.113 (2-0-5) | 2 | 4,0 MB | os cachos de banana quase não aparecem de cima; 0-1-0 (cesto) e 0-0-1 (caixote) são pequenos a 48 px; modelo simples, com folga grande no orçamento |
+| espinhos | 64 de 64 | 1.474 (0-5-2) | 2 | 3,9 MB | a super mina do 5-0-0 é uma só e parece menor que as três do 4-0-0; 0-1-0 e 0-2-0 (engrenagens na lateral) aparecem pouco de cima; 0-0-1 (calha mais comprida) muda pouco |
+| vila | 64 de 64 | 1.142 (5-0-2) | 2 | 2,2 MB | 1-0-0 (mastro mais alto) muda pouco de cima; os prédios do caminho 3 são caixas simples; modelo simples, com folga grande no orçamento |
 | engenheiro | 64 de 64 | 7.690 (4-0-2) | 5 | 12,1 MB | as sentinelas verdes somem um pouco na grama; a terceira sentinela (4-0-0, 5-0-0) fica atrás do macaco; a engrenagem das costas (3-0-0) quase não aparece na vista do jogo |
 
 As 22 torres estão concluídas: 1.408 variações, todas dentro do teto de 10.000 triângulos e de 6
@@ -384,8 +384,9 @@ rotor de duas pás (`torreta`, gira no jogo). Tudo lê os três tiers.
 ## Morteiro (Macaco Morteiro)
 
 Base: macaco padrão de pelo liso, capacete cinza de barra vermelha (`chapeu`) e um projétil na
-mão (`mao_ataque`), em pé atrás do morteiro: placa e bipé (`base`) e o tubo (`torreta`). O
-morteiro lê os três tiers.
+mão direita (`mao_ataque`), em pé ao lado do morteiro, com a mão esquerda apoiada no tubo: placa
+e bipé (`base`) e o tubo (`torreta`). O morteiro lê os três tiers, e a posição do macaco
+acompanha a grossura do tubo e o número de tubos.
 
 | Caminho | Tier | Upgrade (nome no clone) | Encaixe | Peça | O que comunica |
 |---|---|---|---|---|---|
@@ -408,7 +409,8 @@ morteiro lê os três tiers.
 ## Dartling (Atirador Dartling)
 
 Base: macaco padrão de barba, faixa verde na testa (`chapeu`), em pé atrás de uma metralhadora
-de quatro canos (`torreta`) sobre tripé (`base`). A arma lê os três tiers.
+de quatro canos (`torreta`) sobre tripé (`base`), com a mão direita na manopla. A arma lê os
+três tiers.
 
 | Caminho | Tier | Upgrade (nome no clone) | Encaixe | Peça | O que comunica |
 |---|---|---|---|---|---|
@@ -546,8 +548,9 @@ cajado de madeira com um broto verde na ponta (`mao_ataque`). O cajado lê os tr
 
 ## Fazenda (Fazenda de Bananas)
 
-Base: construção sem macaco. Canteiro redondo de terra com duas bananeiras, tudo na malha
-`base`. A fazenda lê os três tiers.
+Base: construção sem macaco. Canteiro redondo de terra e os prédios na malha `base`; as
+bananeiras na malha `torreta`, com pivô no centro do canteiro, para o jogo poder balançá-las
+quando a fazenda produz. A fazenda lê os três tiers.
 
 | Caminho | Tier | Upgrade (nome no clone) | Encaixe | Peça | O que comunica |
 |---|---|---|---|---|---|
@@ -569,8 +572,10 @@ Base: construção sem macaco. Canteiro redondo de terra com duas bananeiras, tu
 
 ## Espinhos (Fábrica de Espinhos)
 
-Base: máquina sem macaco. Caixa da fábrica de teto vermelho, com funil em cima, calha na frente
-e uma pilha de espinhos de aço na saída, tudo na malha `base`. A fábrica lê os três tiers.
+Base: máquina sem macaco. Caixa da fábrica de teto vermelho, com funil em cima e uma pilha de
+espinhos de aço na saída (malha `base`); a calha da frente é a malha `torreta`, com pivô onde
+ela encosta na fábrica, para o jogo poder sacudi-la quando solta espinhos. A fábrica lê os três
+tiers.
 
 | Caminho | Tier | Upgrade (nome no clone) | Encaixe | Peça | O que comunica |
 |---|---|---|---|---|---|
@@ -592,8 +597,10 @@ e uma pilha de espinhos de aço na saída, tudo na malha `base`. A fábrica lê 
 
 ## Vila (Vila dos Macacos)
 
-Base: construção sem macaco. Cabana redonda de parede bege e telhado laranja em cone, com porta,
-mastro e bandeira vermelha, tudo na malha `base`. A vila lê os três tiers.
+Base: construção sem macaco. Cabana redonda de parede bege e telhado laranja em cone, com porta
+(malha `base`); o mastro com a bandeira vermelha é a malha `torreta`, com pivô no pé do mastro,
+para o jogo poder tremular a bandeira. Em 0-0-5 a parte móvel é a antena dourada da cidade. A
+vila lê os três tiers.
 
 | Caminho | Tier | Upgrade (nome no clone) | Encaixe | Peça | O que comunica |
 |---|---|---|---|---|---|

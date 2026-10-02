@@ -1,4 +1,4 @@
-"""Fazenda de Bananas: construcao sem macaco. Canteiro de terra com bananeiras (tudo na malha base).
+"""Fazenda de Bananas: construcao sem macaco. Canteiro de terra e predios (malha base) e as bananeiras (malha torreta).
 
 Caminho 1 (producao): mais bananeiras; do tier 3 em diante, plantacao, centro de pesquisa e central.
 Caminho 2 (banco): cesto e bananas douradas; do tier 3 em diante, o banco.
@@ -57,8 +57,9 @@ def _fazenda(m):
         n = 6 if t1 == 3 else 4
     if banco or merc or (prod and t1 >= 4):   # o predio ocupa o fundo: as arvores ficam na frente
         lugares = [(-0.380, -0.200), (0.380, -0.200), (-0.140, -0.400), (0.140, -0.400), (-0.500, 0.060), (0.500, 0.060)]
+    arvores = []   # malha propria (torreta), para o jogo poder balancar as bananeiras
     for k in range(n):
-        b += _bananeira(m, f"bananeira_{k}", (lugares[k][0], lugares[k][1], 0.040), altura=0.420 if not prod else 0.500, banana=banana)
+        arvores += _bananeira(m, f"bananeira_{k}", (lugares[k][0], lugares[k][1], 0.040), altura=0.420 if not prod else 0.500, banana=banana)
     if prod and t1 >= 4:   # centro de pesquisa e central: laboratorio com domo e caixas
         b += _predio(m, "laboratorio", (0, 0.200), (0.520, 0.380, 0.300 if t1 == 4 else 0.420), "branco", "ciano" if t1 == 4 else "ouro", domo="ciano")
         for k, (x, y) in enumerate(((-0.050, -0.140), (0.110, -0.170), (0.030, -0.150))[:2 if t1 == 4 else 3]):
@@ -100,6 +101,8 @@ def _fazenda(m):
         b.append(pecas.toro(m, "cerca_travessa", (0, 0, 0.130), 0.600, 0.014, "branco", seg=18, lados=4))
     m.por("base", b)
     m.pivo("base", (0, 0, 0))
+    m.por("torreta", arvores)
+    m.pivo("torreta", (0, 0, 0.040))
 
 
 def base(m):

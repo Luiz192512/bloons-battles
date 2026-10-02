@@ -1,4 +1,4 @@
-"""Fabrica de Espinhos: maquina sem macaco. Caixa da fabrica com funil e calha (base) e a pilha de espinhos na frente.
+"""Fabrica de Espinhos: maquina sem macaco. Caixa da fabrica com funil e a pilha de espinhos (base) e a calha (torreta).
 
 Caminho 1 (minas): pilha maior e em brasa; do tier 3 em diante, bolas espinhosas e minas.
 Caminho 2 (producao): engrenagens; do tier 3 em diante, rolo triturador e lancadores no teto.
@@ -49,10 +49,9 @@ def _fabrica(m):
          pecas.bloco(m, "fabrica_teto", (0.560, 0.460, 0.060), (0, 0.180, 0.360), teto, chanfro=0.020),
          pecas.cilindro(m, "funil", (0, 0.220, 0.380), (0, 0, 1), [(0.070, 0), (0.070, 0.050), (0.150, 0.170), (0.130, 0.170), (0.055, 0.060), (0, 0.060)], cores=[metal, metal, metal, "tinta", "tinta"], seg=10)]
     comp = 0.300 + (0.160 if t3 >= 1 else 0)   # Alcance Longo: calha mais comprida
-    b.append(pecas.bloco(m, "calha", (0.200, comp, 0.040), (0, -0.030 - comp / 2, 0.100), metal, chanfro=0.012,
-                         matriz=None))
-    for sx in (-1, 1):
-        b.append(pecas.bloco(m, f"calha_borda_{sx}", (0.026, comp, 0.070), (0.100 * sx, -0.030 - comp / 2, 0.120), metal, chanfro=0.008))
+    calha = [pecas.bloco(m, "calha", (0.200, comp, 0.040), (0, -0.030 - comp / 2, 0.100), metal, chanfro=0.012)]
+    for sx in (-1, 1):   # a calha e malha propria (torreta), para o jogo poder sacudir quando solta espinhos
+        calha.append(pecas.bloco(m, f"calha_borda_{sx}", (0.026, comp, 0.070), (0.100 * sx, -0.030 - comp / 2, 0.120), metal, chanfro=0.008))
     saida = Vector((0, -0.110 - comp, 0.020))
     # o que sai da fabrica: espinhos, bolas ou minas
     cor_esp = "laranja" if t1 >= 2 else "aco"
@@ -98,6 +97,8 @@ def _fabrica(m):
                 b.append(pecas.bloco(m, f"reforco_{sx}_{sy}", (0.060, 0.060, 0.360), (0.250 * sx, 0.180 + 0.200 * sy, 0.180), "cinza" if t3 < 5 else "ouro", chanfro=0.012))
     m.por("base", b)
     m.pivo("base", (0, 0, 0))
+    m.por("torreta", calha)
+    m.pivo("torreta", (0, -0.030, 0.100))
 
 
 def base(m):

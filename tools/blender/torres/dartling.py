@@ -13,7 +13,7 @@ from mathutils import Matrix, Vector
 import pecas
 
 ENQUADRE = ((0, -0.12, 0.42), 2.0)
-G = Vector((0.060, -0.300, 0.430))     # o eixo da arma passa por aqui, apontando para -Y
+G = Vector((0.170, -0.300, 0.430))     # o eixo da arma passa por aqui, apontando para -Y
 RECUO = Matrix.Translation((0, 0.180, 0))
 
 
@@ -38,8 +38,10 @@ def _arma(m):
     m.pivo("base", (0, 0, 0))
 
     t = [pecas.bloco(m, "arma_corpo", (0.170 * esc, 0.250 * esc, 0.170 * esc), G + Vector((0, 0.060 * esc, 0)), corpo, chanfro=0.030, seg=2)]
-    for sx in (-1, 1):   # manoplas voltadas para o macaco
-        t.append(pecas.tubo(m, f"manopla_{sx}", [G + Vector((0.060 * sx, 0.170 * esc, 0)), G + Vector((0.075 * sx, 0.300 * esc, -0.020))], 0.018, "tinta", nivel=0))
+    # manopla ate a mao direita do macaco, que segura a arma; a outra manopla fica livre
+    mao = RECUO @ Vector(pecas.MAO)
+    t.append(pecas.tubo(m, "manopla", [G + Vector((0.050, 0.150 * esc, 0)), mao + Vector((-0.010, -0.050, 0.010)), mao + Vector((-0.010, 0.010, 0.010))], 0.020, "tinta", nivel=0))
+    t.append(pecas.tubo(m, "manopla_esq", [G + Vector((-0.050, 0.150 * esc, 0)), G + Vector((-0.070, 0.150 * esc + 0.110, -0.030))], 0.018, "tinta", nivel=0))
     t.append(pecas.bloco(m, "municao", (0.110, 0.150, 0.130), G + Vector((-0.150 * esc, 0.060, -0.030)), "amarelo" if not laser else "ciano", chanfro=0.016))
     frente = G + Vector((0, -0.060 * esc, 0))
     L = 0.340 * (1.25 if t1 >= 1 else 1.0)
