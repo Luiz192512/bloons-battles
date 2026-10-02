@@ -398,7 +398,7 @@ acompanha a grossura do tubo e o número de tubos.
 | 2 | 1 | Recarga Rápida | base (parâmetro) | pilha de três projéteis ao lado | recarga |
 | 2 | 2 | Recarga Veloz | base (parâmetro) | pilha de seis projéteis | mais recarga |
 | 2 | 3 | Projéteis Pesados | base, torreta, tronco | projéteis de aço com ponta dourada; tubo cinza; bandoleira | estoura tudo |
-| 2 | 4 | Bateria de Artilharia | torreta, tronco, chapeu | três tubos verdes numa placa larga; capacete e colete verdes | bateria |
+| 2 | 4 | Bateria de Artilharia | torreta, tronco, chapeu | três tubos verdes em triângulo, um na frente e dois atrás; capacete e colete verdes | bateria |
 | 2 | 5 | Choque e Pavor | torreta, tronco, chapeu | cinco tubos pretos de anéis vermelhos, quatro nos cantos e um maior no centro; traje preto | choque e pavor |
 | 3 | 1 | Precisão Aumentada | torreta (parâmetro) | mira com lente ciano ao lado do tubo | precisão, vê camo |
 | 3 | 2 | Coisas Queimando | torreta (parâmetro) | chama na boca do tubo; projétil laranja na mão | deixa fogo |

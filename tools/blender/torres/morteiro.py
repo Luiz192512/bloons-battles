@@ -46,18 +46,21 @@ def _morteiro(m):
     n = {4: 3, 5: 5}.get(t2, 1) if p == 1 else 1
     desloc = [Vector(((k - (n - 1) / 2) * raio * 2.2, 0.050 * abs(k - (n - 1) / 2), 0)) for k in range(n)]
     grosso = [1.0] * n
+    if n == 3:   # bateria de tres: triangulo, um tubo na frente e dois atras; o ultimo e o de tras, a direita
+        d = raio * 1.45
+        desloc = [Vector((0, -d * 0.9, 0)), Vector((-d, d * 0.7, 0)), Vector((d, d * 0.7, 0))]
     if n == 5:   # bateria de cinco: quatro tubos nos cantos e um maior no centro; o ultimo e o canto de tras, a direita
         d = raio * 2.1
         desloc = [Vector((0, 0, 0)), Vector((-d, -d, 0)), Vector((d, -d, 0)), Vector((-d, d, 0)), Vector((d, d, 0))]
         grosso = [1.55, 1.0, 1.0, 1.0, 1.0]
 
-    largura = (raio * 2.2 * (n - 1) / 2 if n != 5 else raio * 2.1) + raio * 2.4
+    largura = {1: 0.0, 3: raio * 1.45, 5: raio * 2.1}[n] + raio * 2.4
     # o macaco fica ao lado do ultimo tubo, com a mao esquerda apoiada nele
     ultimo = PE + desloc[-1]
     mao = pecas.MAO_ESQ
     m.matriz = Matrix.Translation((ultimo.x + raio * 0.75 - mao[0], ultimo.y - 0.067 + raio * 0.30 - mao[1], 0))
     b = [pecas.cilindro(m, "placa", PE - Vector((0, 0, 0.050)), (0, 0, 1), [(0, 0), (largura, 0.004), (largura, 0.040), (largura * 0.8, 0.056), (0, 0.056)], cor="cinza", seg=12,
-                        matriz=Matrix.Translation(PE) @ Matrix.Diagonal((1, 0.75 if n == 3 else 1, 1, 1)) @ Matrix.Translation(-PE))]
+                        matriz=Matrix.Translation(PE) @ Matrix.Diagonal((1, 1, 1, 1)) @ Matrix.Translation(-PE))]
     meio = PE + EIXO * comp * 0.60
     for sx in (-1, 1):   # bipe
         b.append(pecas.tubo(m, f"bipe_{sx}", [meio + Vector((sx * raio, 0, 0)), Vector((PE.x + sx * (largura + 0.060), meio.y - 0.200, 0.010))], 0.016, "cinza", nivel=0))
