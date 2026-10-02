@@ -45,6 +45,7 @@ python tools/blender/conferir_variacoes.py dardo
 | gelo | 64 de 64 | 8.468 (0-5-2) | 6 | 10,9 MB | os pingentes das costas (2-0-0) aparecem pouco de cima; azul claro, branco e ciano se misturam a 48 px; o tanque do canhão some atrás do corpo |
 | cola | 64 de 64 | 7.898 (0-2-5) | 5 | 11,0 MB | 0-1-0 (gota maior) quase não se vê a 48 px; 0-3-0 e 0-4-0 se parecem de cima (o tanque fica atrás do corpo); 3-0-0 difere de 2-0-0 só pela máscara e pela pistola maior |
 | sniper | 64 de 64 | 8.262 (0-2-5) | 5 | 10,8 MB | capacete e capuz verdes somem na grama; 1-0-0, 0-0-1 e 0-0-2 (ponteira e carregadores) são pequenos a 48 px |
+| submarino | 64 de 64 | 1.304 (4-0-2) | 2 | 2,8 MB | 1-0-0 (periscópio mais alto) não se vê de cima; o reator fica escondido pelo radar; modelo simples, com folga grande no orçamento |
 | bucaneiro | 1 de 64 (só a base) | 8.868 | 5 | 0,23 MB | upgrades entram na Parte B; a base já usa 8.868 triângulos, sobra pouco para peças |
 
 Primárias concluídas (dardo, bumerangue, bomba, tachinha, gelo, cola). Militares, Mágicas e Suporte ainda não foram começadas.
@@ -262,3 +263,26 @@ Base: macaco padrão de pelo liso, capacete verde (`chapeu`) e rifle comprido co
 | 3 | 3 | Semiautomático | rifle, chapeu | tambor de munição; faixa vermelha na testa | semiautomático |
 | 3 | 4 | Rifle Automático | rifle, tronco | rifle cinza; colete com cinto de munição dourado | automático |
 | 3 | 5 | Defensor de Elite | rifle, chapeu, tronco, extra | dois tambores dourados; capacete e braços blindados com ombreiras douradas | defesa de elite |
+
+## Submarino (Submarino Macaco)
+
+Base: só o submarino, sem macaco. Casco amarelo de faixas azuis com hélice, leme e aletas
+(`base`) e a torre com periscópio e um canhão (`torreta`). Tudo lê os três tiers.
+
+| Caminho | Tier | Upgrade (nome no clone) | Encaixe | Peça | O que comunica |
+|---|---|---|---|---|---|
+| 1 | 1 | Alcance Maior | torreta (parâmetro) | periscópio mais alto | vê mais longe |
+| 1 | 2 | Inteligência Avançada | torreta (parâmetro) | antena de radar branca na torre | ataca no mapa todo |
+| 1 | 3 | Submergir e Apoiar | base | dois anéis de sonar ciano em volta do casco | pulso que tira camo |
+| 1 | 4 | Reator de Bloontônio | base | casco cinza escuro de faixas e anéis verdes; reator verde no convés | radiação |
+| 1 | 5 | Energizador | base | casco preto de faixas ciano; reator ciano maior | energiza |
+| 2 | 1 | Dardos Farpados | base (parâmetro) | ponta de aço com farpas na proa | fura mais |
+| 2 | 2 | Dardos Aquecidos | base (parâmetro) | a ponta da proa fica laranja | estoura chumbo |
+| 2 | 3 | Míssil Balístico | base | dois tubos de míssil no convés, de nariz vermelho | mísseis |
+| 2 | 4 | Capacidade de Primeiro Ataque | base | quatro mísseis; casco verde escuro de faixas amarelas | míssil gigante |
+| 2 | 5 | Ataque Preventivo | base | seis mísseis; casco preto de faixas vermelhas | ataque preventivo |
+| 3 | 1 | Canhões Gêmeos | torreta (parâmetro) | dois canhões na torre | atira em dobro |
+| 3 | 2 | Dardos de Explosão Aérea | torreta (parâmetro) | ponta amarela em cada canhão | divide no ar |
+| 3 | 3 | Canhões Triplos | torreta | três canhões | três canhões |
+| 3 | 4 | Dardos Perfurantes | torreta, base | canhões de aço mais longos; casco cinza com placas de blindagem | perfura |
+| 3 | 5 | Comandante Submarino | torreta, base | casco azul de faixas douradas; estrela dourada na torre | comando |
