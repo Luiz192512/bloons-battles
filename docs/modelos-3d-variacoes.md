@@ -47,6 +47,7 @@ python tools/blender/conferir_variacoes.py dardo
 | sniper | 64 de 64 | 8.262 (0-2-5) | 5 | 10,8 MB | capacete e capuz verdes somem na grama; 1-0-0, 0-0-1 e 0-0-2 (ponteira e carregadores) são pequenos a 48 px |
 | submarino | 64 de 64 | 1.304 (4-0-2) | 2 | 2,8 MB | 1-0-0 (periscópio mais alto) não se vê de cima; o reator fica escondido pelo radar; modelo simples, com folga grande no orçamento |
 | bucaneiro | 64 de 64 | 9.304 (0-1-4) | 6 | 14,5 MB | a pilha de balas de uva (0-1-0, 0-2-0) fica atrás da vela na vista do jogo; as torres do destróier aparecem pouco; orçamento apertado, a base já usa 8.868 |
+| as | 64 de 64 | 1.123 (0-2-5) | 2 | 3,1 MB | o abacaxi (0-1-0) é pequeno a 48 px; as bombas do 0-3-0 ficam sob a asa; modelo simples, com folga grande no orçamento |
 
 Primárias concluídas (dardo, bumerangue, bomba, tachinha, gelo, cola). Militares, Mágicas e Suporte ainda não foram começadas.
 
@@ -311,3 +312,26 @@ mais pesada da cabeça) por um chapéu mais leve.
 | 3 | 3 | Navio Mercante | base | vela verde de faixa dourada; caixas de carga na popa | comércio |
 | 3 | 4 | Comércio Favorecido | base, chapeu | casco branco de faixa azul; mais carga e baú de ouro; lenço verde | mais renda |
 | 3 | 5 | Império Comercial | base, chapeu | casco branco e dourado, vela azul; pilhas de ouro; coroa | império |
+
+## Ás (Macaco Ás)
+
+Base: só o avião, sem macaco. Monomotor vermelho de pontas amarelas, com fuselagem, asas e cauda
+(`base`) e a hélice (`torreta`, gira no jogo). Tudo lê os três tiers.
+
+| Caminho | Tier | Upgrade (nome no clone) | Encaixe | Peça | O que comunica |
+|---|---|---|---|---|---|
+| 1 | 1 | Tiro Rápido | base (parâmetro) | uma metralhadora em cada asa | cadência |
+| 1 | 2 | Muito Mais Dardos | base (parâmetro) | duas metralhadoras em cada asa | mais dardos |
+| 1 | 3 | Avião de Caça | base | caça a jato cinza de asa enflechada, sem hélice, com um míssil por asa | mísseis |
+| 1 | 4 | Operação: Tempestade de Dardos | base | caça azul maior, de duas derivas e dois mísseis por asa | tempestade |
+| 1 | 5 | Retalhador Celeste | base | caça preto e dourado, o maior, com três mísseis por asa e dois bocais | retalhador |
+| 2 | 1 | Abacaxi Explosivo | base (parâmetro) | abacaxi preso em cima da fuselagem | abacaxis |
+| 2 | 2 | Avião Espião | base (parâmetro) | domo de radar branco | vê camo |
+| 2 | 3 | Ás Bombardeiro | base | bombardeiro verde escuro de asa longa, com uma bomba por asa | bombardeio |
+| 2 | 4 | Marco Zero | base | bombardeiro maior com uma bomba grande sob a barriga | bomba na tela toda |
+| 2 | 5 | Tsar Bomba | base, torreta | bombardeiro preto e vermelho com bomba enorme e motores nas asas | a maior bomba |
+| 3 | 1 | Dardos Mais Afiados | base (parâmetro) | ponta de aço no nariz | fura mais |
+| 3 | 2 | Rota Centralizada | base (parâmetro) | alvos branco e ciano pintados nas asas | rota fixa |
+| 3 | 3 | Mira Infalível | base | avião azul de pontas brancas com sensor ciano no nariz | teleguiado |
+| 3 | 4 | Espectro | base, torreta | canhoneira cinza escura, com um motor por asa e canhões laterais | rajada |
+| 3 | 5 | Fortaleza Voadora | base, torreta | asa enorme cinza e dourada, quatro motores | fortaleza |
