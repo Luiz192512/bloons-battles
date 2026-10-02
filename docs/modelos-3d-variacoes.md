@@ -66,6 +66,7 @@ mesmo. Vale para o Dardo (caminho 3, tiers 3 a 5), o Sniper (caminho 1, tiers 3 
 | druida | 64 de 64 | 8.168 (0-5-2) | 5 | 10,7 MB | a barba quase não aparece; a nuvem do 5-0-0 é pequena; verde sobre grama perde contraste; 0-1-0 (farpas no cajado) quase não se vê |
 | fazenda | 64 de 64 | 2.113 (2-0-5) | 1 | 3,9 MB | os cachos de banana quase não aparecem de cima; 0-1-0 (cesto) e 0-0-1 (caixote) são pequenos a 48 px; modelo simples, com folga grande no orçamento |
 | espinhos | 64 de 64 | 1.474 (0-5-2) | 1 | 3,9 MB | a super mina do 5-0-0 é uma só e parece menor que as três do 4-0-0; 0-1-0 e 0-2-0 (engrenagens na lateral) aparecem pouco de cima; 0-0-1 (calha mais comprida) muda pouco |
+| vila | 64 de 64 | 1.142 (5-0-2) | 1 | 2,1 MB | 1-0-0 (mastro mais alto) muda pouco de cima; os prédios do caminho 3 são caixas simples; modelo simples, com folga grande no orçamento |
 
 Primárias, Militares e Mágicas concluídas (18 torres). Suporte ainda não foi começado.
 
@@ -584,3 +585,26 @@ e uma pilha de espinhos de aço na saída, tudo na malha `base`. A fábrica lê 
 | 3 | 3 | Espinhos Duradouros | base | fábrica marrom com reforços nos cantos; espinhos maiores | duram mais |
 | 3 | 4 | Espinhos Mortais | base | fábrica preta de teto vermelho; espinhos vermelhos | mais dano |
 | 3 | 5 | Perma-Espinho | base | fábrica branca e dourada; espinhos dourados grandes | permanente |
+
+## Vila (Vila dos Macacos)
+
+Base: construção sem macaco. Cabana redonda de parede bege e telhado laranja em cone, com porta,
+mastro e bandeira vermelha, tudo na malha `base`. A vila lê os três tiers.
+
+| Caminho | Tier | Upgrade (nome no clone) | Encaixe | Peça | O que comunica |
+|---|---|---|---|---|---|
+| 1 | 1 | Raio Maior | base (parâmetro) | mastro mais alto e bandeira maior | raio maior |
+| 1 | 2 | Tambores da Selva | base (parâmetro) | dois tambores ao lado da porta | acelera as torres |
+| 1 | 3 | Treinamento Primário | base | telhado azul; alvo de treino ao lado | treino |
+| 1 | 4 | Mentoria Primária | base | segunda cabana, menor | mentoria |
+| 1 | 5 | Especialização Primária | base | telhado vermelho; balista gigante dourada em cima da cabana | balista |
+| 2 | 1 | Bloqueador de Crescimento | base (parâmetro) | antena com luz roxa | tira regeneração |
+| 2 | 2 | Radar | base (parâmetro) | prato de radar branco | vê camo |
+| 2 | 3 | Agência de Inteligência Macaco | base | prédio cinza de janelas ciano no lugar da cabana | agência |
+| 2 | 4 | Chamado às Armas | base | teto vermelho e corneta dourada | chamado |
+| 2 | 5 | Defesa da Pátria | base | prédio maior de teto dourado com quatro torres de canto | fortaleza |
+| 3 | 1 | Negócios Macacos | base (parâmetro) | placa de moeda dourada | desconto |
+| 3 | 2 | Comércio Macaco | base (parâmetro) | balcão com toldo listrado verde e branco | mais desconto |
+| 3 | 3 | Cidade Macaco | base | duas cabanas e um prédio azul | cidade |
+| 3 | 4 | Metrópole Macaco | base | dois prédios mais altos | metrópole |
+| 3 | 5 | Macacópolis | base | três prédios, o maior de teto e antena dourados | macacópolis |
