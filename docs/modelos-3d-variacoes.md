@@ -64,6 +64,7 @@ mesmo. Vale para o Dardo (caminho 3, tiers 3 a 5), o Sniper (caminho 1, tiers 3 
 | ninja | 64 de 64 | 9.872 (5-2-0) | 5 | 11,6 MB | 2-0-0 (shuriken maior) e 0-0-1 (miolo ciano) mudam pouco; os estrepes são pequenos a 48 px |
 | alquimista | 64 de 64 | 8.488 (5-0-2) | 5 | 12,3 MB | 0-1-0 e 0-2-0 mudam só a cor do frasco e a fumaça, pouco visíveis a 48 px; o monstro (0-4-0, 0-5-0) é só traje roxo, garras e chifres, sem mudar o corpo |
 | druida | 64 de 64 | 8.168 (0-5-2) | 5 | 10,7 MB | a barba quase não aparece; a nuvem do 5-0-0 é pequena; verde sobre grama perde contraste; 0-1-0 (farpas no cajado) quase não se vê |
+| fazenda | 64 de 64 | 2.113 (2-0-5) | 1 | 3,9 MB | os cachos de banana quase não aparecem de cima; 0-1-0 (cesto) e 0-0-1 (caixote) são pequenos a 48 px; modelo simples, com folga grande no orçamento |
 
 Primárias, Militares e Mágicas concluídas (18 torres). Suporte ainda não foi começado.
 
@@ -536,3 +537,26 @@ cajado de madeira com um broto verde na ponta (`mao_ataque`). O cajado lê os tr
 | 3 | 3 | Druida da Ira | tronco, cajado | túnica vermelha; orbe vermelho | ira |
 | 3 | 4 | Luxúria de Estouros | chapeu, extra | coroa vermelha com chifres; aro laranja no chão | fortalece druidas |
 | 3 | 5 | Avatar da Ira | tronco, chapeu, extra | túnica preta com vermelho; chifres maiores; chama na cabeça; aro com pontas | avatar da ira |
+
+## Fazenda (Fazenda de Bananas)
+
+Base: construção sem macaco. Canteiro redondo de terra com duas bananeiras, tudo na malha
+`base`. A fazenda lê os três tiers.
+
+| Caminho | Tier | Upgrade (nome no clone) | Encaixe | Peça | O que comunica |
+|---|---|---|---|---|---|
+| 1 | 1 | Produção Aumentada | base (parâmetro) | três bananeiras | mais bananas |
+| 1 | 2 | Produção Maior | base (parâmetro) | quatro bananeiras | mais ainda |
+| 1 | 3 | Plantação de Bananas | base | seis bananeiras mais altas | plantação |
+| 1 | 4 | Centro de Pesquisa de Bananas | base | laboratório branco de teto e domo ciano, com caixas amarelas | pesquisa |
+| 1 | 5 | Central de Bananas | base | laboratório mais alto de teto dourado, chaminé e mais caixas | central |
+| 2 | 1 | Bananas Duradouras | base (parâmetro) | cesto de bananas na frente | duram mais |
+| 2 | 2 | Bananas Valiosas | base (parâmetro) | bananas douradas nas árvores e no cesto | valem mais |
+| 2 | 3 | Banco Macaco | base | banco bege de colunas brancas e teto azul | banco |
+| 2 | 4 | Empréstimo do FMI | base | banco mais alto com domo dourado | empréstimo |
+| 2 | 5 | Macaconomia | base | banco de teto dourado com uma moeda grande no alto | macaconomia |
+| 3 | 1 | Coleta Fácil | base (parâmetro) | caixote laranja de coleta na frente | coleta fácil |
+| 3 | 2 | Salvamento de Bananas | base (parâmetro) | cerca branca em volta do canteiro | protege o valor |
+| 3 | 3 | Mercado | base | barraca de toldo listrado vermelho e branco | mercado |
+| 3 | 4 | Mercado Central | base | duas barracas | mercado central |
+| 3 | 5 | Wall Street dos Macacos | base | prédio alto de vidro azul com antena dourada, entre as barracas | bolsa |
