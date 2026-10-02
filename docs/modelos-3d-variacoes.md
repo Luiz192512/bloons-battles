@@ -48,6 +48,7 @@ python tools/blender/conferir_variacoes.py dardo
 | submarino | 64 de 64 | 1.304 (4-0-2) | 2 | 2,8 MB | 1-0-0 (periscópio mais alto) não se vê de cima; o reator fica escondido pelo radar; modelo simples, com folga grande no orçamento |
 | bucaneiro | 64 de 64 | 9.304 (0-1-4) | 6 | 14,5 MB | a pilha de balas de uva (0-1-0, 0-2-0) fica atrás da vela na vista do jogo; as torres do destróier aparecem pouco; orçamento apertado, a base já usa 8.868 |
 | as | 64 de 64 | 1.123 (0-2-5) | 2 | 3,1 MB | o abacaxi (0-1-0) é pequeno a 48 px; as bombas do 0-3-0 ficam sob a asa; modelo simples, com folga grande no orçamento |
+| heli | 64 de 64 | 2.176 (0-2-5) | 2 | 4,4 MB | o corpo verde some um pouco na grama; os canhões e o tambor ficam sob o nariz e aparecem pouco de cima; no helicóptero de dois rotores a malha `torreta` tem um pivô só |
 
 Primárias concluídas (dardo, bumerangue, bomba, tachinha, gelo, cola). Militares, Mágicas e Suporte ainda não foram começadas.
 
@@ -335,3 +336,26 @@ Base: só o avião, sem macaco. Monomotor vermelho de pontas amarelas, com fusel
 | 3 | 3 | Mira Infalível | base | avião azul de pontas brancas com sensor ciano no nariz | teleguiado |
 | 3 | 4 | Espectro | base, torreta | canhoneira cinza escura, com um motor por asa e canhões laterais | rajada |
 | 3 | 5 | Fortaleza Voadora | base, torreta | asa enorme cinza e dourada, quatro motores | fortaleza |
+
+## Heli (Piloto de Helicóptero)
+
+Base: só o helicóptero, sem macaco. Cabine verde de vidro ciano, cauda e esquis (`base`) e o
+rotor de duas pás (`torreta`, gira no jogo). Tudo lê os três tiers.
+
+| Caminho | Tier | Upgrade (nome no clone) | Encaixe | Peça | O que comunica |
+|---|---|---|---|---|---|
+| 1 | 1 | Dardos Quádruplos | base (parâmetro) | quatro canhões sob o nariz em vez de dois | quatro dardos |
+| 1 | 2 | Perseguição | base (parâmetro) | farol amarelo no nariz | persegue |
+| 1 | 3 | Hélices Navalha | torreta | rotor maior, de quatro pás de aço com pontas vermelhas | hélice que corta |
+| 1 | 4 | Apache Dardeiro | base, torreta | casco cinza escuro com asas curtas e casulos de foguete | helicóptero de ataque |
+| 1 | 5 | Apache Prime | base, torreta | casco preto com luz ciano, casulos de laser e rotor de cinco pás | lasers |
+| 2 | 1 | Jatos Maiores | base (parâmetro) | dois bocais com chama dos lados | voa mais rápido |
+| 2 | 2 | IFR | torreta (parâmetro) | domo de radar branco por cima do rotor | vê camo |
+| 2 | 3 | Corrente Descendente | torreta | rotor bem largo, de seis pás com pontas brancas | sopra os bloons |
+| 2 | 4 | Chinook de Apoio | base, torreta | corpo comprido verde escuro com dois rotores; caixa de carga pendurada | carga e dinheiro |
+| 2 | 5 | Operações Especiais | base, torreta | o mesmo em preto e dourado, com caixa dourada | operações especiais |
+| 3 | 1 | Dardos Rápidos | base (parâmetro) | canhões mais longos, de aço | alcance |
+| 3 | 2 | Disparo Rápido | base (parâmetro) | tambor de munição amarelo | cadência |
+| 3 | 3 | Empurrão de M.O.A.B. | base, torreta | aríete de aço no nariz e dois mísseis; rotor de três pás | empurra dirigível |
+| 3 | 4 | Defesa Comanche | base, torreta | casco azul mais fino; rotor de quatro pás | comanche |
+| 3 | 5 | Comandante Comanche | base | aríete dourado e dois helicópteros pequenos de escolta | comanda a escolta |
