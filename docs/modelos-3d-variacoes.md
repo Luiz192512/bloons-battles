@@ -46,7 +46,7 @@ python tools/blender/conferir_variacoes.py dardo
 | cola | 64 de 64 | 7.898 (0-2-5) | 5 | 11,0 MB | 0-1-0 (gota maior) quase não se vê a 48 px; 0-3-0 e 0-4-0 se parecem de cima (o tanque fica atrás do corpo); 3-0-0 difere de 2-0-0 só pela máscara e pela pistola maior |
 | sniper | 64 de 64 | 8.262 (0-2-5) | 5 | 10,8 MB | capacete e capuz verdes somem na grama; 1-0-0, 0-0-1 e 0-0-2 (ponteira e carregadores) são pequenos a 48 px |
 | submarino | 64 de 64 | 1.304 (4-0-2) | 2 | 2,8 MB | 1-0-0 (periscópio mais alto) não se vê de cima; o reator fica escondido pelo radar; modelo simples, com folga grande no orçamento |
-| bucaneiro | 1 de 64 (só a base) | 8.868 | 5 | 0,23 MB | upgrades entram na Parte B; a base já usa 8.868 triângulos, sobra pouco para peças |
+| bucaneiro | 64 de 64 | 9.304 (0-1-4) | 6 | 14,5 MB | a pilha de balas de uva (0-1-0, 0-2-0) fica atrás da vela na vista do jogo; as torres do destróier aparecem pouco; orçamento apertado, a base já usa 8.868 |
 
 Primárias concluídas (dardo, bumerangue, bomba, tachinha, gelo, cola). Militares, Mágicas e Suporte ainda não foram começadas.
 
@@ -286,3 +286,28 @@ Base: só o submarino, sem macaco. Casco amarelo de faixas azuis com hélice, le
 | 3 | 3 | Canhões Triplos | torreta | três canhões | três canhões |
 | 3 | 4 | Dardos Perfurantes | torreta, base | canhões de aço mais longos; casco cinza com placas de blindagem | perfura |
 | 3 | 5 | Comandante Submarino | torreta, base | casco azul de faixas douradas; estrela dourada na torre | comando |
+
+## Bucaneiro (Macaco Bucaneiro)
+
+Base: a do piloto. Macaco padrão de tufos, lenço vermelho, tapa-olho e luneta, em pé no convés
+de um veleiro com quatro canhões de bordo. O barco lê os três tiers; como a base já usa 8.868
+triângulos, os enfeites cruzados são pequenos e os trajes dos tiers altos trocam o lenço (a peça
+mais pesada da cabeça) por um chapéu mais leve.
+
+| Caminho | Tier | Upgrade (nome no clone) | Encaixe | Peça | O que comunica |
+|---|---|---|---|---|---|
+| 1 | 1 | Disparo Rápido | base (parâmetro) | flâmula amarela no mastro | cadência |
+| 1 | 2 | Tiro Duplo | base (parâmetro) | canhão de proa | tiro em dobro |
+| 1 | 3 | Destróier | base, torreta, chapeu | casco de aço sem vela, chaminé e mastro de radar; duas torres de canhão duplo; quepe branco | navio de guerra |
+| 1 | 4 | Porta-Aviões | base, chapeu | pista com linha amarela, ilha de comando e um avião pousado; o macaco sobe para a pista | aviões |
+| 1 | 5 | Nau Capitânia | base, chapeu | casco azul e dourado, pista preta, ilha dourada mais alta e dois aviões; quepe com ouro | nau capitânia |
+| 2 | 1 | Tiro de Uva | base (parâmetro) | pilha de balas roxas na popa | tiro em leque |
+| 2 | 2 | Tiro Quente | base (parâmetro) | as balas ficam laranja | fogo |
+| 2 | 3 | Navio Canhão | base, torreta | vela vermelha de faixa preta; canhão grande na proa (malha `torreta`) | bombas |
+| 2 | 4 | Macacos Piratas | base, torreta, chapeu | vela preta de faixa amarela, bandeira vermelha, arpão na proa; chapéu preto de aba com pena | piratas |
+| 2 | 5 | Senhor Pirata | base, torreta, chapeu | casco preto e dourado, vela vermelha, segundo canhão na popa; chapéu com ouro | senhor pirata |
+| 3 | 1 | Longo Alcance | base (parâmetro) | bandeira azul comprida no alto do mastro | alcance |
+| 3 | 2 | Ninho do Corvo | base (parâmetro) | cesto grande com luneta | vê camo |
+| 3 | 3 | Navio Mercante | base | vela verde de faixa dourada; caixas de carga na popa | comércio |
+| 3 | 4 | Comércio Favorecido | base, chapeu | casco branco de faixa azul; mais carga e baú de ouro; lenço verde | mais renda |
+| 3 | 5 | Império Comercial | base, chapeu | casco branco e dourado, vela azul; pilhas de ouro; coroa | império |
