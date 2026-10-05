@@ -7,6 +7,11 @@ jogando (forma e comportamento do disparo, visual de cada tier e interface).
 
 ## 0. Resumo
 
+**Estado em 05/10/2026:** dos 29 itens do backlog (seção 6), 28 estão feitos, cada um com teste
+ou captura em `docs/design/capturas/clone-vs-btd6/`. Falta só o B26 (Beast Handler, Mermonkey,
+Desperado e Skywarden), adiado pelo dono. Os 18 heróis ganharam modelo 3D. O texto abaixo é o
+retrato de antes da implementação.
+
 Foram testadas no BTD6 as 22 torres que o clone também tem, cada uma nos 3 caminhos até o
 tier 5, e ainda o Beast Handler (tiers 4). O backlog da seção 6 tem **3 itens P0, 15 P1 e 11 P2**.
 O clone já reproduz bem a maior parte dos disparos (divisão do Ultra-Juggernaut, glaives em

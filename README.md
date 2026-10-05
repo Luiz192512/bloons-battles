@@ -43,7 +43,10 @@ está marcada como **Privada** nas configurações do Windows.
 | Clique no mapa (Shift mantém a torre selecionada) | colocar |
 | Clique na torre | abrir upgrades |
 | `,` `.` `/` | upgrade nos caminhos 1, 2 e 3 |
-| Tab | prioridade de alvo |
+| Tab | prioridade de alvo. Em algumas torres troca outra coisa: trava a mira da Dartling, pede o ponto do Morteiro, troca a rota do Ás e o modo de voo do Heli, saca o Banco |
+| Botão ao lado do alvo | Bumerangue: mão do arremesso. Sub com Submergir: Tona ou Fundo. Robô Macaco: alvo do segundo braço. Engenheiro com Overclock: torre que recebe a habilidade (clique nela) |
+| Cursor sobre a banana ou a caixa | coletar o dinheiro caído |
+| F2 | no Sandbox, alterna a loja e o painel de envio de bloons |
 | Backspace | vender |
 | 1 a 9 | habilidades |
 | Espaço | iniciar rodada / acelerar (solo) |
@@ -62,6 +65,11 @@ por código: os sprites em `src/cliente/sprites.cpp` (desenhados com a caneta de
 e habilidade em `src/cliente/anim.cpp`. O inventário do que foi aplicado está em
 [docs/design/inventario.md](docs/design/inventario.md), com capturas em `docs/design/capturas/`.
 
+As torres e os 18 heróis também têm modelo 3D (`assets/modelos/<chave>/<a>-<b>-<c>.glb`, gerados
+por script no Blender, ver [tools/blender/LEIAME.md](tools/blender/LEIAME.md)). O jogo desenha o
+modelo quando a pasta `assets/modelos` está ao lado do executável e cai no sprite 2D quando não
+está.
+
 Opções de linha de comando para conferir o visual:
 
 | Opção | O que faz |
@@ -69,7 +77,9 @@ Opções de linha de comando para conferir o visual:
 | `--vitrine [0-11]` | galeria de sprites; a página 9 toca as animações com as curvas de cada clipe e a 11 mostra a mira 3/4 |
 | `--fps` | mostra o FPS desde o início |
 | `--demo solo` / `--demo batalha` | partida local já montada, com torres, upgrades e bloons |
-| `--tela solo\|hospedar\|entrar\|entrar-erro\|lobby` | abre direto uma tela de menu |
+| `--tela solo\|macacos\|hospedar\|entrar\|entrar-erro\|lobby` | abre direto uma tela de menu |
+| `--sandbox [mapa] [heroi=chave] [comandos]` | partida Sandbox já com os comandos aplicados (ex.: `Tsuper@600,500 U1:1 Xb:ceramica:20`) |
+| `--sel id` / `--up caminho` / `--bloons` | seleciona a torre, abre a confirmação de upgrade ou o painel de bloons |
 | `--captura arquivo.png [s] [n] [intervalo]` | salva n capturas depois de s segundos e fecha |
 
 ## Compilar

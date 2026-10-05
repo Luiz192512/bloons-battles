@@ -99,10 +99,7 @@ A pesquisa foi feita em 30/09/2026, com os dados que a Blooncyclopedia mostra ho
 
 Ficaram de fora porque não há fonte com o número ou porque o motor ainda não tem a mecânica:
 
-- **Transformar torres:** Fan Club (Dardo 2-4 e 2-5) e Total Transformation viraram turbo de velocidade em área.
-- **Sacrifícios:** Sun Temple e True Sun God, e a Monkeyopolis, que sacrifica fazendas. Esta última ficou sem efeito.
 - **Passivos de vazamento:**
-  - Legend of the Night (Super 3-5) ficou sem efeito.
   - A passiva da Bomb Blitz virou a habilidade de dano global que já existia.
 - **Detalhes de buff ainda fora:**
   - Primary Training: +25% de velocidade do projétil nas Primárias.
@@ -110,16 +107,13 @@ Ficaram de fora porque não há fonte com o número ou porque o motor ainda não
   - Berserker Brew com o cruzamento 3-2-0 (40 tiros ou 6 s).
   - AMD: +1 só em chumbo fortificado (o motor não separa chumbo fortificado de outros fortificados).
 - **Mecânicas sem suporte:**
-  - Coleta manual de bananas e juros reais do Monkey Bank (virou ×1,15 na renda).
-  - Mira no cursor do Dartling e do Morteiro.
-  - Cemitério do Necromante.
-  - Shrink Potion (Alquimista 3-5 sem efeito).
-  - Rota Centralizada (Ás 3-2 sem efeito).
   - Smart Spikes (Espinhos 3-2 sem efeito).
   - Velocidade do Heli (2-1 sem efeito).
-  - Mini-Comanches (Heli 3-4 e 3-5 viraram só dano).
   - Aumento de 20% de renda da Monkey City.
-  - +15 vidas do Wall Street.
+- **Resolvidas no backlog de `docs/analise-btd6-sandbox.md`** (seção 6), com as aproximações anotadas lá:
+  transformação do Fan Club e da Total Transformation, sacrifícios do Sun Temple e da Monkeyopolis,
+  Legend of the Night, coleta de bananas, banco com juros e saque, mira do Dartling e do Morteiro,
+  cemitério do Necromante, Shrink Potion, Rota Centralizada, Mini-Comanches e +15 vidas do Wall Street.
 - **Números aproximados**, com a direção certa mas sem o número exato na fonte:
   - Distraction do Ninja.
   - Tornado e supertempestade do Druida.
