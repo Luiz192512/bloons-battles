@@ -52,7 +52,9 @@ private:
         const float w = (1200.0f - (DIFICULDADES.size() - 1) * 8.0f) / DIFICULDADES.size();
         return {40 + i * (w + 8.0f), 368, w, 56};
     }
-    std::string mapa_ = "prado", dif_ = "medio";
+    // modos de restricao do BTD6, no cabecalho do passo 2 para nao apertar a linha das dificuldades
+    Rectangle rect_restricao(size_t i) const { return {688 + i * 138.0f, 338, 130, 24}; }
+    std::string mapa_ = "prado", dif_ = "medio", restricao_;
     GradeHerois herois_{40, 496, 9, 58};
     ui::Botao voltar_, jogar_;
 };

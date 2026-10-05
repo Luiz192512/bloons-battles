@@ -320,6 +320,7 @@ char Pista::colocar_torre(const std::string& chave, double x, double y) {
     if (!achar_torre(chave) && !heroi) return ERRO_INVALIDO;
     if (heroi && (tem_heroi || chave != heroi_escolhido)) return ERRO_HEROI;
     const DefTorre& dfn = definicao(chave);
+    if (!permitida(dfn)) return ERRO_BLOQUEADO;
     if (!posicao_valida(dfn, x, y)) return ERRO_POSICAO;
     int c = custo(dfn.custo, x, y);
     if (dinheiro < c) return ERRO_DINHEIRO;

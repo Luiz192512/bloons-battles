@@ -486,7 +486,7 @@ O avião é grande: o sprite cobre duas faixas da pista.
 | B22 | P2 | Ultraboost: escolher a torre que recebe o buff | `src/jogo/sim.cpp`: habilidade `turbo_area`; `src/cliente/cena_jogo.cpp` | M | não | a fazer |
 | B23 | P2 | Mini-Comanches, juros do banco e +15 vidas do Wall Street | `src/jogo/sim.cpp` e `src/jogo/dados.cpp` | M | sim | feito (teste e tela): banco com saldo, 20% de juros e saque; +15 vidas na compra do Wall Street; 3 mini-Comanches |
 | B24 | P2 | Polimento de efeitos: clarão do Bloon Crush, anel expandindo no Inferno Ring, Kylie em chamas, rastro verde do Perma Charge, visual roxo do Super Brittle, avião do Tsar Bomba | `src/cliente/render.cpp`, `arte.cpp` e `sprites.cpp` | P cada | não | a fazer |
-| B25 | P2 | Modos de restrição (Primary Only, Military Only) | `src/cliente/cenas_menu.cpp` e `src/jogo/sim.cpp` | M | não | a fazer |
+| B25 | P2 | Modos de restrição (Primary Only, Military Only) | `src/cliente/cenas_menu.cpp` e `src/jogo/sim.cpp` | M | não | feito (teste e tela do menu): Só Primárias, Só Militares e Só Mágicas no passo 2 do Jogo Solo; cartão PROIBIDA na loja não visto em tela |
 | B26 | P2 | Beast Handler, Mermonkey, Desperado e Skywarden | torres novas em `src/jogo/dados.cpp` e arte em `src/cliente/sprites.cpp` | G | sim (adiado pelo dono) | a fazer |
 
 Implementação em andamento na branch `luiz/backlog-btd6`, um commit por item. "Não visto na

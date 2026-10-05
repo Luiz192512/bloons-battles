@@ -718,7 +718,8 @@ void CenaJogo::painel_lateral(Vector2 mouse) {
         const DefTorre& dfn = definicao(chave);
         const int custo = pista_.custo(dfn.custo);
         const bool em_jogo = dfn.heroi && pista_.tem_heroi;
-        const bool pode = pista_.dinheiro >= custo && !em_jogo;
+        const bool proibida = !pista_.permitida(dfn);  // modo de restricao por categoria
+        const bool pode = pista_.dinheiro >= custo && !em_jogo && !proibida;
         const bool sobre = ui::dentro(r0, mouse);
         const bool colocando = colocando_ == chave;
         const Rectangle r = sobre && !colocando ? ui::mover(r0, 0, -2) : r0;
@@ -743,7 +744,8 @@ void CenaJogo::painel_lateral(Vector2 mouse) {
         DrawRectangleRec({f.x, rod_r.y - 2, f.width, 2}, ui::TINTA);
         ui::ret(rod_r, fundo, 5);
         DrawRectangleRec({rod_r.x, rod_r.y, rod_r.width, 6}, fundo);
-        ui::texto(em_jogo ? "EM JOGO" : "$" + ui::formatar(custo), r.x + r.width / 2, rod_r.y + 8, em_jogo ? 9 : 11,
+        ui::texto(em_jogo ? "EM JOGO" : proibida ? "PROIBIDA" : "$" + ui::formatar(custo), r.x + r.width / 2, rod_r.y + 8,
+                  em_jogo || proibida ? 9 : 11,
                   em_jogo ? rgb(233, 255, 217) : pode ? ui::DINHEIRO : ui::PRECO_RUIM, 0, Ancora::CENTER);
         const std::string tecla = dfn.heroi ? "U" : std::string(1, static_cast<char>(std::toupper(dfn.tecla[0])));
         ui::tecla(tecla, r.x + 4, r.y + 5, 9);

@@ -42,7 +42,8 @@ public:
 
 class ControladorSolo : public Controlador {
 public:
-    ControladorSolo(const std::string& mapa, const std::string& dificuldade, const std::string& heroi, int seed);
+    ControladorSolo(const std::string& mapa, const std::string& dificuldade, const std::string& heroi, int seed,
+                    const std::string& restricao = "");
     bool online() const override { return false; }
     std::unique_ptr<ControladorSolo> reiniciar() const;
     char enviar(const std::string& cmd) override { return partida->aplicar(1, cmd); }
@@ -52,7 +53,7 @@ public:
     int vencedor() const override { return partida->vencedor; }
 
 private:
-    std::string mapa_, dificuldade_, heroi_;
+    std::string mapa_, dificuldade_, heroi_, restricao_;
     int seed_;
     double acc_ = 0;
 };

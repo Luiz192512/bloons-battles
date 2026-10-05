@@ -17,13 +17,14 @@ std::string mensagem_erro(char erro) {
 
 // ---------------------------------------------------------------- solo
 ControladorSolo::ControladorSolo(const std::string& mapa, const std::string& dificuldade, const std::string& heroi,
-                                 int seed)
-    : mapa_(mapa), dificuldade_(dificuldade), heroi_(heroi), seed_(seed) {
+                                 int seed, const std::string& restricao)
+    : mapa_(mapa), dificuldade_(dificuldade), heroi_(heroi), restricao_(restricao), seed_(seed) {
     partida = std::make_unique<Partida>("solo", mapa, seed, dificuldade, std::map<int, std::string>{{1, heroi}});
+    partida->pista(1).restricao = restricao;
 }
 
 std::unique_ptr<ControladorSolo> ControladorSolo::reiniciar() const {
-    return std::make_unique<ControladorSolo>(mapa_, dificuldade_, heroi_, seed_);
+    return std::make_unique<ControladorSolo>(mapa_, dificuldade_, heroi_, seed_, restricao_);
 }
 
 void ControladorSolo::botao_play() {

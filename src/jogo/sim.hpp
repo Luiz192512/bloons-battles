@@ -269,6 +269,9 @@ public:
     int prox_torre = 1;
     std::vector<Evento> eventos;
     std::string heroi_escolhido;
+    // modo de restricao (So Primarias, So Militares, So Magicas): categoria unica permitida; vazio = todas
+    std::string restricao;
+    bool permitida(const DefTorre& dfn) const { return dfn.heroi || restricao.empty() || dfn.categoria == restricao; }
     bool tem_heroi = false;
     int pops_total = 0;
     int vazou = 0;

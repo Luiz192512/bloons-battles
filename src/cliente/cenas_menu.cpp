@@ -180,6 +180,14 @@ void cabecalho(const std::string& t, const std::string& sub) {
 }  // namespace
 
 // ====================================================================== SOLO
+namespace {
+struct Restricao {
+    const char* chave;
+    const char* nome;
+};
+const Restricao RESTRICOES[4] = {{"", "Todas as torres"}, {"primaria", "Só Primárias"}, {"militar", "Só Militares"}, {"magica", "Só Mágicas"}};
+}  // namespace
+
 CenaSolo::CenaSolo(App& a) : Cena(a) {
     voltar_ = {{24, 646, 180, 56}, "Voltar", ui::AZUL, 19};
     voltar_.atalho = "Esc";
@@ -194,12 +202,14 @@ void CenaSolo::evento(const ui::Evento& e) {
             if (ui::dentro(rect_mapa(i), e.pos)) mapa_ = mapas()[i].chave;
         for (size_t i = 0; i < DIFICULDADES.size(); ++i)
             if (ui::dentro(rect_dif(i), e.pos)) dif_ = DIFICULDADES[i].chave;
+        for (size_t i = 0; i < 4; ++i)
+            if (ui::dentro(rect_restricao(i), e.pos)) restricao_ = RESTRICOES[i].chave;
     }
     if (voltar_.clicou(e) || (e.tipo == ui::Evento::TECLA && e.tecla == KEY_ESCAPE)) app.ir_menu();
     if (jogar_.clicou(e) || (e.tipo == ui::Evento::TECLA && e.tecla == KEY_ENTER)) {
         som::tocar("rodada");
         int seed = std::uniform_int_distribution<int>(1, 999999)(app.rng);
-        app.iniciar_jogo(std::make_unique<ControladorSolo>(mapa_, dif_, herois_.escolhido, seed));
+        app.iniciar_jogo(std::make_unique<ControladorSolo>(mapa_, dif_, herois_.escolhido, seed, restricao_));
     }
 }
 
@@ -229,6 +239,14 @@ void CenaSolo::desenhar() {
         ui::texto(d.sandbox ? std::string("dinheiro e vidas infinitos")
                             : vidas + " · R" + std::to_string(d.primeira_rodada) + " a R" + std::to_string(d.ultima_rodada),
                   r.x + r.width / 2, r.y + 40, 11, sel ? ui::BRANCO : rgb(110, 69, 35), 0, Ancora::CENTER, ui::Peso::TEXTO);
+    }
+    for (size_t i = 0; i < 4; ++i) {
+        const bool sel = restricao_ == RESTRICOES[i].chave;
+        const Rectangle r = rect_restricao(i);
+        ui::ret(r, ui::TINTA, 12);
+        ui::ret(ui::inflar(r, -3, -3), sel ? ui::VERDE : ui::dentro(r, m) ? rgb(255, 246, 218) : ui::BEGE, 9);
+        ui::texto(RESTRICOES[i].nome, r.x + r.width / 2, r.y + 12, 11, sel ? ui::BRANCO : ui::MADEIRA_ESCURA, sel ? 3 : 0,
+                  Ancora::CENTER);
     }
     painel_passo({24, 452, 1232, 176}, "3 · Herói");
     const DefTorre& h = herois_.desenhar();

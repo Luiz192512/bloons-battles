@@ -760,6 +760,16 @@ TESTE(b23_wall_street_e_mini_comanches) {
     CHECA_IGUAL(minis(), 0);  // somem com o Heli
 }
 
+TESTE(b25_modo_de_restricao_por_categoria) {
+    Partida p("solo", "prado", 1, "sandbox", {{1, "quincy"}});
+    Pista& pi = p.pista(1);
+    pi.restricao = "militar";
+    CHECA_IGUAL(p.aplicar(1, "Tdardo@300,240"), ERRO_BLOQUEADO);
+    CHECA_IGUAL(p.aplicar(1, "Tmago@300,240"), ERRO_BLOQUEADO);
+    CHECA_IGUAL(p.aplicar(1, "Tsniper@300,240"), OK);
+    CHECA_IGUAL(p.aplicar(1, "Tquincy@340,200"), OK);  // o heroi entra em qualquer modo
+}
+
 TESTE(b07_fa_clube_transforma_os_dardos) {
     Partida p("solo", "prado", 1, "sandbox");
     Pista& pi = p.pista(1);
