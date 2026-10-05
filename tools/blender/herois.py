@@ -1,8 +1,13 @@
 """Os 18 herois, montados com as mesmas pecas das torres (pecas.py) sobre o macaco padrao.
 
-Cada heroi e uma funcao que recebe a montagem (m) e veste o macaco: nao ha caminhos de upgrade,
-entao so existe a variacao 0-0-0. O desenho segue os herois 2D do proprio jogo (sprites.cpp):
-mesma cor de roupa, mesmo chapeu e mesma arma, sem copiar trajes de outro jogo.
+Cada heroi e uma funcao que recebe a montagem (m) e veste o macaco no estagio 0 (nivel 1). Heroi
+nao tem caminho de upgrade: o visual muda por estagio de nivel. ESTAGIOS guarda, por heroi, as
+funcoes dos estagios seguintes, cumulativas (o estagio 2 parte do 1); montar(m, chave, e) aplica
+a base e os e primeiros estagios. O arquivo do estagio e e assets/modelos/<chave>/<e>-0-0.glb.
+A tabela de estagios e niveis esta em docs/herois-aparencias.md.
+
+O desenho segue os herois 2D do proprio jogo (sprites.cpp): mesma cor de roupa, mesmo chapeu e
+mesma arma, sem copiar trajes de outro jogo.
 
 Regras que valem aqui tambem: o corpo e o de todos os macacos (so Pat Fusty e maior), heroi de
 capuz usa a cabeca sem orelhas (pecas.capuz ja troca) e a cor e chapada por peca.
@@ -30,14 +35,26 @@ def _espada(m, nome, pos, direcao=(0.10, -0.55, 1), comp=0.50, lamina="aco", gua
                            cor=lamina, seg=4, matriz=mat)]
 
 
-def _arco(m):
-    """Arco deitado na frente da mao, com a corda puxada e a flecha armada (aparece de cima)."""
+def _arco(m, tam=1.0, madeira="marrom_escuro", reforco=None, laminas=None, flechas=1, ponta="cinza"):
+    """Arco recurvo deitado na frente da mao, com a corda puxada e a flecha armada (aparece de cima).
+    reforco = cor das pontas do arco; laminas = cor de duas laminas nas pontas; flechas = 1 ou 3 em leque."""
     x, y, z = MX - 0.040, MY - 0.200, MZ + 0.040
-    pts = [(x - 0.300, y + 0.130, z - 0.050), (x - 0.170, y + 0.020, z - 0.025), (x, y - 0.030, z), (x + 0.170, y + 0.020, z + 0.025),
-           (x + 0.300, y + 0.130, z + 0.050)]
-    objs = [pecas.tubo(m, "arco", pts, [0.012, 0.024, 0.030, 0.024, 0.012], "marrom_escuro")]
-    objs.append(pecas.tubo(m, "arco_corda", [pts[0], (x, y + 0.150, z), pts[-1]], 0.007, "bege", nivel=0))
-    objs += pecas.dardo(m, "flecha", (x, y + 0.020, z + 0.012), frente=0.260, tras=0.130, penas=("vermelho", "amarelo"))
+    e = tam
+    forma = [(-0.330, 0.090, -0.055), (-0.300, 0.150, -0.050), (-0.170, 0.020, -0.025), (0, -0.035, 0),
+             (0.170, 0.020, 0.025), (0.300, 0.150, 0.050), (0.330, 0.090, 0.055)]
+    pts = [(x + px * e, y + py * e, z + pz * e) for px, py, pz in forma]
+    objs = [pecas.tubo(m, "arco", pts, [0.010, 0.020, 0.028, 0.034, 0.028, 0.020, 0.010], madeira)]
+    objs.append(pecas.tubo(m, "arco_punho", [(x - 0.050 * e, y - 0.030 * e, z - 0.008), (x + 0.050 * e, y - 0.030 * e, z + 0.008)], 0.040, "bege", nivel=0))
+    objs.append(pecas.tubo(m, "arco_corda", [pts[0], (x, y + 0.170 * e, z), pts[-1]], 0.007, "bege", nivel=0))
+    for k in ((0, 1), (-1, -2)) if reforco else ():
+        objs.append(pecas.tubo(m, f"arco_reforco_{k[0]}", [pts[k[0]], pts[k[1]]], [0.018, 0.030], reforco, nivel=0))
+    if laminas:
+        for sx, p in ((-1, pts[1]), (1, pts[-2])):
+            objs.append(pecas.cone(m, f"arco_lamina_{sx}", p, (0.55 * sx, -1, 0.05 * sx), 0.040, 0.230 * e, laminas, seg=4, fechado=True))
+    abre = (0,) if flechas == 1 else (-0.22, 0, 0.22)
+    for k, dx in enumerate(abre):
+        objs += pecas.dardo(m, f"flecha_{k}", (x + dx * 0.10, y + 0.030, z + 0.012), direcao=(dx, -1, 0), frente=0.250 * e, tras=0.140,
+                            ponta=ponta, penas=("vermelho", "amarelo"))
     return objs
 
 
@@ -86,12 +103,65 @@ def _orbes(m, nome, cor, n, raio=0.52, z=0.80, tam=0.060, rabo=None):
 
 
 # ---------------------------------------------------------------- os herois
+def _bolsas(m, cor="marrom", n=2):
+    """Bolsinhas presas ao cinto, na frente."""
+    return [pecas.bloco(m, f"bolsa_{k}", (0.070, 0.045, 0.075), ((k - (n - 1) / 2) * 0.150, -0.185, 0.285), cor, chanfro=0.016) for k in range(n)]
+
+
+def _bracadeira(m, cor, detalhe=None, nome="bracadeira"):
+    """Bracadeira no antebraco do ataque."""
+    a, b = Vector(pecas.BRACO_DIR[1]), Vector(pecas.BRACO_DIR[2])
+    objs = [pecas.tubo(m, nome, [a + (b - a) * 0.10, a + (b - a) * 0.80], 0.074, cor, nivel=0)]
+    if detalhe:
+        objs.append(pecas.toro(m, nome + "_aro", a + (b - a) * 0.45, 0.076, 0.014, detalhe, normal=b - a, seg=10, lados=4))
+    return objs
+
+
+def _asas_capuz(m, cor, cor2, n=3):
+    """Penas grandes dos dois lados do capuz, abertas para tras."""
+    objs = []
+    for sx in (-1, 1):
+        for k in range(n):
+            base = (0.285 * sx, 0.020 + 0.050 * k, 0.800 + 0.060 * k)
+            objs.append(pecas.cone(m, f"asa_{sx}_{k}", base, (0.75 * sx, 0.95 - 0.20 * k, 0.25 + 0.30 * k), 0.058, 0.300 - 0.040 * k,
+                                   cor if k % 2 == 0 else cor2, seg=4, fechado=True))
+    return objs
+
+
+def _listra_capuz(m, cor):
+    """Listra por cima do capuz, da testa a nuca (aparece de cima)."""
+    pts = [(0, y, zt + 0.004) for y, _a, zt, _zb in pecas.CAPUZ[:5]]
+    return [pecas.tubo(m, "capuz_listra", pts, 0.030, cor)]
+
+
 def quincy(m):
     m.macaco(pelagem="lisa")
     m.por("chapeu", pecas.capuz(m, "verde_escuro", barra="ouro"))
-    m.por("costas", pecas.aljava(m))
-    m.por("tronco", pecas.cinto(m, "marrom_escuro") + pecas.bandoleira(m, "marrom"))
+    m.por("costas", pecas.aljava(m, penas=("vermelho", "amarelo")))
+    m.por("tronco", pecas.cinto(m, "marrom_escuro") + pecas.bandoleira(m, "marrom") + _bolsas(m))
     m.por("mao_ataque", _arco(m))
+
+
+def quincy_1(m):
+    """Niveis 3 a 9: aljava cheia, listra no capuz, bracadeira e a flecha explosiva (ponta vermelha)."""
+    m.por("costas", pecas.aljava(m, penas=("vermelho", "amarelo", "vermelho", "amarelo", "vermelho")))
+    m.somar("chapeu", _listra_capuz(m, "ouro"))
+    m.somar("extra", _bracadeira(m, "marrom_escuro", "ouro"), grupo="braco", preso=True)
+    m.por("mao_ataque", _arco(m, tam=1.12, ponta="vermelho"))
+
+
+def quincy_2(m):
+    """Niveis 10 a 19: penas no capuz, arco longo de pontas douradas e ombreira."""
+    m.somar("chapeu", _asas_capuz(m, "amarelo", "laranja"))
+    m.somar("tronco", pecas.esfera(m, "ombreira", Vector(pecas.BRACO_ESQ[0]) + Vector((-0.040, 0, 0.035)), (0.105, 0.095, 0.080), "marrom_escuro"))
+    m.por("mao_ataque", _arco(m, tam=1.30, reforco="ouro", ponta="vermelho"))
+
+
+def quincy_3(m):
+    """Nivel 20: mascara de lente laranja, arco de laminas, tres flechas e capa curta."""
+    m.por("rosto", pecas.viseira(m, cor="laranja", aro="tinta"))
+    m.somar("costas", pecas.capa(m, "verde_escuro", borda="ouro", comp=0.40, largura=0.50, gola=False))
+    m.por("mao_ataque", _arco(m, tam=1.38, madeira="tinta", reforco="ouro", laminas="ouro", flechas=3, ponta="vermelho"))
 
 
 def gwendolin(m):
@@ -313,3 +383,20 @@ HEROIS = {
     "ezili": ezili, "pat": pat, "adora": adora, "brickell": brickell, "etienne": etienne, "sauda": sauda,
     "psi": psi, "geraldo": geraldo, "corvus": corvus, "rosalia": rosalia, "dan": dan, "silas": silas,
 }
+
+# estagios seguintes de cada heroi, em ordem e cumulativos (docs/herois-aparencias.md)
+ESTAGIOS = {
+    "quincy": [quincy_1, quincy_2, quincy_3],
+}
+
+
+def estagios(chave):
+    """Quantos estagios o heroi tem, contando a base."""
+    return 1 + len(ESTAGIOS.get(chave, []))
+
+
+def montar(m, chave, e=0):
+    """Veste o heroi no estagio e: a base e os e primeiros estagios, em ordem."""
+    HEROIS[chave](m)
+    for f in ESTAGIOS.get(chave, [])[:e]:
+        f(m)

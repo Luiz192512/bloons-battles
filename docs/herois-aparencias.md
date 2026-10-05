@@ -50,19 +50,22 @@ Total: 74 estágios (18 bases refeitas e 56 estágios novos).
 Os níveis 3 e 10 coincidem com o desbloqueio das duas habilidades do herói no clone, então a
 troca de visual também avisa que a habilidade chegou.
 
-## Decisões para o dono antes de modelar
+## Decisões do dono (05/10/2026)
 
-1. **Brickell de pistola.** O modelo atual segura um sabre, mas o ataque dela no clone é bala
-   (`visual: bala`) e no original é pistola. Proposta: pistola na mão de ataque e o sabre na
-   cintura. Se preferir manter o sabre na mão, os estágios trocam a pistola pelo sabre.
-2. **Corvus com livro.** Hoje ele tem lança e três espíritos. Proposta: manter a lança e dar o
-   livro de feitiços na mão livre a partir do estágio 1, porque o ataque dele é o espírito.
-3. **Psi azul no nível 20.** No original o pelo muda de cor no último estágio. Proposta: trocar o
-   lilás pelo ciano só no estágio 3. É a única troca de cor de pelo da lista.
-4. **Forma mascarada do Dan.** No original ele alterna com o Macaco Mascarado. Fica fora deste
-   levantamento: o clone desenha um modelo por herói.
-5. **Barcos, cadeiras e tapetes.** No original Brickell fica num navio, Benjamin numa cadeira e
-   Psi num tapete. Aqui todos ficam em pé no chão, como hoje. Só o Churchill tem veículo.
+1. **Brickell de pistola.** Aprovado: pistola na mão de ataque e o sabre na cintura (o ataque dela
+   no clone é bala).
+2. **Corvus com livro.** Aprovado: mantém a lança e ganha o livro de feitiços na mão livre a
+   partir do estágio 1.
+3. **Psi azul no nível 20.** Aprovado: o pelo troca o lilás pelo ciano só no estágio 3. É a única
+   troca de cor de pelo da lista.
+4. **Forma mascarada do Dan.** Aprovado: fica fora. O clone desenha um modelo por herói.
+5. **Navio, cadeira e tapete.** O dono pediu para fazer como no jogo original: Brickell num navio,
+   Benjamin sentado na cadeira e Psi flutuando sobre o tapete. Como no Churchill, o veículo ou o
+   móvel entra na malha `base` e não gira com a mira. Desenho próprio, sem copiar o do original:
+   - Brickell: bote de guerra pequeno (casco, convés e mastro curto). Cresce nos estágios 2 e 3.
+   - Benjamin: cadeira giratória nos estágios 0 e 1. Do estágio 2 em diante ele fica de pé na
+     frente do servidor, como no original.
+   - Psi: tapete redondo no chão e o macaco erguido, flutuando sentado sobre ele.
 
 ## Fichas
 
@@ -124,7 +127,7 @@ Identidade fixa: tanque verde com casco na base, torre com canhão e a cabeça d
 
 ### Benjamin
 
-Identidade fixa: topete, fones azuis, óculos ciano, colete cinza-escuro e laptop.
+Identidade fixa: topete, fones azuis, óculos ciano, colete cinza-escuro e laptop. Sentado na cadeira giratória nos estágios 0 e 1 (decisão 5).
 
 | Estágio | Níveis | No original (observado) | No nosso modelo | Encaixes | O que comunica |
 |---|---|---|---|---|---|
@@ -169,7 +172,7 @@ Identidade fixa: pelo dourado, coroa de ouro com joia vermelha, raios de sol atr
 
 ### Almirante Brickell
 
-Identidade fixa: quepe marinho com estrela dourada, casaco marinho de barra dourada e luvas brancas. A arma depende da decisão 1.
+Identidade fixa: quepe marinho com estrela dourada, casaco marinho de barra dourada, luvas brancas, pistola na mão e o bote de guerra na base (decisões 1 e 5).
 
 A wiki não descreve as mudanças em texto (seção marcada como incompleta). A coluna do original foi escrita por mim olhando os cinco retratos da galeria. Tentado: página "Admiral Brickell", página "Admiral Brickell (BTD6)" e a galeria.
 
@@ -206,7 +209,7 @@ A seção de aparência da wiki está vazia. A coluna do original foi escrita po
 
 ### Psi
 
-Identidade fixa: pelo lilás, antena de ponta rosa, gema na testa, saia roxa e orbes em volta.
+Identidade fixa: pelo lilás, antena de ponta rosa, gema na testa, saia roxa e orbes em volta. Flutua sentado sobre um tapete redondo (decisão 5).
 
 | Estágio | Níveis | No original (observado) | No nosso modelo | Encaixes | O que comunica |
 |---|---|---|---|---|---|
@@ -300,3 +303,4 @@ Preenchida nas Partes B e C.
 
 | Herói | Estágios gerados | Máx. de triângulos | Malhas | Tamanho total | Pendências |
 |---|---|---|---|---|---|
+| quincy | 4 de 4 | 9.224 (estágio 3) | 4 | 0,8 MB | o arco escuro do estágio 3 some um pouco sobre a grama; a braçadeira do estágio 1 não aparece na vista do jogo |
