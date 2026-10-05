@@ -212,12 +212,11 @@ void RenderPista::desenhar_torre(const Torre& t, bool sel) {
     if (t.turbo < 1.0) anel_chao(rgb(255, 170, 40), sel ? 14.0f : 6.0f);
     // modelo 3D quando a pasta assets/modelos existe; senao, o sprite 2D
     auto desenhar = [&](const std::string& chave, const std::array<int, 3>& cam, float tm) {
-        const bool heroi = t.dfn->heroi && chave == t.chave;
-        if (!heroi && m3d::disponivel() && t.dfn->mov == Mov::FIXO)  // sombra no chao (quem voa ja tem a base desenhada)
+        if (m3d::tem(chave) && t.dfn->mov == Mov::FIXO)  // sombra no chao (quem voa ja tem a base desenhada)
             DrawEllipse(static_cast<int>(x), static_cast<int>(y + tm * 0.22f), tm * 0.36f, tm * 0.17f, ui::com_alfa(ui::TINTA, 70));
         // o Templo do Sol e uma construcao: nao gira com a mira
         const anim::TipoMira mira = chave == "super" && cam[0] >= 4 ? anim::TipoMira::FIXA : anim::tipo_mira(chave);
-        if (heroi || !m3d::torre(chave, cam, x, y + tm * 0.2f, tm * 0.95f, static_cast<float>(t.ang), mira))
+        if (!m3d::torre(chave, cam, x, y + tm * 0.2f, tm * 0.95f, static_cast<float>(t.ang), mira))
             arte::torre_mapa(chave, chave == t.chave ? arte::visual(t) : arte::Visual{}, x, y, tm, &q);
     };
     if (t.disfarce == "super" || t.disfarce == "plasma") {

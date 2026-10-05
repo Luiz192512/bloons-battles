@@ -22,6 +22,8 @@ PALETA = {
     "verde_escuro": (48, 120, 60), "rosa": (240, 120, 170),
     # Macaco de Gelo, a unica excecao de paleta: tons tirados de docs/design/capturas/btd6/real_ice_*.jpg
     "pelo_gelo": (130, 200, 236), "pele_gelo": (240, 250, 253), "pelo_gelo_escuro": (50, 157, 202),
+    # herois (entram no fim para nao mudar o indice das cores acima): azul da marinha e o lilas de Psi
+    "marinho": (36, 58, 110), "lilas": (176, 120, 210), "lilas_claro": (245, 225, 250), "lilas_escuro": (128, 78, 170),
 }
 INDICE = {nome: i for i, nome in enumerate(PALETA)}
 CORES = list(PALETA.values())

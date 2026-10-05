@@ -116,3 +116,22 @@ Macaco de capuz não tem orelhas: `pecas.capuz` troca a cabeça pela versão sem
 (`m.sem_orelhas()`), para o capuz encaixar justo.
 
 As regras completas e o estado de cada torre estão em `docs/modelos-3d-variacoes.md`.
+
+## Heróis
+
+Os 18 heróis saem de `herois.py`: uma função por herói, que veste o macaco padrão com as peças de
+`pecas.py` (mais algumas só deles: espada, arco, fones, boina, orbes). Herói não tem caminho de
+upgrade, então só existe a variação `0-0-0`.
+
+```
+"C:\Program Files\Blender Foundation\Blender 5.2\blender.exe" --background --python tools/blender/gerar_herois.py
+```
+
+Com chaves depois do `--` (por exemplo `-- quincy pat`), gera só esses. Saídas:
+`assets/modelos/<chave>/0-0-0.glb` e `.json`, e as folhas `docs/design/capturas/modelos/herois.png`
+(vista do jogo) e `herois_3q.png` (três quartos), na ordem de `herois.HEROIS`.
+
+Regras: o desenho segue o herói 2D do próprio jogo (`src/cliente/sprites.cpp`, `HS()`), sem copiar
+traje de outro jogo. Só Pat Fusty é maior que os outros. O Capitão Churchill é um tanque: casco na
+malha `base` e torre, canhão e cabeça na malha `torreta`, que o jogo gira para a mira. Psi e Silas
+têm pelo de outra cor (lilás e gelo).

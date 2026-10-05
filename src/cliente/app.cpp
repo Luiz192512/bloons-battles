@@ -89,15 +89,16 @@ App::App(const std::vector<std::string>& args) {
             cena_ = criar_demo(*this, batalha);
         } else if (args[i] == "--sandbox") {
             // Sandbox pronto para conferir o visual: os argumentos seguintes, ate o proximo "--", sao
-            // comandos da partida (ex.: Tsuper@600,500 U1:0 Xb:ceramica:20) ou o nome do mapa
-            std::string mapa = "prado";
+            // comandos da partida (ex.: Tsuper@600,500 U1:0 Xb:ceramica:20), o nome do mapa ou heroi=<chave>
+            std::string mapa = "prado", heroi = "quincy";
             std::vector<std::string> cmds;
             while (i + 1 < args.size() && args[i + 1].rfind("--", 0) != 0) {
                 const std::string& a = args[++i];
-                if (a.find_first_of("@:") == std::string::npos && a.size() > 2) mapa = a;
+                if (a.rfind("heroi=", 0) == 0) heroi = a.substr(6);
+                else if (a.find_first_of("@:") == std::string::npos && a.size() > 2) mapa = a;
                 else cmds.push_back(a);
             }
-            auto ctl = std::make_unique<ControladorSolo>(mapa, "sandbox", "quincy", 1);
+            auto ctl = std::make_unique<ControladorSolo>(mapa, "sandbox", heroi, 1);
             for (auto& c : cmds) ctl->enviar(c);
             cena_ = std::make_unique<CenaJogo>(*this, std::move(ctl));
         } else if (args[i] == "--sel" && i + 1 < args.size()) {

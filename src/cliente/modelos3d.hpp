@@ -11,6 +11,8 @@
 namespace bl::m3d {
 
 bool disponivel();
+// Existe modelo 3D para esta torre ou heroi (a variacao base)?
+bool tem(const std::string& chave);
 
 // Desenha a torre com o pe em (x, y). px = pixels por unidade do modelo (o macaco tem 1 de altura).
 // ang = para onde ela aponta, em graus na tela (0 = direita, 90 = baixo). Devolve false se nao

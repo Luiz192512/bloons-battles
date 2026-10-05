@@ -144,6 +144,8 @@ RenderTexture2D gerar(const Modelo& m, float giro, bool so_torreta) {
 
 bool disponivel() { return !achar_pasta().empty(); }
 
+bool tem(const std::string& chave) { return disponivel() && carregar(chave, "0-0-0").ok; }
+
 bool torre(const std::string& chave, const std::array<int, 3>& caminhos, float x, float y, float px, float ang,
            anim::TipoMira mira, unsigned char alfa) {
     if (!disponivel()) return false;
