@@ -113,6 +113,9 @@ struct Torre {
     bool patrulha_volta = false;
     double ang = -90.0;
     double turbo = 1.0, turbo_t = 0.0;
+    // Robo Macaco em diante: o segundo braco tem a propria prioridade de alvo
+    int modo2 = 0;
+    bool dois_bracos() const { return chave == "super" && caminhos[1] >= 3; }
     // Submarino com Submergir e Apoiar: submerso so pulsa o radar; na tona so atira
     bool submerso = false;
     bool pode_submergir() const { return chave == "submarino" && caminhos[0] >= 3; }

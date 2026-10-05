@@ -501,7 +501,7 @@ static DefTorre t_super() {
         {
             U("Super Alcance", 1500, "+10 de alcance e +1 pierce.", {{"alcance", 40}, {"pierce", 1}}),
             U("Alcance Épico", 1900, "+12 de alcance, +2 pierce.", {{"alcance", 48}, {"pierce", 2}, {"vel", 1.4}}),
-            U("Robô Macaco", 7500, "Atira com os 2 braços; crítico de +9 de dano a cada 15 a 20 tiros.", {{"n", 1}, {"spread", 12}, {"pierce", 1}, {"crit_cada", 15}, {"crit_max", 20}, {"crit_mais", 9}}),
+            U("Robô Macaco", 7500, "Atira com os 2 braços, cada um com a sua prioridade de alvo; crítico de +9 de dano a cada 15 a 20 tiros.", {{"n", 1}, {"spread", 12}, {"pierce", 1}, {"crit_cada", 15}, {"crit_max", 20}, {"crit_mais", 9}}),
             U("Terror Tecnológico", 25000, "Habilidade: aniquilação (2.600 de dano).", {{"pierce", 2}, {"hab", H("Aniquilação", "dano_global", 45, {{"valor", 2600}})}}),
             U("O Anti-Bloon", 70000, "5 de dano, pierce 12. Habilidade de 10.400.", {{"dano", 4}, {"pierce", 5}, {"alcance", 40}, {"hab", H("Erradicação", "dano_global", 30, {{"valor", 10400}})}}),
         },

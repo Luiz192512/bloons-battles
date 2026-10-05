@@ -480,7 +480,7 @@ O avião é grande: o sprite cobre duas faixas da pista.
 | B16 | P2 | Loja com cor de fundo por categoria (Primárias, Militares, Mágicas, Suporte) | `src/cliente/cena_jogo.cpp`: desenho dos cartões da loja | P | não | feito (tela) |
 | B17 | P2 | Selo de camo no painel da torre | `src/cliente/cena_jogo.cpp`: painel de upgrade | P | não | feito (tela) |
 | B18 | P2 | Cor da cola por upgrade (amarela, verde, rosa) e estrelas na Super Glue | `src/cliente/arte.cpp`: estado de cola; `src/jogo/dados.cpp`: visual por upgrade | P | não | feito (tela para a cola verde; rosa e estrelas não vistas) |
-| B19 | P2 | Anti-Bloon com um seletor de alvo por braço | `src/jogo/sim.cpp`: alvo por ataque; `src/cliente/cena_jogo.cpp` | M | não | a fazer |
+| B19 | P2 | Anti-Bloon com um seletor de alvo por braço | `src/jogo/sim.cpp`: alvo por ataque; `src/cliente/cena_jogo.cpp` | M | não | feito (teste e tela): botão ALVO 2 no Robô Macaco em diante (O<id>:0 a 3); cada braço mira pela sua prioridade |
 | B20 | P2 | Sub: botão Submerge e radar verde | `src/jogo/dados.cpp`: submarino 1-3; `src/cliente/cena_jogo.cpp` e `render.cpp` | M | não | feito (teste e tela): botão SUB (Tona/Fundo) com O<id>:1, radar verde e casco sob a água; submerso só pulsa, na tona só atira |
 | B21 | P2 | Tela de consulta dos 15 upgrades de cada torre fora da partida | `src/cliente/cenas_menu.cpp` (pode reaproveitar a vitrine) | M | não | a fazer |
 | B22 | P2 | Ultraboost: escolher a torre que recebe o buff | `src/jogo/sim.cpp`: habilidade `turbo_area`; `src/cliente/cena_jogo.cpp` | M | não | a fazer |

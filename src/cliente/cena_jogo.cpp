@@ -886,7 +886,9 @@ void CenaJogo::rodape_upgrade(const Torre& t, float x, float y, float w, Vector2
     // prioridade de alvo com seta e atalho Tab
     const float wv = t.temporaria ? 0.0f : 150.0f;
     const bool sub = t.pode_submergir();
-    const float wm = t.chave == "bumerangue" || sub ? 52.0f : 0.0f;  // espaco do botao de mao (ou de submergir)
+    const bool robo = t.dois_bracos();
+    // espaco do botao de mao (ou de submergir, ou do alvo do segundo braco)
+    const float wm = t.chave == "bumerangue" || sub || robo ? 52.0f : 0.0f;
     const Rectangle ra{x, y, w - wv - (wv ? 8 : 0) - wm, 44};
     ui::ret(ra, ui::TINTA, 12);
     ui::ret(ui::inflar(ra, -6, -6), rgb(36, 82, 24), 9);
@@ -960,13 +962,17 @@ void CenaJogo::rodape_upgrade(const Torre& t, float x, float y, float w, Vector2
         ui::ret(rm, ui::TINTA, 12);
         ui::ret(ui::inflar(rm, -6, -6), rgb(36, 82, 24), 9);
         ui::ret({rm.x + 3, rm.y + 3, rm.width - 6, rm.height - 10}, ui::PAINEL_VERDE_ESC, 9);
-        ui::texto(sub ? "SUB" : "MÃO", rm.x + 22, rm.y + 12, 10, rgb(207, 239, 191), 0, Ancora::CENTER, ui::Peso::TEXTO);
-        ui::texto(sub ? (t.submerso ? "Fundo" : "Tona") : t.mao ? "Esq" : "Dir", rm.x + 22, rm.y + 28, 13,
-                  sub && t.submerso ? rgb(120, 255, 140) : ui::BRANCO, 3, Ancora::CENTER);
-        const int mao = (sub ? t.submerso : t.mao != 0) ? 0 : 1;
+        static const char* CURTOS[4] = {"Prim", "Últ", "Perto", "Forte"};
+        ui::texto(robo ? "ALVO 2" : sub ? "SUB" : "MÃO", rm.x + 22, rm.y + 12, robo ? 9 : 10, rgb(207, 239, 191), 0,
+                  Ancora::CENTER, ui::Peso::TEXTO);
+        ui::texto(robo ? CURTOS[t.modo2 & 3] : sub ? (t.submerso ? "Fundo" : "Tona") : t.mao ? "Esq" : "Dir", rm.x + 22,
+                  rm.y + 28, robo ? 11 : 13, sub && t.submerso ? rgb(120, 255, 140) : ui::BRANCO, 3, Ancora::CENTER);
+        const int mao = robo ? (t.modo2 + 1) % 4 : (sub ? t.submerso : t.mao != 0) ? 0 : 1;
         botoes_up_.push_back({rm, [this, id, mao] { comando("O" + std::to_string(id) + ":" + std::to_string(mao)); }});
         if (ui::dentro(rm, mouse)) {
-            if (sub)
+            if (robo)
+                dicas_.push_back({mouse, "Alvo do segundo braço", "Cada braço do robô escolhe o bloon pela sua prioridade."});
+            else if (sub)
                 dicas_.push_back({mouse, "Submergir", "Submerso, o Sub para de atirar e o radar tira o camo dos bloons no alcance."});
             else
                 dicas_.push_back({mouse, "Mão do arremesso", "Troca o lado para onde o bumerangue faz a curva."});

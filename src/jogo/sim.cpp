@@ -426,6 +426,10 @@ char Pista::opcao(int tid, int valor) {
         t->patrulha_volta = false;
         return OK;
     }
+    if (t->dois_bracos() && valor <= 3) {
+        t->modo2 = valor;
+        return OK;
+    }
     if (t->pode_submergir() && valor <= 1) {
         t->submerso = valor == 1;
         return OK;
@@ -1184,7 +1188,19 @@ void Pista::passo_torre(const TorreP& tp) {
         } else {
             const int n = static_cast<int>(at.n);
             const double spread = at.spread;
-            if (n <= 1) {
+            Bloon* a2 = nullptr;
+            if (n == 2 && a && t.dois_bracos() && tipo == TipoAtaque::PROJETIL && t.modo2 != t.modo) {
+                // o segundo braco procura o alvo pela prioridade dele
+                const int m = t.modo;
+                t.modo = t.modo2;
+                a2 = alvo(t, at, alcance);
+                t.modo = m;
+            }
+            if (a2 && a2 != a) {
+                const Posicao m2 = antecipa ? mira_antecipada(t, *atc, *a2) : Posicao{a2->x, a2->y, 0};
+                disparar(tp, atc, ang, a);
+                disparar(tp, atc, graus(std::atan2(m2.y - t.y, m2.x - t.x)), a2);
+            } else if (n <= 1) {
                 // um projetil so com espalhamento (Dartling): desvio sorteado dentro do leque
                 disparar(tp, atc, spread > 0 ? ang + rng.uniform(-spread / 2, spread / 2) : ang, a);
             } else if (spread >= 360) {

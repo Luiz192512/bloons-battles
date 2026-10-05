@@ -794,6 +794,31 @@ TESTE(b20_sub_submerge_e_para_de_atirar) {
     CHECA(atirou);
 }
 
+TESTE(b19_segundo_braco_com_alvo_proprio) {
+    Partida p("solo", "prado", 1, "sandbox");
+    Pista& pi = p.pista(1);
+    CHECA_IGUAL(p.aplicar(1, "Tsuper@600,500"), OK);
+    CHECA_IGUAL(p.aplicar(1, "O1:1"), ERRO_INVALIDO);  // so com o Robo Macaco
+    for (int k = 0; k < 3; ++k) CHECA_IGUAL(p.aplicar(1, "U1:1"), OK);
+    CHECA_IGUAL(p.aplicar(1, "O1:1"), OK);  // braco 1 no Primeiro, braco 2 no Ultimo
+    CHECA_IGUAL(pi.torres.at(1)->modo2, 1);
+    CHECA_IGUAL(p.aplicar(1, "Xb:ceramica:25"), OK);
+    // com os bracos em alvos diferentes, os dois dardos de uma salva saem bem separados
+    double maior = 0;
+    for (int i = 0; i < 30 * 25; ++i) {
+        p.passo();
+        for (size_t a = 0; a < pi.projeteis.size(); ++a)
+            for (size_t b = a + 1; b < pi.projeteis.size(); ++b) {
+                const auto& pa = *pi.projeteis[a];
+                const auto& pb = *pi.projeteis[b];
+                const double cosang = (pa.vx * pb.vx + pa.vy * pb.vy) /
+                                      (std::hypot(pa.vx, pa.vy) * std::hypot(pb.vx, pb.vy) + 1e-9);
+                maior = std::max(maior, std::acos(std::clamp(cosang, -1.0, 1.0)) * 180.0 / 3.14159265);
+            }
+    }
+    CHECA(maior > 25);
+}
+
 TESTE(b07_fa_clube_transforma_os_dardos) {
     Partida p("solo", "prado", 1, "sandbox");
     Pista& pi = p.pista(1);
