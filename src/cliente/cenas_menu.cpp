@@ -52,7 +52,7 @@ void info_heroi_card(const DefTorre& h, Rectangle r) {
     const Vector2 c{r.x + 16 + 48, r.y + r.height / 2};
     DrawCircleV(c, 48, ui::TINTA);
     DrawCircleV(c, 44, rgb(247, 215, 116));
-    if (!m3d::torre(h.chave, {0, 0, 0}, c.x, c.y + 26, 56, 90, anim::TipoMira::FIXA)) arte::torre_viva(h.chave, {}, c.x, c.y + 4, 86, ui::tempo());
+    if (!m3d::retrato(h.chave, c.x, c.y, 84) && !m3d::torre(h.chave, {0, 0, 0}, c.x, c.y + 26, 56, 90, anim::TipoMira::FIXA)) arte::torre_viva(h.chave, {}, c.x, c.y + 4, 86, ui::tempo());
     const float x = r.x + 132;
     ui::texto(h.nome, x, r.y + 30, 23, ui::AMARELO, 5, Ancora::MIDLEFT);
     ui::texto(h.titulo, x, r.y + 58, 14, ui::BEGE, 0, Ancora::MIDLEFT, ui::Peso::TEXTO);
@@ -133,7 +133,8 @@ const DefTorre& GradeHerois::desenhar() const {
         if (sel) ui::ret(ui::inflar(r, 4, 4), ui::TINTA, 14);
         ui::ret(r, sel ? ui::AMARELO : ui::TINTA, 12);
         ui::ret(ui::inflar(r, sel ? -8.0f : -6.0f, sel ? -8.0f : -6.0f), sel ? rgb(247, 215, 116) : sobre ? rgb(255, 246, 218) : ui::BEGE, 8);
-        if (!m3d::torre(herois()[i].chave, {0, 0, 0}, r.x + r.width / 2, r.y + r.height / 2 + 15, 30, 90, anim::TipoMira::FIXA))
+        if (!m3d::retrato(herois()[i].chave, r.x + r.width / 2, r.y + r.height / 2, 46) &&
+            !m3d::torre(herois()[i].chave, {0, 0, 0}, r.x + r.width / 2, r.y + r.height / 2 + 15, 30, 90, anim::TipoMira::FIXA))
             arte::torre_icone(herois()[i].chave, {}, r.x + r.width / 2, r.y + r.height / 2 + 1, 50);
     }
     return *achar_heroi(escolhido);
@@ -222,7 +223,7 @@ void CenaMacacos::desenhar() {
         const Rectangle f = ui::inflar(r, -6, -6);
         ui::ret(f, sobre || sel ? rgb(255, 246, 218) : ui::BEGE, 7);
         DrawRectangleRec({f.x + 2, f.y, f.width - 4, 3}, cor_cat(d));
-        boneco(d.chave, {0, 0, 0}, r.x + r.width / 2, r.y + 44, 32);
+        if (!m3d::retrato(d.chave, r.x + r.width / 2, r.y + r.height / 2 + 1, 48)) boneco(d.chave, {0, 0, 0}, r.x + r.width / 2, r.y + 44, 32);
     }
     const DefTorre& d = definicao(torre_);
     painel_passo({332, 80, 924, 548}, "");

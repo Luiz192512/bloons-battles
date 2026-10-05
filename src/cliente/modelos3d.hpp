@@ -20,6 +20,10 @@ bool tem(const std::string& chave);
 bool torre(const std::string& chave, const std::array<int, 3>& caminhos, float x, float y, float px, float ang,
            anim::TipoMira mira, unsigned char alfa = 255);
 
+// Retrato 2D da torre ou heroi (assets/retratos/<chave>.png, feito a partir do modelo 3D): o desenho
+// da loja e dos menus. Centro em (cx, cy), com 'lado' pixels. Devolve false se nao houver o arquivo.
+bool retrato(const std::string& chave, float cx, float cy, float lado, unsigned char alfa = 255);
+
 void liberar();
 
 }  // namespace bl::m3d

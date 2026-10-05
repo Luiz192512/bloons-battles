@@ -60,6 +60,7 @@ Shader shader{};
 Material material{};
 std::map<std::string, Modelo> modelos;
 std::map<std::string, RenderTexture2D> sprites;
+std::map<std::string, Texture2D> retratos;  // id 0 = arquivo nao existe
 
 const std::string& achar_pasta() {
     if (procurou) return pasta;
@@ -178,6 +179,26 @@ bool torre(const std::string& chave, const std::array<int, 3>& caminhos, float x
         for (int dy = -1; dy <= 1; ++dy)
             if (dx || dy) DrawTexturePro(it->second.texture, src, {base.x + dx * e, base.y + dy * e, lado, lado}, {0, 0}, 0, tinta);
     DrawTexturePro(it->second.texture, src, base, {0, 0}, 0, {255, 255, 255, alfa});
+    return true;
+}
+
+bool retrato(const std::string& chave, float cx, float cy, float lado, unsigned char alfa) {
+    if (!disponivel()) return false;
+    auto it = retratos.find(chave);
+    if (it == retratos.end()) {
+        Texture2D t{};
+        const std::string arq = pasta + "/../retratos/" + chave + ".png";
+        if (FileExists(arq.c_str())) {
+            t = LoadTexture(arq.c_str());
+            GenTextureMipmaps(&t);  // o cartao da loja mostra o retrato bem menor que o arquivo
+            SetTextureFilter(t, TEXTURE_FILTER_TRILINEAR);
+        }
+        it = retratos.emplace(chave, t).first;
+    }
+    const Texture2D& t = it->second;
+    if (!t.id) return false;
+    DrawTexturePro(t, {0, 0, static_cast<float>(t.width), static_cast<float>(t.height)}, {cx - lado / 2, cy - lado / 2, lado, lado},
+                   {0, 0}, 0, {255, 255, 255, alfa});
     return true;
 }
 
