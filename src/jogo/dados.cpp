@@ -379,8 +379,8 @@ static DefTorre t_heli() {
             U("Dardos Rápidos", 250, "+30% de alcance.", {{"alcance", 50}, {"vel", 1.3}}),
             U("Disparo Rápido", 350, "Todos os ataques 25% mais rápidos.", {{"a", "todos"}, {"cad", 0.8}}),
             U("Empurrão de M.O.A.B.", 3400, "Empurra dirigíveis e dispara mísseis.", J::array({{{"novo", A("aura", {{"cad", 0.5}, {"dano", 0}, {"pierce", 1}, {"lento", J::array({0.5, 0.5})}, {"moab_lento", true}, {"raio_aura", 90}, {"visual", "nenhum"}})}}, {{"novo", A("projetil", {{"cad", 3.0}, {"dano", 2}, {"cer", 2}, {"moab", 5}, {"pierce", 10}, {"vel", 900}, {"dist", 900}, {"busca", true}, {"visual", "missil"}})}}})),
-            U("Defesa Comanche", 8500, "Dardos com 2 de dano.", {{"dano", 1}}),
-            U("Comandante Comanche", 35000, "Dardos com 4 de dano.", {{"dano", 2}}),
+            U("Defesa Comanche", 8500, "Dardos com 2 de dano. Quando os bloons avançam, 3 mini-Comanches escoltam por 20 s.", {{"dano", 1}}),
+            U("Comandante Comanche", 35000, "Dardos com 4 de dano e 3 mini-Comanches permanentes.", {{"dano", 2}}),
         },
     };
     t.categoria = "militar";
@@ -631,16 +631,16 @@ static DefTorre t_fazenda() {
         {
             U("Bananas Duradouras", 300, "As bananas ficam 30 s no chão (em vez de 15 s).", J::object()),
             U("Bananas Valiosas", 800, "Bananas valem 25% mais.", {{"valor_x", 1.25}}),
-            U("Banco Macaco", 3650, "Banco: guarda o dinheiro e rende 15% de juros.", {{"valor_x", 1.15}}),
-            U("Empréstimo do FMI", 7200, "Habilidade: empréstimo de $9.000 (paga depois com metade da renda).", {{"hab", H("Empréstimo", "emprestimo", 85, {{"valor", 9000}})}}),
-            U("Macaconomia", 100000, "Habilidade: $9.000 sem dívida.", {{"hab", H("Macaconomia", "dinheiro", 60, {{"valor", 9000}})}}),
+            U("Banco Macaco", 3650, "Banco: guarda a renda, que rende 20% de juros por rodada, até $14.000. Saque quando quiser.", J::object()),
+            U("Empréstimo do FMI", 7200, "Banco de $18.000. Habilidade: empréstimo de $9.000 (paga depois com metade da renda).", {{"hab", H("Empréstimo", "emprestimo", 85, {{"valor", 9000}})}}),
+            U("Macaconomia", 100000, "Banco de $30.000. Habilidade: $9.000 sem dívida.", {{"hab", H("Macaconomia", "dinheiro", 60, {{"valor", 9000}})}}),
         },
         {
             U("Coleta Fácil", 250, "O cursor coleta bananas de mais longe.", J::object()),
             U("Salvamento de Bananas", 400, "Vende por 80%.", {{"venda", 0.8}}),
             U("Mercado", 2700, "Dinheiro automático: $320 por rodada.", {{"valor", 240}}),
             U("Mercado Central", 15000, "$1.120 por rodada.", {{"valor", 800}}),
-            U("Wall Street dos Macacos", 70000, "+$4.000 no fim de cada rodada.", {{"valor", 4000}}),
+            U("Wall Street dos Macacos", 70000, "+$4.000 no fim de cada rodada e +15 vidas na compra.", {{"valor", 4000}}),
         },
     };
     t.categoria = "suporte";

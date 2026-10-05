@@ -370,6 +370,7 @@ char Pista::upar(int tid, int p) {
     t->recalcular();
     preparar_trilha(*t);
     buff_t = 0.0;
+    if (t->chave == "fazenda" && p == 2 && t->caminhos[2] == 5) vidas += 15;  // Wall Street
     evento({"upgrade", t->x, t->y});
     return OK;
 }
@@ -424,6 +425,15 @@ char Pista::opcao(int tid, int valor) {
         t->patrulha_volta = false;
         return OK;
     }
+    if (t->chave == "fazenda" && valor == 0 && teto_banco(*t) > 0) {
+        // saque do banco: tudo o que esta guardado vai para o caixa
+        if (t->banco < 1) return ERRO_BLOQUEADO;
+        const double v = std::floor(t->banco);
+        t->banco = 0;
+        receber(v);
+        evento({"dinheiro", t->x, t->y, v});
+        return OK;
+    }
     if (t->chave == "as" && valor <= 3) {
         if (valor == 3 && t->caminhos[2] < 2) return ERRO_BLOQUEADO;
         if (valor == 3 && !t->tem_mira) t->mx = t->cx, t->my = t->cy, t->tem_mira = true;
@@ -431,6 +441,11 @@ char Pista::opcao(int tid, int valor) {
         return OK;
     }
     return ERRO_INVALIDO;
+}
+
+double Pista::teto_banco(const Torre& t) const {
+    if (t.chave != "fazenda" || t.caminhos[1] < 3) return 0;
+    return t.caminhos[1] >= 5 ? 30000 : t.caminhos[1] == 4 ? 18000 : 14000;
 }
 
 void Pista::soltar(double x, double y, double valor, double vida, const std::string& visual) {
@@ -719,6 +734,39 @@ void Pista::invocar(const Torre& t, const std::string& base, double dur, const J
     evento({"invocar", x, y});
 }
 
+// Defesa Comanche: quando um bloon passa de 25% da trilha, 3 mini-helicopteros escoltam o Heli por
+// 20 s (e so voltam 45 s depois). No Comandante Comanche os 3 sao permanentes.
+void Pista::comanches(Torre& t) {
+    if (t.comanche_t > 0) t.comanche_t -= DT;
+    int vivos = 0;
+    for (auto& [id, o] : torres) vivos += o->mae == t.id;
+    const bool fixos = t.caminhos[2] >= 5;
+    if (vivos >= 3) return;
+    if (!fixos) {
+        if (vivos > 0 || t.comanche_t > 0) return;
+        bool avancou = false;
+        for (auto& b : bloons)
+            if (b->vivo && b->d >= mapa.caminhos[b->cam].comprimento * 0.25) {
+                avancou = true;
+                break;
+            }
+        if (!avancou) return;
+        t.comanche_t = 45.0;
+    }
+    for (int k = vivos; k < 3; ++k) {
+        const double ang = 2 * PI * k / 3;
+        auto s = std::make_shared<Torre>(prox_torre, "heli", dono, t.x + std::cos(ang) * 46, t.y + std::sin(ang) * 46, 0,
+                                         fixos ? 1e9 : 20.0);
+        prox_torre += 1;
+        s->mae = t.id;
+        s->caminhos = {0, 0, 2};
+        s->recalcular();
+        preparar_trilha(*s);
+        torres[s->id] = s;
+        evento({"invocar", s->x, s->y});
+    }
+}
+
 // ---------------------------------------------------------------- passo
 void Pista::passo() {
     tempo += DT;
@@ -976,11 +1024,13 @@ void Pista::passo_torre(const TorreP& tp) {
     Torre& t = *tp;
     if (t.temporaria) {
         t.temporaria -= DT;
-        if (t.temporaria <= 0) {
+        // a escolta some junto com o Heli que a chamou
+        if (t.temporaria <= 0 || (t.mae && !torres.count(t.mae))) {
             torres.erase(t.id);
             return;
         }
     }
+    if (t.chave == "heli" && t.caminhos[2] >= 4 && !t.temporaria) comanches(t);
     if (t.dfn->mov != Mov::FIXO) mover_torre(t);
     if (t.turbo_t > 0) {
         t.turbo_t -= DT;
@@ -1605,6 +1655,17 @@ void Pista::pagar_renda() {
                 // Fazenda de bananas: a renda cai no chao em 4 cachos e o jogador coleta. Banco (caminho 2,
                 // tier 3) e Mercado (caminho 3, tier 3) depositam direto, como as outras rendas.
                 const bool cai = t->chave == "fazenda" && t->caminhos[1] < 3 && t->caminhos[2] < 3;
+                if (const double teto = teto_banco(*t); teto > 0) {
+                    // Banco: a renda da rodada entra no saldo, que rende 20% de juros. Cheio, ele se
+                    // saca sozinho (no jogo real o dinheiro a mais se perderia).
+                    t->banco = (t->banco + at.valor) * 1.20;
+                    if (t->banco >= teto) {
+                        receber(teto);
+                        evento({"dinheiro", t->x, t->y, teto});
+                        t->banco = 0;
+                    }
+                    continue;
+                }
                 if (!cai) {
                     receber(at.valor);
                     evento({"dinheiro", t->x, t->y, std::floor(at.valor)});

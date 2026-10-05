@@ -33,7 +33,7 @@ Color cor_efeito(const std::string& vis, Color padrao) {
 // Tamanho da caixa do sprite de uma torre no mapa
 float tamanho_torre(const Torre& t) {
     float tam = t.dfn->heroi ? 74.0f : static_cast<float>(t.dfn->raio) * 3.2f;
-    if (t.temporaria) tam *= 0.8f;
+    if (t.temporaria) tam *= t.mae ? 0.6f : 0.8f;  // escolta do Comanche menor ainda
     return tam;
 }
 

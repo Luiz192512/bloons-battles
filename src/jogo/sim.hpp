@@ -113,6 +113,11 @@ struct Torre {
     bool patrulha_volta = false;
     double ang = -90.0;
     double turbo = 1.0, turbo_t = 0.0;
+    // Banco Macaco: saldo guardado, que rende juros a cada rodada ate o teto
+    double banco = 0.0;
+    // Mini-Comanche: id do Heli que o chamou (0 = torre comum) e a espera para chamar de novo
+    int mae = 0;
+    double comanche_t = 0.0;
     // transformacao temporaria por habilidade (Fa-Clube, Transformacao): so muda o desenho da torre
     std::string disfarce;
     double disfarce_t = 0.0;
@@ -213,6 +218,7 @@ public:
     char coletar(int cid);
     void soltar(double x, double y, double valor, double vida, const std::string& visual);
     char opcao(int tid, int valor);
+    double teto_banco(const Torre& t) const;
     char usar_habilidade(int tid, int idx);
 
     // bloons
@@ -282,6 +288,7 @@ private:
     void executar_habilidade(const TorreP& t, const J& h);
     std::pair<int, double> ponto_trilha_mais_avancado(const Torre& t) const;
     void invocar(const Torre& t, const std::string& base, double dur, const J& nivel);
+    void comanches(Torre& t);
     void spawns();
     void grade();
     std::vector<Bloon*> vizinhos(double x, double y, double r) const;

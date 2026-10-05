@@ -922,6 +922,16 @@ void CenaJogo::rodape_upgrade(const Torre& t, float x, float y, float w, Vector2
         botoes_up_.push_back({ra, [this, id] { proxima_rota(id); }});
         if (ui::dentro(ra, mouse))
             dicas_.push_back({mouse, "Rota do voo", "Clique ou Tab para trocar. A Rota Centralizada pede o upgrade e um clique no mapa."});
+    } else if (pista().teto_banco(t) > 0) {
+        // o Banco nao mira: mostra o saldo e saca com um clique
+        ui::texto("BANCO", cx, ra.y + 12, 10, rgb(207, 239, 191), 0, Ancora::CENTER, ui::Peso::TEXTO);
+        ui::texto("Sacar $" + ui::formatar(std::floor(t.banco)), cx, ra.y + 28, 13, t.banco >= 1 ? ui::DINHEIRO : ui::BRANCO, 3,
+                  Ancora::CENTER);
+        botoes_up_.push_back({ra, [this, id] { comando("O" + std::to_string(id) + ":0"); }});
+        if (ui::dentro(ra, mouse))
+            dicas_.push_back({mouse, "Banco Macaco",
+                              "Guarda a renda e rende 20% por rodada, até $" + ui::formatar(pista().teto_banco(t)) +
+                                  ". Clique ou Tab para sacar."});
     } else if (t.chave == "morteiro") {
         // o Morteiro bombardeia um ponto fixo, escolhido com um clique no mapa
         const bool esperando = definindo_alvo_ == id;
@@ -987,8 +997,9 @@ void CenaJogo::painel_upgrade(const TorreP& tp, Vector2 mouse) {
     if (t.dfn->heroi) {
         painel_heroi(t, px, yy, pw);
     } else if (t.temporaria) {
-        ui::texto("Temporária: " + std::to_string(static_cast<int>(t.temporaria)) + " s", px + pw / 2, yy + 70, 18,
-                  ui::BRANCO, 3, Ancora::CENTER);
+        ui::texto(t.temporaria > 1e8 ? std::string("Escolta do Comandante")
+                                     : "Temporária: " + std::to_string(static_cast<int>(t.temporaria)) + " s",
+                  px + pw / 2, yy + 70, 18, ui::BRANCO, 3, Ancora::CENTER);
     } else {
         for (int pth = 0; pth < 3; ++pth) linha_upgrade(tp, pth, px + pth * 120.0f, yy, 112, mouse);
     }

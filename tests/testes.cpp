@@ -704,6 +704,62 @@ TESTE(b11_cemiterio_do_necromante) {
     CHECA(t.cemiterio < pico);
 }
 
+TESTE(b23_banco_rende_juros_e_saca) {
+    Partida p("solo", "prado", 1, "sandbox");
+    Pista& pi = p.pista(1);
+    CHECA_IGUAL(p.aplicar(1, "Tfazenda@750,270"), OK);
+    for (int k = 0; k < 3; ++k) CHECA_IGUAL(p.aplicar(1, "U1:1"), OK);
+    const Torre& t = *pi.torres.at(1);
+    CHECA_IGUAL(p.aplicar(1, "O1:0"), ERRO_BLOQUEADO);  // banco vazio
+    const double antes = pi.dinheiro;
+    pi.pagar_renda();
+    CHECA_IGUAL(pi.dinheiro, antes);  // a renda fica no banco
+    const double r1 = t.banco;
+    CHECA(r1 > 100);
+    pi.pagar_renda();
+    CHECA(t.banco > r1 * 2.1);  // renda nova mais 20% sobre tudo
+    const double guardado = std::floor(t.banco);
+    CHECA_IGUAL(p.aplicar(1, "O1:0"), OK);
+    CHECA_IGUAL(pi.dinheiro, antes + guardado);
+    CHECA_IGUAL(t.banco, 0.0);
+    // cheio, saca sozinho
+    for (int k = 0; k < 60; ++k) pi.pagar_renda();
+    CHECA(pi.dinheiro >= antes + guardado + 14000);
+}
+
+TESTE(b23_wall_street_e_mini_comanches) {
+    Partida p("solo", "prado", 1, "sandbox");
+    Pista& pi = p.pista(1);
+    CHECA_IGUAL(p.aplicar(1, "Tfazenda@750,270"), OK);
+    const int vidas = pi.vidas;
+    for (int k = 0; k < 5; ++k) CHECA_IGUAL(p.aplicar(1, "U1:2"), OK);
+    CHECA_IGUAL(pi.vidas, vidas + 15);
+    CHECA_IGUAL(p.aplicar(1, "Theli@300,240"), OK);
+    for (int k = 0; k < 4; ++k) CHECA_IGUAL(p.aplicar(1, "U2:2"), OK);
+    auto minis = [&] {
+        int n = 0;
+        for (auto& [id, t] : pi.torres) n += t->mae == 2;
+        return n;
+    };
+    for (int i = 0; i < 60; ++i) p.passo();
+    CHECA_IGUAL(minis(), 0);  // sem bloons avancando nao ha escolta
+    CHECA_IGUAL(p.aplicar(1, "Xb:ceramica:40"), OK);
+    int pico = 0;
+    for (int i = 0; i < 30 * 15; ++i) {
+        p.passo();
+        pico = std::max(pico, minis());
+    }
+    CHECA_IGUAL(pico, 3);
+    for (int i = 0; i < 30 * 25; ++i) p.passo();
+    CHECA_IGUAL(minis(), 0);  // temporarios
+    CHECA_IGUAL(p.aplicar(1, "U2:2"), OK);  // Comandante: permanentes
+    for (int i = 0; i < 30 * 40; ++i) p.passo();
+    CHECA_IGUAL(minis(), 3);
+    CHECA_IGUAL(p.aplicar(1, "V2"), OK);
+    for (int i = 0; i < 5; ++i) p.passo();
+    CHECA_IGUAL(minis(), 0);  // somem com o Heli
+}
+
 TESTE(b07_fa_clube_transforma_os_dardos) {
     Partida p("solo", "prado", 1, "sandbox");
     Pista& pi = p.pista(1);
