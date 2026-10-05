@@ -78,6 +78,7 @@ void RenderPista::consumir_eventos() {
             Evento t = e;
             t.cor = {255, 255, 255};
             efeitos_.push_back({"texto", t, 0, 1.4});
+            if (e.s == "Tsar Bomba") efeitos_.push_back({"aviao", e, 0, 1.3});
             if (sons_) som::tocar("habilidade");
         } else if (tipo == "flash") {
             flash_ = true;
@@ -124,7 +125,20 @@ void RenderPista::desenhar(int selecionada) {
         return a->y < b->y;
     });
     for (const Torre* t : ordem) desenhar_torre(*t, t->id == selecionada);
-    for (auto& p : pista_.projeteis) arte::projetil(*p);
+    for (auto& p : pista_.projeteis) {
+        // rastro por upgrade: chamas no Kylie da Dominacao M.O.A.B. e verde na Carga Permanente
+        if (p->torre && p->torre->chave == "bumerangue" && (p->torre->caminhos[2] >= 5 || p->torre->caminhos[1] >= 5)) {
+            const bool fogo = p->torre->caminhos[2] >= 5;
+            const float v = static_cast<float>(std::hypot(p->vx, p->vy)) + 0.001f;
+            const float ux = static_cast<float>(p->vx) / v, uy = static_cast<float>(p->vy) / v;
+            for (int i = 1; i <= 5; ++i) {
+                const float px = static_cast<float>(p->x) - ux * i * 9, py = static_cast<float>(p->y) - uy * i * 9;
+                const Color c = fogo ? (i < 3 ? rgb(255, 220, 90) : rgb(255, 110, 30)) : rgb(110, 255, 120);
+                DrawCircleV({px, py}, (fogo ? 12.0f : 8.0f) - i * 1.4f, ui::com_alfa(c, 210 - i * 36));
+            }
+        }
+        arte::projetil(*p);
+    }
     // dinheiro caido no chao: balanca, e pisca nos ultimos 3 s antes de sumir
     for (const Coletavel& c : pista_.coletaveis) {
         const double t = ui::tempo();
@@ -194,6 +208,7 @@ void RenderPista::desenhar_torre(const Torre& t, bool sel) {
         rlPopMatrix();
     };
     if (sel) anel_chao(ui::AMARELO, 6);
+    if (t.chave == "bumerangue" && t.caminhos[1] >= 5) anel_chao(rgb(110, 255, 120), sel ? 13.0f : 5.0f);  // Carga Permanente
     if (t.turbo < 1.0) anel_chao(rgb(255, 170, 40), sel ? 14.0f : 6.0f);
     // modelo 3D quando a pasta assets/modelos existe; senao, o sprite 2D
     auto desenhar = [&](const std::string& chave, const std::array<int, 3>& cam, float tm) {
@@ -276,6 +291,8 @@ void RenderPista::desenhar_bloons() {
             if (b->cola_f <= 0.15) DrawCircleV({x, y - r * 0.15f}, r * 0.8f, rgb(255, 105, 180, 150));
             else if (b->cola_dps > 0) DrawCircleV({x, y - r * 0.15f}, r * 0.8f, rgb(110, 220, 70, 150));
         }
+        // Super Fragil: o bloon fica roxo enquanto recebe o dano extra
+        if (b->frag >= 4) DrawCircleV({x, y - r * 0.15f}, r * 0.85f, rgb(170, 70, 235, 150));
         if (b->queima_t > 0) arte::estado_bloon(2, x, y, r, agora);
         if (b->atord_t > 0) arte::estado_bloon(3, x, y, r, agora);
     }
@@ -296,6 +313,12 @@ void RenderPista::desenhar_efeitos() {
         } else if (f.tipo == "explosao") {
             const float raio = static_cast<float>(d.v);
             arte::efeito("explosao", x, y, std::max(48.0f, raio * 2.6f), k * 0.9);
+            if (d.s == "esmaga") {
+                // Esmaga Bloon: clarao branco e onda de choque por cima da explosao
+                const int a = static_cast<int>(230 * (1 - k));
+                DrawCircleV({x, y}, raio * (1.2f + 1.4f * k), rgb(255, 255, 255, a / 2));
+                DrawRing({x, y}, raio * (0.6f + 2.2f * k) - 7, raio * (0.6f + 2.2f * k), 0, 360, 64, rgb(255, 250, 200, a));
+            }
         } else if (f.tipo == "nivel") {
             arte::efeito("nivel", x, y - 20, 70, k * 0.8);
         } else if (f.tipo == "raio") {
@@ -332,10 +355,38 @@ void RenderPista::desenhar_efeitos() {
             const Color c = cor_efeito(d.s, WHITE);
             const int a = static_cast<int>(140 * (1 - k));
             const float rr = raio * (0.3f + 0.7f * k);
+            if (d.s == "anel_fogo") {
+                // Anel de Fogo e Anel Infernal: tres aneis de fogo abrindo ate a borda do alcance
+                for (int i = 0; i < 3; ++i) {
+                    const float ki = std::clamp(static_cast<float>(k) * 1.25f - i * 0.12f, 0.0f, 1.0f);
+                    const float ri = raio * ki, esp = 5.0f + raio * 0.05f;
+                    const Color ci = i == 0 ? rgb(255, 235, 120) : i == 1 ? rgb(255, 140, 30) : rgb(220, 50, 20);
+                    DrawRing({x, y}, std::max(0.0f, ri - esp), ri, 0, 360, 64, ui::com_alfa(ci, static_cast<int>(210 * (1 - ki))));
+                }
+            }
             if (d.s == "congelar") DrawCircleV({x, y}, rr, ui::com_alfa(c, a / 2));
             if (a) DrawRing({x, y}, std::max(0.0f, rr - 4), rr, 0, 360, 64, ui::com_alfa(c, a + 60));
         } else if (f.tipo == "texto") {
             ui::texto(d.s, x, y - 30 * k - 20, 18, arte::cor(d.cor), 2, ui::Ancora::CENTER);
+        } else if (f.tipo == "aviao") {
+            // Tsar Bomba: o bombardeiro cruza o mapa e solta a bomba no meio do caminho
+            const float ax = -90.0f + (LARGURA_MAPA + 180.0f) * static_cast<float>(k), ay = ALTURA_MAPA * 0.42f;
+            DrawEllipse(static_cast<int>(ax - 14), static_cast<int>(ay + 70), 60, 14, rgb(22, 20, 26, 70));  // sombra
+            DrawTriangle({ax - 6, ay}, {ax - 40, ay + 48}, {ax + 16, ay}, ui::TINTA);
+            DrawTriangle({ax - 6, ay}, {ax + 16, ay}, {ax - 40, ay - 48}, ui::TINTA);
+            DrawTriangle({ax - 4, ay}, {ax - 34, ay + 40}, {ax + 10, ay}, rgb(92, 104, 82));
+            DrawTriangle({ax - 4, ay}, {ax + 10, ay}, {ax - 34, ay - 40}, rgb(92, 104, 82));
+            DrawEllipse(static_cast<int>(ax), static_cast<int>(ay), 58, 13, ui::TINTA);
+            DrawEllipse(static_cast<int>(ax), static_cast<int>(ay), 54, 10, rgb(120, 134, 104));
+            DrawTriangle({ax - 44, ay}, {ax - 62, ay + 18}, {ax - 34, ay}, ui::TINTA);
+            DrawTriangle({ax - 44, ay}, {ax - 34, ay}, {ax - 62, ay - 18}, ui::TINTA);
+            DrawCircleV({ax + 34, ay}, 6, rgb(150, 210, 240));
+            if (k > 0.45 && k < 0.8) {
+                const float q = static_cast<float>((k - 0.45) / 0.35);
+                const float bx = LARGURA_MAPA * 0.5f, by = ay + 10 + q * 60;
+                DrawEllipse(static_cast<int>(bx), static_cast<int>(by), 9 * (1 - q * 0.4f), 18 * (1 - q * 0.4f), ui::TINTA);
+                DrawEllipse(static_cast<int>(bx), static_cast<int>(by), 6 * (1 - q * 0.4f), 15 * (1 - q * 0.4f), rgb(60, 62, 70));
+            }
         } else if (f.tipo == "anel") {
             const float r = 10 + 30 * k;
             const int a = static_cast<int>(255 * (1 - k));

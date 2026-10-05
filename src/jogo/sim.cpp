@@ -1391,7 +1391,8 @@ Bloon* Pista::mais_proximo(double x, double y, double r, const std::unordered_se
 
 void Pista::explosao(double x, double y, double raio, double dano, double pierce, const Ataque& at, Torre* torre,
                      DType dtype) {
-    evento({"explosao", x, y, raio, 0, 0, at.visual});
+    // o Esmaga Bloon (atordoa dirigiveis) avisa a tela para desenhar o clarao
+    evento({"explosao", x, y, raio, 0, 0, at.moab_atordoa && at.atordoa ? "esmaga" : at.visual});
     if (!dtype) dtype = DT_EXPLOSAO;
     if (torre && torre->buff.dtype_normal) dtype = DT_NORMAL;
     int n = static_cast<int>(pierce);
