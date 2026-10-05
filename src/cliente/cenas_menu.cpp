@@ -3,6 +3,7 @@
 #include <cmath>
 
 #include "cliente/arte.hpp"
+#include "cliente/modelos3d.hpp"
 #include "cliente/som.hpp"
 #include "rlgl.h"
 
@@ -66,10 +67,11 @@ void info_heroi_card(const DefTorre& h, Rectangle r) {
 CenaMenu::CenaMenu(App& a) : Cena(a) {
     const float x = 470, w = 340;
     botoes_ = {
-        {{x, 318, w, 72}, "Jogar Solo", ui::VERDE, 28},
-        {{x, 402, w, 62}, "Batalha: Hospedar", ui::AZUL, 22},
-        {{x, 476, w, 62}, "Batalha: Entrar", ui::AZUL, 22},
-        {{x, 558, w, 52}, "Sair", ui::VERMELHO, 19},
+        {{x, 316, w, 64}, "Jogar Solo", ui::VERDE, 26},
+        {{x, 388, w, 54}, "Batalha: Hospedar", ui::AZUL, 21},
+        {{x, 450, w, 54}, "Batalha: Entrar", ui::AZUL, 21},
+        {{x, 512, w, 48}, "Macacos e Upgrades", ui::AMARELO, 18},
+        {{x, 568, w, 46}, "Sair", ui::VERMELHO, 18},
     };
 }
 
@@ -80,6 +82,7 @@ void CenaMenu::evento(const ui::Evento& e) {
         if (i == 0) app.trocar(std::make_unique<CenaSolo>(app));
         else if (i == 1) app.trocar(std::make_unique<CenaBatalha>(app, true));
         else if (i == 2) app.trocar(std::make_unique<CenaBatalha>(app, false));
+        else if (i == 3) app.trocar(std::make_unique<CenaMacacos>(app));
         else app.sair();
     }
 }
@@ -178,6 +181,91 @@ void cabecalho(const std::string& t, const std::string& sub) {
 }
 
 }  // namespace
+
+// ====================================================================== MACACOS
+CenaMacacos::CenaMacacos(App& a) : Cena(a) {
+    voltar_ = {{24, 646, 180, 56}, "Voltar", ui::AZUL, 19};
+    voltar_.atalho = "Esc";
+}
+
+void CenaMacacos::evento(const ui::Evento& e) {
+    if (e.tipo == ui::Evento::CLIQUE)
+        for (size_t i = 0; i < torres().size(); ++i)
+            if (ui::dentro(rect_torre(i), e.pos)) {
+                torre_ = torres()[i].chave;
+                som::tocar("colocar");
+            }
+    if (voltar_.clicou(e) || (e.tipo == ui::Evento::TECLA && e.tecla == KEY_ESCAPE)) app.ir_menu();
+}
+
+void CenaMacacos::desenhar() {
+    auto cor_cat = [](const DefTorre& d) {
+        return d.categoria == "militar" ? rgb(143, 160, 74) : d.categoria == "magica" ? rgb(166, 95, 232)
+               : d.categoria == "suporte" ? rgb(242, 169, 58) : ui::AZUL;
+    };
+    auto nome_cat = [](const DefTorre& d) {
+        return d.categoria == "militar" ? "Militar" : d.categoria == "magica" ? "Mágica" : d.categoria == "suporte" ? "Suporte" : "Primária";
+    };
+    auto boneco = [](const std::string& chave, const std::array<int, 3>& cam, float x, float y, float px) {
+        if (!m3d::torre(chave, cam, x, y, px, 90, anim::TipoMira::FIXA)) arte::torre_icone(chave, {}, x, y - px * 0.4f, px * 1.7f);
+    };
+    ui::fundo_gradiente(rgb(90, 170, 70), rgb(47, 107, 40));
+    cabecalho("Macacos e Upgrades", "os 3 caminhos e os 15 upgrades de cada torre");
+    const Vector2 m = ui::mouse();
+    painel_passo({24, 80, 292, 548}, "");
+    for (size_t i = 0; i < torres().size(); ++i) {
+        const DefTorre& d = torres()[i];
+        const bool sel = d.chave == torre_, sobre = ui::dentro(rect_torre(i), m);
+        const Rectangle r = ui::mover(rect_torre(i), 0, sobre && !sel ? -2.0f : 0);
+        ui::ret(r, sel ? ui::AMARELO : ui::TINTA, 10);
+        const Rectangle f = ui::inflar(r, -6, -6);
+        ui::ret(f, sobre || sel ? rgb(255, 246, 218) : ui::BEGE, 7);
+        DrawRectangleRec({f.x + 2, f.y, f.width - 4, 3}, cor_cat(d));
+        boneco(d.chave, {0, 0, 0}, r.x + r.width / 2, r.y + 44, 32);
+    }
+    const DefTorre& d = definicao(torre_);
+    painel_passo({332, 80, 924, 548}, "");
+    // upgrade sob o cursor: o boneco do topo mostra aquela variacao
+    std::array<int, 3> cam{0, 0, 0};
+    for (int p = 0; p < 3; ++p)
+        for (int k = 0; k < 5; ++k)
+            if (ui::dentro(rect_up(p, k), m)) cam[static_cast<size_t>(p)] = k + 1;
+    DrawEllipse(410, 196, 58, 16, ui::com_alfa(ui::TINTA, 90));
+    boneco(d.chave, cam, 410, 186, 66);
+    ui::texto(d.nome, 490, 116, 26, ui::BRANCO, 5, Ancora::MIDLEFT);
+    const float wn = ui::medir(d.nome, 26).x;
+    ui::pilula(nome_cat(d), 490 + wn + 60, 116, cor_cat(d), ui::TINTA, 12);
+    ui::pilula_preco(d.custo, 490 + wn + 150, 116, true, 13);
+    ui::texto(d.desc, 490, 150, 14, ui::BEGE, 0, Ancora::MIDLEFT, ui::Peso::TEXTO);
+    ui::texto("Passe o cursor num upgrade para ver o macaco com ele. Preços do nível Médio.", 490, 176, 12,
+              rgb(217, 191, 134), 0, Ancora::MIDLEFT, ui::Peso::TEXTO);
+    for (int p = 0; p < 3 && p < static_cast<int>(d.caminhos.size()); ++p) {
+        for (int k = 0; k < 5 && k < static_cast<int>(d.caminhos[static_cast<size_t>(p)].size()); ++k) {
+            const Upgrade& u = d.caminhos[static_cast<size_t>(p)][static_cast<size_t>(k)];
+            const Rectangle r = rect_up(p, k);
+            const bool sobre = ui::dentro(r, m);
+            ui::ret(r, sobre ? ui::AMARELO : ui::TINTA, 10);
+            const Rectangle f = ui::inflar(r, -6, -6);
+            ui::ret(f, sobre ? rgb(255, 246, 218) : ui::BEGE, 7);
+            DrawRectangleRec({f.x + 2, f.y, f.width - 4, 3}, k >= 4 ? ui::VERMELHO : k >= 2 ? ui::AMARELO : ui::VERDE);
+            ui::tecla_centro(std::to_string(k + 1), f.x + 12, f.y + 15, 9);
+            float y = f.y + 15;
+            for (const std::string& l : ui::quebrar(u.nome, 12, f.width - 34)) {
+                ui::texto(l, f.x + 26, y, 12, ui::MADEIRA_ESCURA, 0, Ancora::MIDLEFT);
+                y += 14;
+            }
+            ui::texto("$" + ui::formatar(u.custo), f.x + f.width - 6, f.y + f.height - 11, 12, rgb(110, 69, 35), 0, Ancora::MIDRIGHT);
+            y = std::max(y, f.y + 44) + 2;
+            int linhas = 0;
+            for (const std::string& l : ui::quebrar(u.desc.empty() ? std::string("Melhora o anterior.") : u.desc, 11, f.width - 12, ui::Peso::TEXTO)) {
+                if (++linhas > 5 || y > f.y + f.height - 24) break;
+                ui::texto(l, f.x + 6, y, 11, rgb(70, 44, 24), 0, Ancora::MIDLEFT, ui::Peso::TEXTO);
+                y += 13;
+            }
+        }
+    }
+    voltar_.desenhar();
+}
 
 // ====================================================================== SOLO
 namespace {

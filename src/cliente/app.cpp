@@ -69,6 +69,7 @@ App::App(const std::vector<std::string>& args) {
             // telas de menu para conferir o visual: solo, hospedar, entrar, entrar-erro, lobby
             const std::string t = args[i + 1];
             if (t == "solo") cena_ = std::make_unique<CenaSolo>(*this);
+            else if (t == "macacos") cena_ = std::make_unique<CenaMacacos>(*this);
             else if (t == "hospedar" || t == "lobby") cena_ = std::make_unique<CenaBatalha>(*this, true);
             else if (t.rfind("entrar", 0) == 0) cena_ = std::make_unique<CenaBatalha>(*this, false);
             if (auto* b = dynamic_cast<CenaBatalha*>(cena_.get())) {

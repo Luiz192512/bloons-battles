@@ -23,6 +23,21 @@ private:
     double dt_ = 0.016;
 };
 
+// Consulta dos 15 upgrades de cada torre, fora da partida
+class CenaMacacos : public Cena {
+public:
+    explicit CenaMacacos(App& app);
+    void evento(const ui::Evento& e) override;
+    void atualizar(double) override {}
+    void desenhar() override;
+
+private:
+    Rectangle rect_torre(size_t i) const { return {40 + (i % 4) * 66.0f, 100 + (i / 4) * 66.0f, 60, 60}; }
+    Rectangle rect_up(int p, int k) const { return {348 + k * 180.0f, 226 + p * 132.0f, 172, 124}; }
+    std::string torre_ = "dardo";
+    ui::Botao voltar_;
+};
+
 // Grade de selecao de heroi (comum ao solo e a batalha)
 class GradeHerois {
 public:
