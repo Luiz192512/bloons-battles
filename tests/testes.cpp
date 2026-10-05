@@ -770,6 +770,30 @@ TESTE(b25_modo_de_restricao_por_categoria) {
     CHECA_IGUAL(p.aplicar(1, "Tquincy@340,200"), OK);  // o heroi entra em qualquer modo
 }
 
+TESTE(b20_sub_submerge_e_para_de_atirar) {
+    Partida p("solo", "lago", 1, "sandbox");
+    Pista& pi = p.pista(1);
+    CHECA_IGUAL(p.aplicar(1, "Tsubmarino@530,300"), OK);
+    CHECA_IGUAL(p.aplicar(1, "O1:1"), ERRO_INVALIDO);  // sem o upgrade nao submerge
+    for (int k = 0; k < 3; ++k) CHECA_IGUAL(p.aplicar(1, "U1:0"), OK);
+    CHECA_IGUAL(p.aplicar(1, "O1:1"), OK);
+    CHECA(pi.torres.at(1)->submerso);
+    CHECA_IGUAL(p.aplicar(1, "Xb:vermelho:20:c"), OK);
+    bool atirou = false;
+    for (int i = 0; i < 30 * 12; ++i) {
+        p.passo();
+        atirou |= !pi.projeteis.empty();
+    }
+    CHECA(!atirou);  // submerso nao dispara dardos
+    CHECA_IGUAL(p.aplicar(1, "O1:0"), OK);
+    CHECA_IGUAL(p.aplicar(1, "Xb:vermelho:20"), OK);
+    for (int i = 0; i < 30 * 12; ++i) {
+        p.passo();
+        atirou |= !pi.projeteis.empty();
+    }
+    CHECA(atirou);
+}
+
 TESTE(b07_fa_clube_transforma_os_dardos) {
     Partida p("solo", "prado", 1, "sandbox");
     Pista& pi = p.pista(1);

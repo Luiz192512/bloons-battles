@@ -426,6 +426,10 @@ char Pista::opcao(int tid, int valor) {
         t->patrulha_volta = false;
         return OK;
     }
+    if (t->pode_submergir() && valor <= 1) {
+        t->submerso = valor == 1;
+        return OK;
+    }
     if (t->chave == "fazenda" && valor == 0 && teto_banco(*t) > 0) {
         // saque do banco: tudo o que esta guardado vai para o caixa
         if (t->banco < 1) return ERRO_BLOQUEADO;
@@ -1071,6 +1075,8 @@ void Pista::passo_torre(const TorreP& tp) {
         const AtaqueP& atp = ats[i];
         const Ataque& at = *atp;
         const TipoAtaque tipo = at.tipo;
+        // Submergir e Apoiar: submerso, o Sub so usa os pulsos (radar e reator); na tona, so as armas
+        if (t.pode_submergir() && (tipo == TipoAtaque::AURA) != t.submerso) continue;
         if (tipo == TipoAtaque::BUFF && at.pocao) {
             t.recargas[i] -= DT;
             if (t.recargas[i] <= 0 && jogar_pocao(tp, at)) t.recargas[i] = std::max(0.02, at.cad * mult_cad);

@@ -113,6 +113,9 @@ struct Torre {
     bool patrulha_volta = false;
     double ang = -90.0;
     double turbo = 1.0, turbo_t = 0.0;
+    // Submarino com Submergir e Apoiar: submerso so pulsa o radar; na tona so atira
+    bool submerso = false;
+    bool pode_submergir() const { return chave == "submarino" && caminhos[0] >= 3; }
     // Banco Macaco: saldo guardado, que rende juros a cada rodada ate o teto
     double banco = 0.0;
     // Mini-Comanche: id do Heli que o chamou (0 = torre comum) e a espera para chamar de novo

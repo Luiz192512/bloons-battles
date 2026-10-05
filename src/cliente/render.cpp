@@ -216,6 +216,16 @@ void RenderPista::desenhar_torre(const Torre& t, bool sel) {
     } else {
         desenhar(t.chave, t.caminhos, tam);
     }
+    if (t.submerso) {
+        // submerso: agua por cima do casco e o radar verde varrendo o alcance
+        DrawEllipse(static_cast<int>(x), static_cast<int>(y + tam * 0.1f), tam * 0.46f, tam * 0.34f, rgb(40, 120, 210, 150));
+        const float alc = static_cast<float>(t.alcance());
+        for (int k = 0; k < 2; ++k) {
+            const float f = static_cast<float>(std::fmod(ui::tempo() / 1.35 + k * 0.5, 1.0));
+            DrawRing({x, y}, alc * f - 3, alc * f, 0, 360, 72, rgb(90, 255, 120, static_cast<int>(200 * (1 - f))));
+        }
+        DrawCircleV({x, y}, alc, rgb(90, 255, 120, 18));
+    }
     if (t.dfn->heroi) ui::tecla_centro(std::to_string(t.nivel), x + tam * 0.3f, pe - 4);
 }
 

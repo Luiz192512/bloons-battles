@@ -263,8 +263,8 @@ static DefTorre t_submarino() {
         {
             U("Alcance Maior", 130, "+10 de alcance.", {{"alcance", 40}}),
             U("Inteligência Avançada", 500, "Ataca qualquer bloon no mapa.", {{"global_", true}}),
-            U("Submergir e Apoiar", 700, "Submerso: pulso que remove camo.", {{"camo", true}, {"novo", A("aura", {{"cad", 1.35}, {"dano", 0}, {"pierce", 999}, {"retira_camo", true}, {"dtype", "normal"}, {"visual", "nenhum"}})}}),
-            U("Reator de Bloontônio", 2400, "Pulso radioativo de 1 de dano (pierce 50) a cada 0,28 s.", {{"novo", A("aura", {{"cad", 0.28}, {"dano", 1}, {"pierce", 50}, {"dtype", "energia"}, {"visual", "radiacao"}})}}),
+            U("Submergir e Apoiar", 700, "Botão Submergir: submerso, para de atirar e o radar remove o camo dos bloons no alcance.", {{"camo", true}, {"novo", A("aura", {{"cad", 1.35}, {"dano", 0}, {"pierce", 999}, {"retira_camo", true}, {"dtype", "normal"}, {"visual", "nenhum"}})}}),
+            U("Reator de Bloontônio", 2400, "Submerso: pulso radioativo de 1 de dano (pierce 50) a cada 0,28 s.", {{"novo", A("aura", {{"cad", 0.28}, {"dano", 1}, {"pierce", 50}, {"dtype", "energia"}, {"visual", "radiacao"}})}}),
             U("Energizador", 28000, "Dardos com 5 de dano.", {{"dano", 3}}),
         },
         {
