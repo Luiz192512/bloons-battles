@@ -41,6 +41,8 @@ const Ataque& ataque_dot() {
     return at;
 }
 
+bool ataca(const Torre& t);
+
 }  // namespace
 
 // ================================================================ Rng
@@ -401,6 +403,18 @@ char Pista::mirar(int tid, double x, double y) {
     TorreP t = torre(tid);
     if (!t) return ERRO_INVALIDO;
     // o As so escolhe o centro da rota depois do upgrade Rota Centralizada (caminho 3, tier 2)
+    if (t->escolhe_torre()) {
+        // o clique escolhe a torre que vai receber o Overclock: a mais proxima do ponto
+        Torre* melhor = nullptr;
+        for (auto& [id, o] : torres) {
+            if (o.get() == t.get() || o->temporaria) continue;
+            const double d2 = quad(o->x - x) + quad(o->y - y);
+            if (d2 <= quad(o->dfn->raio + 30.0) && (!melhor || d2 < quad(melhor->x - x) + quad(melhor->y - y))) melhor = o.get();
+        }
+        if (!melhor) return ERRO_INVALIDO;
+        t->alvo_torre = melhor->id;
+        return OK;
+    }
     const bool as_centrado = t->chave == "as" && t->caminhos[2] >= 2;
     if (!(t->chave == "dartling" || t->chave == "morteiro" || t->chave == "heli" || as_centrado)) return ERRO_INVALIDO;
     if (!(x >= 0 && x <= LARGURA_MAPA && y >= 0 && y <= ALTURA_MAPA)) return ERRO_INVALIDO;
@@ -575,6 +589,21 @@ void Pista::executar_habilidade(const TorreP& tp, const J& h) {
             t.espiral_bracos = static_cast<int>(h.value("n", 2.0));
             t.espiral_prox = 0.0;
         }
+    } else if (tipo == "turbo_alvo") {
+        // Overclock: uma torre so, a escolhida pelo jogador ou, sem escolha, a que ataca mais perto
+        Torre* o = nullptr;
+        if (auto it = torres.find(t.alvo_torre); it != torres.end()) o = it->second.get();
+        if (!o) {
+            for (auto& [id, c] : torres) {
+                if (c.get() == &t || c->temporaria || !ataca(*c)) continue;
+                if (!o || quad(c->x - t.x) + quad(c->y - t.y) < quad(o->x - t.x) + quad(o->y - t.y)) o = c.get();
+            }
+        }
+        if (!o) o = &t;
+        o->turbo = std::min(o->turbo, h["valor"].get<double>());
+        o->turbo_t = std::max(o->turbo_t, h["dur"].get<double>());
+        if (h.value("ultra", false)) o->ultra = std::min(10, o->ultra + 1);
+        evento({"upgrade", o->x, o->y});
     } else if (tipo == "turbo_area") {
         std::set<std::string> filtro;
         std::stringstream ss(h.value("filtro", std::string()));
@@ -1071,7 +1100,7 @@ void Pista::passo_torre(const TorreP& tp) {
             ++it;
         }
     }
-    const double mult_cad = t.turbo * std::max(0.1, t.buff.mult_cad());
+    const double mult_cad = t.turbo * (1.0 - 0.04 * t.ultra) * std::max(0.1, t.buff.mult_cad());
     const double alcance = t.alcance();
     const std::vector<AtaqueP> ats = t.ats;  // o heroi pode subir de nivel no meio do laco
     const std::vector<double> antes = t.recargas;

@@ -498,6 +498,14 @@ void CenaJogo::desenhar() {
     TorreP sel = selecionada_ ? pista().torre(selecionada_) : nullptr;
     render_.desenhar(selecionada_);
     if (sel) circulo_alcance(static_cast<float>(sel->x), static_cast<float>(sel->y), sel->alcance(), true);
+    if (TorreP alvo = sel && sel->escolhe_torre() ? pista().torre(sel->alvo_torre) : nullptr) {
+        // torre que vai receber o Overclock: anel laranja e uma linha ate o Engenheiro
+        const Vector2 a{static_cast<float>(sel->x), static_cast<float>(sel->y)}, b{static_cast<float>(alvo->x), static_cast<float>(alvo->y)};
+        DrawLineEx(a, b, 5, ui::TINTA);
+        DrawLineEx(a, b, 2.5f, rgb(255, 170, 40));
+        DrawRing(b, 28, 33, 0, 360, 48, ui::TINTA);
+        DrawRing(b, 29, 32, 0, 360, 48, rgb(255, 170, 40));
+    }
     if (sel && (sel->chave == "morteiro" ? sel->tem_mira
                 : sel->chave == "heli"   ? sel->rota == 2
                                          : sel->chave == "as" && sel->rota == 3) ||
@@ -886,9 +894,9 @@ void CenaJogo::rodape_upgrade(const Torre& t, float x, float y, float w, Vector2
     // prioridade de alvo com seta e atalho Tab
     const float wv = t.temporaria ? 0.0f : 150.0f;
     const bool sub = t.pode_submergir();
-    const bool robo = t.dois_bracos();
+    const bool robo = t.dois_bracos(), eng = t.escolhe_torre();
     // espaco do botao de mao (ou de submergir, ou do alvo do segundo braco)
-    const float wm = t.chave == "bumerangue" || sub || robo ? 52.0f : 0.0f;
+    const float wm = t.chave == "bumerangue" || sub || robo || eng ? 52.0f : 0.0f;
     const Rectangle ra{x, y, w - wv - (wv ? 8 : 0) - wm, 44};
     ui::ret(ra, ui::TINTA, 12);
     ui::ret(ui::inflar(ra, -6, -6), rgb(36, 82, 24), 9);
@@ -962,7 +970,18 @@ void CenaJogo::rodape_upgrade(const Torre& t, float x, float y, float w, Vector2
         ui::ret(rm, ui::TINTA, 12);
         ui::ret(ui::inflar(rm, -6, -6), rgb(36, 82, 24), 9);
         ui::ret({rm.x + 3, rm.y + 3, rm.width - 6, rm.height - 10}, ui::PAINEL_VERDE_ESC, 9);
+        if (eng) {
+            // Overclock: escolhe no mapa a torre que recebe o impulso
+            const bool esperando = definindo_alvo_ == id;
+            ui::texto("TORRE", rm.x + 22, rm.y + 12, 9, rgb(207, 239, 191), 0, Ancora::CENTER, ui::Peso::TEXTO);
+            ui::texto(esperando ? "Clique" : pista().torre(t.alvo_torre) ? "Fixa" : "Auto", rm.x + 22, rm.y + 28, 11,
+                      esperando ? ui::AMARELO : ui::BRANCO, 3, Ancora::CENTER);
+            botoes_up_.push_back({rm, [this, id] { definindo_alvo_ = definindo_alvo_ == id ? 0 : id; }});
+            if (ui::dentro(rm, mouse))
+                dicas_.push_back({mouse, "Torre do Overclock", "Clique aqui e depois na torre que vai receber a habilidade."});
+        }
         static const char* CURTOS[4] = {"Prim", "Últ", "Perto", "Forte"};
+        if (!eng) {
         ui::texto(robo ? "ALVO 2" : sub ? "SUB" : "MÃO", rm.x + 22, rm.y + 12, robo ? 9 : 10, rgb(207, 239, 191), 0,
                   Ancora::CENTER, ui::Peso::TEXTO);
         ui::texto(robo ? CURTOS[t.modo2 & 3] : sub ? (t.submerso ? "Fundo" : "Tona") : t.mao ? "Esq" : "Dir", rm.x + 22,
@@ -976,6 +995,7 @@ void CenaJogo::rodape_upgrade(const Torre& t, float x, float y, float w, Vector2
                 dicas_.push_back({mouse, "Submergir", "Submerso, o Sub para de atirar e o radar tira o camo dos bloons no alcance."});
             else
                 dicas_.push_back({mouse, "Mão do arremesso", "Troca o lado para onde o bumerangue faz a curva."});
+        }
         }
     }
     if (t.temporaria) return;

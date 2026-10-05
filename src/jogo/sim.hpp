@@ -113,6 +113,11 @@ struct Torre {
     bool patrulha_volta = false;
     double ang = -90.0;
     double turbo = 1.0, turbo_t = 0.0;
+    // Overclock e Ultraimpulso: torre escolhida pelo jogador para receber o impulso (0 = a mais proxima)
+    int alvo_torre = 0;
+    bool escolhe_torre() const { return chave == "engenheiro" && caminhos[1] >= 4; }
+    // cargas permanentes de Ultraimpulso recebidas (ate 10; cada uma acelera 4%)
+    int ultra = 0;
     // Robo Macaco em diante: o segundo braco tem a propria prioridade de alvo
     int modo2 = 0;
     bool dois_bracos() const { return chave == "super" && caminhos[1] >= 3; }

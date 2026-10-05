@@ -819,6 +819,33 @@ TESTE(b19_segundo_braco_com_alvo_proprio) {
     CHECA(maior > 25);
 }
 
+TESTE(b22_overclock_na_torre_escolhida) {
+    Partida p("solo", "prado", 1, "sandbox");
+    Pista& pi = p.pista(1);
+    CHECA_IGUAL(p.aplicar(1, "Tengenheiro@300,240"), OK);
+    CHECA_IGUAL(p.aplicar(1, "Tdardo@340,200"), OK);   // perto
+    CHECA_IGUAL(p.aplicar(1, "Tbomba@490,520"), OK);   // longe
+    CHECA_IGUAL(p.aplicar(1, "A1@490,520"), ERRO_INVALIDO);  // sem o Overclock nao escolhe
+    for (int k = 0; k < 4; ++k) CHECA_IGUAL(p.aplicar(1, "U1:1"), OK);
+    CHECA_IGUAL(p.aplicar(1, "A1@900,60"), ERRO_INVALIDO);  // clique sem torre
+    CHECA_IGUAL(p.aplicar(1, "A1@492,518"), OK);
+    CHECA_IGUAL(pi.torres.at(1)->alvo_torre, 3);
+    CHECA_IGUAL(p.aplicar(1, "Xh"), OK);
+    CHECA_IGUAL(p.aplicar(1, "B1:0"), OK);
+    CHECA(pi.torres.at(3)->turbo < 1.0);
+    CHECA_IGUAL(pi.torres.at(2)->turbo, 1.0);  // so a escolhida
+    CHECA_IGUAL(pi.torres.at(3)->ultra, 0);
+    CHECA_IGUAL(p.aplicar(1, "U1:1"), OK);  // Ultraimpulso: carga permanente
+    CHECA_IGUAL(p.aplicar(1, "Xh"), OK);
+    CHECA_IGUAL(p.aplicar(1, "B1:1"), OK);
+    CHECA_IGUAL(pi.torres.at(3)->ultra, 1);
+    // vendida a escolhida, vai na torre que ataca mais perto
+    CHECA_IGUAL(p.aplicar(1, "V3"), OK);
+    CHECA_IGUAL(p.aplicar(1, "Xh"), OK);
+    CHECA_IGUAL(p.aplicar(1, "B1:0"), OK);
+    CHECA(pi.torres.at(2)->turbo < 1.0);
+}
+
 TESTE(b07_fa_clube_transforma_os_dardos) {
     Partida p("solo", "prado", 1, "sandbox");
     Pista& pi = p.pista(1);

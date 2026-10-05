@@ -730,8 +730,8 @@ static DefTorre t_engenheiro() {
             U("Área de Serviço Maior", 250, "+50% de alcance.", {{"alcance", 80}}),
             U("Desconstrução", 350, "+1 de dano em M.O.A.B. e fortificado.", {{"moab", 1}, {"fort", 1}}),
             U("Espuma Purificadora", 900, "Espuma remove camo e regeneração.", {{"novo", A("pilha", {{"cad", 4.0}, {"dano", 1}, {"pilha_pierce", 10}, {"pilha_vida", 8}, {"retira_camo", true}, {"retira_regen", true}, {"visual", "espuma"}})}}),
-            U("Overclock", 13500, "Habilidade: acelera torres próximas.", {{"hab", H("Overclock", "turbo_area", 45, {{"dur", 30}, {"valor", 0.6}})}}),
-            U("Ultraimpulso", 72000, "", {{"buffs", {{"cad", 0.7}}}, {"hab", H("Ultraimpulso", "turbo_area", 30, {{"dur", 45}, {"valor", 0.4}})}}),
+            U("Overclock", 13500, "Habilidade: a torre escolhida ataca 67% mais rápido por 30 s.", {{"hab", H("Overclock", "turbo_alvo", 45, {{"dur", 30}, {"valor", 0.6}})}}),
+            U("Ultraimpulso", 72000, "Habilidade mais forte, e cada uso deixa a torre escolhida 4% mais rápida para sempre (até 10 vezes).", {{"buffs", {{"cad", 0.7}}}, {"hab", H("Ultraimpulso", "turbo_alvo", 30, {{"dur", 45}, {"valor", 0.4}, {"ultra", true}})}}),
         },
         {
             U("Pregos Enormes", 450, "+5 pierce.", {{"pierce", 5}}),
