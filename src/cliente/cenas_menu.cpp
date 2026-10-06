@@ -133,7 +133,7 @@ const DefTorre& GradeHerois::desenhar() const {
         if (sel) ui::ret(ui::inflar(r, 4, 4), ui::TINTA, 14);
         ui::ret(r, sel ? ui::AMARELO : ui::TINTA, 12);
         ui::ret(ui::inflar(r, sel ? -8.0f : -6.0f, sel ? -8.0f : -6.0f), sel ? rgb(247, 215, 116) : sobre ? rgb(255, 246, 218) : ui::BEGE, 8);
-        if (!m3d::retrato(herois()[i].chave, r.x + r.width / 2, r.y + r.height / 2, 46) &&
+        if (!m3d::retrato_em(herois()[i].chave, ui::inflar(r, -12, -12)) &&
             !m3d::torre(herois()[i].chave, {0, 0, 0}, r.x + r.width / 2, r.y + r.height / 2 + 15, 30, 90, anim::TipoMira::FIXA))
             arte::torre_icone(herois()[i].chave, {}, r.x + r.width / 2, r.y + r.height / 2 + 1, 50);
     }
@@ -223,7 +223,7 @@ void CenaMacacos::desenhar() {
         const Rectangle f = ui::inflar(r, -6, -6);
         ui::ret(f, sobre || sel ? rgb(255, 246, 218) : ui::BEGE, 7);
         DrawRectangleRec({f.x + 2, f.y, f.width - 4, 3}, cor_cat(d));
-        if (!m3d::retrato(d.chave, r.x + r.width / 2, r.y + r.height / 2 + 1, 48)) boneco(d.chave, {0, 0, 0}, r.x + r.width / 2, r.y + 44, 32);
+        if (!m3d::retrato_em(d.chave, {f.x, f.y + 3, f.width, f.height - 3})) boneco(d.chave, {0, 0, 0}, r.x + r.width / 2, r.y + 44, 32);
     }
     const DefTorre& d = definicao(torre_);
     painel_passo({332, 80, 924, 548}, "");

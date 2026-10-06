@@ -744,7 +744,7 @@ void CenaJogo::painel_lateral(Vector2 mouse) {
         ui::ret(f, face, 7);
         DrawRectangleRec({f.x + 2, f.y, f.width - 4, 3}, cor_categoria(dfn));  // faixa de categoria
         const unsigned char alfa = em_jogo ? 140 : pode ? 255 : 115;
-        if (!m3d::retrato(chave, r.x + r.width / 2, r.y + 24, 44, alfa) &&
+        if (!m3d::retrato_em(chave, {f.x, f.y + 3, f.width, r.height - 30}, alfa) &&
             !m3d::torre(chave, {0, 0, 0}, r.x + r.width / 2, r.y + 33, 24, 90, anim::TipoMira::FIXA, alfa))
             arte::torre_icone(chave, {}, r.x + r.width / 2, r.y + 23, 40, alfa);
         // rodape do preco

@@ -7,6 +7,7 @@
 #include <string>
 
 #include "cliente/anim.hpp"
+#include "raylib.h"
 
 namespace bl::m3d {
 
@@ -23,6 +24,11 @@ bool torre(const std::string& chave, const std::array<int, 3>& caminhos, float x
 // Retrato 2D da torre ou heroi (assets/retratos/<chave>.png, feito a partir do modelo 3D): o desenho
 // da loja e dos menus. Centro em (cx, cy), com 'lado' pixels. Devolve false se nao houver o arquivo.
 bool retrato(const std::string& chave, float cx, float cy, float lado, unsigned char alfa = 255);
+
+// O retrato dentro de uma caixa pequena (cartao da loja, grade de herois). Maquina e construcao
+// entram inteiras; macaco de corpo inteiro e ampliado e ancorado pelo topo, para a cabeca e o
+// tronco ficarem grandes, e o que passa da caixa e recortado.
+bool retrato_em(const std::string& chave, Rectangle caixa, unsigned char alfa = 255);
 
 void liberar();
 

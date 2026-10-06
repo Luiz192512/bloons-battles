@@ -202,6 +202,21 @@ bool retrato(const std::string& chave, float cx, float cy, float lado, unsigned 
     return true;
 }
 
+bool retrato_em(const std::string& chave, Rectangle caixa, unsigned char alfa) {
+    static const char* INTEIRAS[] = {"bomba", "tachinha", "submarino", "bucaneiro", "as", "heli", "fazenda", "espinhos", "vila", "churchill"};
+    bool inteira = false;
+    for (const char* k : INTEIRAS) inteira |= chave == k;
+    const float cx = caixa.x + caixa.width / 2;
+    if (inteira) return retrato(chave, cx, caixa.y + caixa.height / 2, std::min(caixa.width, caixa.height * 1.5f), alfa);
+    // a cabeca ocupa a metade de cima do retrato: o lado e o que faz ela caber na altura da caixa
+    const float lado = std::min(caixa.width * 1.38f, caixa.height * 2.1f);
+    ui::recortar(caixa);
+    const bool ok = retrato(chave, cx, caixa.y + lado * 0.47f, lado, alfa);
+    rlDrawRenderBatchActive();
+    ui::fim_recorte();
+    return ok;
+}
+
 void liberar() {
     for (auto& [k, rt] : sprites) UnloadRenderTexture(rt);
     sprites.clear();
