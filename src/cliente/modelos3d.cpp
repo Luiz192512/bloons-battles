@@ -52,6 +52,9 @@ struct Modelo {
     bool ok = false;
     int torreta = -1;  // malha que gira sozinha nas maquinas
     Vector3 pivo_torreta{};
+    // grupo animavel e pivo de cada malha, na ordem do .glb
+    std::vector<std::string> grupos;
+    std::vector<Vector3> pivos;
 };
 
 std::string pasta;
@@ -60,6 +63,7 @@ Shader shader{};
 Material material{};
 std::map<std::string, Modelo> modelos;
 std::map<std::string, RenderTexture2D> sprites;
+RenderTexture2D quadro_vivo{};  // onde sai a torre no meio de uma animacao (um desenho por vez)
 std::map<std::string, Texture2D> retratos;  // id 0 = arquivo nao existe
 
 const std::string& achar_pasta() {
@@ -96,10 +100,16 @@ Modelo& carregar(const std::string& chave, const std::string& var) {
             if (!j.is_discarded() && j.contains("malhas")) {
                 int i = 0;
                 for (const J& malha : j["malhas"]) {
-                    if (malha.value("grupo", std::string()) == "torreta" && malha.contains("pivo")) {
-                        m.torreta = i;
+                    Vector3 pv{};
+                    if (malha.contains("pivo")) {
                         const J& p = malha["pivo"];
-                        m.pivo_torreta = {p[0].get<float>(), p[1].get<float>(), p[2].get<float>()};
+                        pv = {p[0].get<float>(), p[1].get<float>(), p[2].get<float>()};
+                    }
+                    m.grupos.push_back(malha.value("grupo", std::string()));
+                    m.pivos.push_back(pv);
+                    if (m.grupos.back() == "torreta" && malha.contains("pivo")) {
+                        m.torreta = i;
+                        m.pivo_torreta = pv;
                     }
                     ++i;
                 }
@@ -109,11 +119,27 @@ Modelo& carregar(const std::string& chave, const std::string& var) {
     return modelos[k] = m;
 }
 
+// Movimento de uma malha dentro do modelo (antes do giro da mira), para o instante do clipe.
+// O modelo olha para +Z: girar em X sobe e desce o braco; andar em Z avanca e recua.
+Matrix pose_da_malha(const Modelo& m, int i, const spr::Pose* pose) {
+    if (!pose || !pose->ativa || i >= static_cast<int>(m.grupos.size())) return MatrixIdentity();
+    const std::string& g = m.grupos[static_cast<size_t>(i)];
+    const Vector3 p = m.pivos[static_cast<size_t>(i)];
+    auto em_volta = [&](float graus) {
+        return MatrixMultiply(MatrixMultiply(MatrixTranslate(-p.x, -p.y, -p.z), MatrixRotateX(graus * DEG2RAD)),
+                              MatrixTranslate(p.x, p.y, p.z));
+    };
+    if (g == "braco")  // o mesmo sinal do clipe 2D: positivo arma para tras, negativo golpeia para a frente e para cima
+        return MatrixMultiply(em_volta(pose->giro * 2.4f), MatrixTranslate(0, 0, pose->estica * 0.03f - pose->recuo * 0.08f));
+    if (g == "cabeca") return em_volta(pose->giro * -0.25f);
+    if (g == "torreta") return MatrixTranslate(0, 0, -pose->recuo * 0.24f);
+    return MatrixIdentity();
+}
+
 // Renderiza o modelo na vista do jogo, girado em 'giro' radianos em volta do eixo vertical
-RenderTexture2D gerar(const Modelo& m, float giro, bool so_torreta) {
+void desenhar_em(RenderTexture2D rt, const Modelo& m, float giro, bool so_torreta, const spr::Pose* pose) {
     rlDrawRenderBatchActive();
     rlDisableScissorTest();
-    RenderTexture2D rt = LoadRenderTexture(RES, RES);
     BeginTextureMode(rt);
     ClearBackground(BLANK);
     Camera3D cam{};
@@ -125,19 +151,26 @@ RenderTexture2D gerar(const Modelo& m, float giro, bool so_torreta) {
     BeginMode3D(cam);
     const Matrix rot = MatrixRotateY(giro);
     for (int i = 0; i < m.model.meshCount; ++i) {
-        Matrix t = MatrixIdentity();
+        Matrix t = pose_da_malha(m, i, pose);
         if (!so_torreta) {
-            t = rot;
+            t = MatrixMultiply(t, rot);
         } else if (i == m.torreta) {
             const Vector3 p = m.pivo_torreta;
-            t = MatrixMultiply(MatrixMultiply(MatrixTranslate(-p.x, -p.y, -p.z), rot), MatrixTranslate(p.x, p.y, p.z));
+            t = MatrixMultiply(MatrixMultiply(MatrixMultiply(MatrixTranslate(-p.x, -p.y, -p.z), t), rot), MatrixTranslate(p.x, p.y, p.z));
+        } else {
+            t = MatrixIdentity();
         }
         DrawMesh(m.model.meshes[i], material, t);
     }
     EndMode3D();
     EndTextureMode();
-    SetTextureFilter(rt.texture, TEXTURE_FILTER_BILINEAR);
     ui::restaurar_tela();
+}
+
+RenderTexture2D gerar(const Modelo& m, float giro, bool so_torreta) {
+    RenderTexture2D rt = LoadRenderTexture(RES, RES);
+    desenhar_em(rt, m, giro, so_torreta, nullptr);
+    SetTextureFilter(rt.texture, TEXTURE_FILTER_BILINEAR);
     return rt;
 }
 
@@ -148,7 +181,7 @@ bool disponivel() { return !achar_pasta().empty(); }
 bool tem(const std::string& chave) { return disponivel() && carregar(chave, "0-0-0").ok; }
 
 bool torre(const std::string& chave, const std::array<int, 3>& caminhos, float x, float y, float px, float ang,
-           anim::TipoMira mira, unsigned char alfa) {
+           anim::TipoMira mira, unsigned char alfa, const spr::Pose* pose) {
     if (!disponivel()) return false;
     std::string var = std::to_string(caminhos[0]) + "-" + std::to_string(caminhos[1]) + "-" + std::to_string(caminhos[2]);
     Modelo* m = &carregar(chave, var);
@@ -162,10 +195,24 @@ bool torre(const std::string& chave, const std::array<int, 3>& caminhos, float x
     }
     const bool so_torreta = mira == anim::TipoMira::TORRETA && m->torreta >= 0;
     const std::string k = chave + "/" + var + "/" + std::to_string(passo);
-    auto it = sprites.find(k);
-    if (it == sprites.end()) {
-        if (sprites.size() > 600) liberar();  // partidas longas: recomeca o cache em vez de crescer sem fim
-        it = sprites.emplace(k, gerar(*m, passo * 2.0f * PI / PASSOS, so_torreta)).first;
+    // no meio de um clipe a torre e desenhada na hora, com a pose; parada, sai do sprite guardado
+    const bool viva = pose && pose->ativa &&
+                      (std::fabs(pose->giro) > 0.5f || std::fabs(pose->estica) > 0.3f || pose->recuo > 0.01f);
+    Texture2D tex{};
+    if (viva) {
+        if (!quadro_vivo.id) {
+            quadro_vivo = LoadRenderTexture(RES, RES);
+            SetTextureFilter(quadro_vivo.texture, TEXTURE_FILTER_BILINEAR);
+        }
+        desenhar_em(quadro_vivo, *m, passo * 2.0f * PI / PASSOS, so_torreta, pose);
+        tex = quadro_vivo.texture;
+    } else {
+        auto it = sprites.find(k);
+        if (it == sprites.end()) {
+            if (sprites.size() > 600) liberar();  // partidas longas: recomeca o cache em vez de crescer sem fim
+            it = sprites.emplace(k, gerar(*m, passo * 2.0f * PI / PASSOS, so_torreta)).first;
+        }
+        tex = it->second.texture;
     }
     // o pe do modelo (origem) fica ALTO unidades abaixo do centro do quadro, visto de cima
     const float lado = LADO * px;
@@ -177,8 +224,9 @@ bool torre(const std::string& chave, const std::array<int, 3>& caminhos, float x
     const Color tinta{20, 18, 24, alfa};
     for (int dx = -1; dx <= 1; ++dx)
         for (int dy = -1; dy <= 1; ++dy)
-            if (dx || dy) DrawTexturePro(it->second.texture, src, {base.x + dx * e, base.y + dy * e, lado, lado}, {0, 0}, 0, tinta);
-    DrawTexturePro(it->second.texture, src, base, {0, 0}, 0, {255, 255, 255, alfa});
+            if (dx || dy) DrawTexturePro(tex, src, {base.x + dx * e, base.y + dy * e, lado, lado}, {0, 0}, 0, tinta);
+    DrawTexturePro(tex, src, base, {0, 0}, 0, {255, 255, 255, alfa});
+    if (viva) rlDrawRenderBatchActive();  // o quadro vivo e reaproveitado pela proxima torre
     return true;
 }
 

@@ -216,7 +216,11 @@ void RenderPista::desenhar_torre(const Torre& t, bool sel) {
             DrawEllipse(static_cast<int>(x), static_cast<int>(y + tm * 0.22f), tm * 0.36f, tm * 0.17f, ui::com_alfa(ui::TINTA, 70));
         // o Templo do Sol e uma construcao: nao gira com a mira
         const anim::TipoMira mira = chave == "super" && cam[0] >= 4 ? anim::TipoMira::FIXA : anim::tipo_mira(chave);
-        if (!m3d::torre(chave, cam, x, y + tm * 0.2f, tm * 0.95f, static_cast<float>(t.ang), mira))
+        // o clipe de disparo ou de habilidade move o modelo: escala, pulo e recuo do corpo na tela,
+        // braco, cabeca e cano dentro do modelo
+        const float rad = static_cast<float>(t.ang) * DEG2RAD, cr = q.corpo_recuo * 1.6f;
+        const float ax = x - std::cos(rad) * cr, ay = y + tm * 0.2f - std::sin(rad) * cr + q.salto;
+        if (!m3d::torre(chave, cam, ax, ay, tm * 0.95f * q.escala, static_cast<float>(t.ang), mira, 255, &q.pose))
             arte::torre_mapa(chave, chave == t.chave ? arte::visual(t) : arte::Visual{}, x, y, tm, &q);
     };
     if (t.disfarce == "super" || t.disfarce == "plasma") {

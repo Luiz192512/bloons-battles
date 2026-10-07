@@ -18,8 +18,10 @@ bool tem(const std::string& chave);
 // Desenha a torre com o pe em (x, y). px = pixels por unidade do modelo (o macaco tem 1 de altura).
 // ang = para onde ela aponta, em graus na tela (0 = direita, 90 = baixo). Devolve false se nao
 // houver modelo para essa torre.
+// pose = instante do clipe de disparo ou de habilidade (anim::Animador): o braco de ataque gira e
+// avanca, a cabeca acompanha e o cano das maquinas recua. Sem pose (ou parada), usa o sprite guardado.
 bool torre(const std::string& chave, const std::array<int, 3>& caminhos, float x, float y, float px, float ang,
-           anim::TipoMira mira, unsigned char alfa = 255);
+           anim::TipoMira mira, unsigned char alfa = 255, const spr::Pose* pose = nullptr);
 
 // Retrato 2D da torre ou heroi (assets/retratos/<chave>.png, feito a partir do modelo 3D): o desenho
 // da loja e dos menus. Centro em (cx, cy), com 'lado' pixels. Devolve false se nao houver o arquivo.
