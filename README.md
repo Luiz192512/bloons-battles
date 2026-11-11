@@ -25,6 +25,11 @@ precisa instalar nada (nem o Visual C++ Redistributable).
   segunda, "Batalha: Entrar" com IP `127.0.0.1`.
 - **Batalha em dois PCs:** quem hospeda vê o próprio IP na sala de espera e o outro digita esse
   IP. Os dois precisam estar na mesma rede.
+- **Coop em LAN:** em "Batalha: Hospedar", clique em **Modo: Coop** antes de hospedar. O outro
+  jogador entra normalmente por "Batalha: Entrar" e o modo vem do anfitrião. Os dois defendem a
+  mesma pista, com vidas e dinheiro comuns; qualquer um coloca, melhora e vende qualquer torre, e
+  qualquer um inicia a rodada com Espaço. Só há um herói (o de quem hospeda). Não há velocidade 3x
+  nem rodada automática. Se o parceiro sai, a partida termina ("Parceiro saiu").
 
 ### Firewall do Windows (dois PCs)
 
@@ -140,7 +145,7 @@ publicam em memória compartilhada. Precisa rodar no mesmo PC de quem hospeda:
 ctest --test-dir build --output-on-failure
 ```
 
-São 27 testes: protocolo, dados das torres, regras de upgrade, simulação e determinismo,
+São 41 testes: protocolo (inclusive o coop), dados das torres, regras de upgrade, simulação e determinismo,
 exclusão mútua com threads concorrentes, o servidor com clientes TCP reais e a memória
 compartilhada entre processos (inclusive abrindo o `bloons_monitor` como processo separado).
 

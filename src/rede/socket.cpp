@@ -235,6 +235,7 @@ void Socket::fechar() {
 std::vector<std::string> ips_locais() {
     garantir_winsock();
     std::set<std::string> ips;
+    std::string da_rota;  // IP da interface que sai para a rede: e o que o outro jogador deve digitar
     char nome[256] = {0};
     if (gethostname(nome, sizeof nome) == 0) {
         addrinfo dica{}, *res = nullptr;
@@ -258,14 +259,21 @@ std::vector<std::string> ips_locais() {
             if (getsockname(s, reinterpret_cast<sockaddr*>(&l), &len) == 0) {
                 char buf[64] = {0};
                 inet_ntop(AF_INET, &l.sin_addr, buf, sizeof buf);
+                da_rota = buf;
                 ips.insert(buf);
             }
         }
         FECHAR_SOCK(s);
     }
+    // o IP da rota vem primeiro (a ordem do std::set poria 172.x do Docker/WSL antes do 192.168.x da rede
+    // local); enderecos 169.254.x (sem DHCP) nao servem para jogar
+    auto util = [](const std::string& ip) {
+        return ip.rfind("127.", 0) != 0 && ip.rfind("169.254.", 0) != 0 && ip != "0.0.0.0";
+    };
     std::vector<std::string> out;
+    if (!da_rota.empty() && util(da_rota)) out.push_back(da_rota);
     for (auto& ip : ips)
-        if (ip.rfind("127.", 0) != 0 && ip != "0.0.0.0") out.push_back(ip);
+        if (util(ip) && ip != da_rota) out.push_back(ip);
     return out;
 }
 

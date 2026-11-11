@@ -1328,6 +1328,14 @@ TESTE(servidor_desconexao_da_vitoria_ao_oponente) {
     servidor.parar();
 }
 
+TESTE(rede_ips_locais_sem_loopback_nem_link_local) {
+    // B-01: o IP mostrado na sala de espera e o primeiro da lista; nao pode ser 127.x nem 169.254.x
+    for (const std::string& ip : rede::ips_locais()) {
+        CHECA(ip.rfind("127.", 0) != 0);
+        CHECA(ip.rfind("169.254.", 0) != 0);
+    }
+}
+
 TESTE(servidor_coop_dois_clientes_mesma_partida) {
     Servidor servidor("127.0.0.1", 0, true);
     servidor.iniciar();
