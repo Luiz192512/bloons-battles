@@ -427,7 +427,7 @@ void CenaBatalha::desenhar() {
         ui::texto(coop_ ? "Os dois defendem a mesma pista, com vidas e dinheiro comuns."
                         : "Cada um defende a sua pista e envia bloons ao outro.",
                   modo_.rect.x + modo_.rect.width, modo_.rect.y + 62, 12, ui::BEGE, 0, Ancora::MIDRIGHT, ui::Peso::TEXTO);
-        ui::texto("Porta TCP que ficará aberta. Libere no firewall se o oponente estiver em outro PC.", 214, 398, 14,
+        ui::texto("Porta TCP que ficará aberta. Libere no firewall se o outro jogador estiver em outro PC.", 214, 398, 14,
                   ui::BEGE, 0, Ancora::MIDLEFT, ui::Peso::TEXTO);
         painel_passo({24, 452, 1232, 176}, "3 · Herói");
         const DefTorre& h = herois_.desenhar();

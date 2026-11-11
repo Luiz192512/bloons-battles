@@ -810,8 +810,8 @@ void CenaJogo::painel_lateral(Vector2 mouse) {
     ui::tecla_centro("Espaço", c.x, r.y + r.height + 4, 8);
     // coop: rodada automática e velocidade mudariam a simulação só neste PC (o lockstep não aceita)
     if (ctl_->online()) {
-        ui::texto("COOP", PAINEL_X + 150, ui::ALTURA - 100.0f, 14, ui::AMARELO, 3, Ancora::MIDLEFT);
-        ui::texto(p.em_rodada ? "rodada em andamento" : "qualquer um inicia", PAINEL_X + 150, ui::ALTURA - 76.0f, 12,
+        ui::texto("COOP", PAINEL_X + 114, ui::ALTURA - 100.0f, 14, ui::AMARELO, 3, Ancora::MIDLEFT);
+        ui::texto(p.em_rodada ? "em rodada" : "pronto: Espaço", PAINEL_X + 114, ui::ALTURA - 76.0f, 12,
                   ui::BEGE, 0, Ancora::MIDLEFT, ui::Peso::TEXTO);
         if (sobre_play && !p.em_rodada)
             dicas_.push_back({mouse, "Iniciar rodada", "Começa a próxima rodada para os dois jogadores."});
