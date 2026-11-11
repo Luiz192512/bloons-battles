@@ -47,10 +47,10 @@ void ControladorSolo::atualizar(double dt) {
 ControladorBatalha::ControladorBatalha(std::shared_ptr<Conexao> conexao, int numero, long long seed,
                                        const std::string& mapa, const std::map<int, std::string>& herois,
                                        std::shared_ptr<Servidor> servidor, std::vector<P::Mensagem> pendentes,
-                                       int porta)
-    : conexao_(std::move(conexao)), servidor_(std::move(servidor)), pendentes_(std::move(pendentes)) {
+                                       int porta, bool coop)
+    : conexao_(std::move(conexao)), servidor_(std::move(servidor)), coop_(coop), pendentes_(std::move(pendentes)) {
     meu = numero;
-    partida = std::make_unique<Partida>("batalha", mapa, static_cast<int>(seed), "medio", herois);
+    partida = std::make_unique<Partida>(coop ? "coop" : "batalha", mapa, static_cast<int>(seed), "medio", herois);
     if (meu == 1 || meu == 2) placar_ = ipc::PlacarCompartilhado::abrir(porta);
 }
 
@@ -110,6 +110,11 @@ char ControladorBatalha::checar(const std::string& cmd) {
     return OK;
 }
 
+// coop: qualquer um dos dois inicia a rodada; o comando passa pelo servidor e vale para os dois
+void ControladorBatalha::botao_play() {
+    if (coop_ && !partida->em_rodada && !terminou()) conexao_->comando("N");
+}
+
 char ControladorBatalha::enviar(const std::string& cmd) {
     if (terminou()) return ERRO_INVALIDO;
     if (char erro = checar(cmd)) return erro;
@@ -134,6 +139,7 @@ void ControladorBatalha::atualizar(double) {
             status = "Dessincronia detectada no tick " + std::to_string(msg.tick) + "!";
         } else if (msg.comando == P::FIM_JOGO) {
             fim_remoto = msg.vencedor;
+            if (coop_ && !partida->fim) status = "Seu parceiro saiu da partida.";
         }
     }
     if (!conexao_->ativo() && !terminou()) {

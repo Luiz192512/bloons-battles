@@ -51,7 +51,7 @@ std::string linha(int origem, const std::string& corpo) { return std::to_string(
 }  // namespace
 
 bool eh_comando_jogo(char c) {
-    return c == TORRE || c == UPGRADE || c == VENDA || c == MODO || c == HABILIDADE || c == ENVIO;
+    return c == TORRE || c == UPGRADE || c == VENDA || c == MODO || c == HABILIDADE || c == ENVIO || c == RODADA;
 }
 
 bool comando_valido(const std::string& cmd) {
@@ -72,6 +72,8 @@ bool comando_valido(const std::string& cmd) {
             return par(r, ':', d15, [](const std::string& s) { return s.size() == 1 && s[0] >= '0' && s[0] <= '3'; });
         case HABILIDADE:
             return par(r, ':', d15, [](const std::string& s) { return digitos(s, 1, 1); });
+        case RODADA:
+            return r.empty();
         case ENVIO: {
             if (r.empty() || r.size() > 6) return false;
             for (char c : r)
@@ -88,8 +90,9 @@ std::string entrar(const std::string& heroi, const std::string& mapa, int jogado
     return linha(jogador, std::string(1, ENTRAR) + heroi + "," + mapa);
 }
 std::string boas_vindas(int jogador) { return linha(SERVIDOR, std::string(1, ENTRAR) + std::to_string(jogador)); }
-std::string inicio(long long seed, const std::string& mapa, const std::string& h1, const std::string& h2) {
-    return linha(SERVIDOR, std::string(1, INICIO) + std::to_string(seed) + "," + mapa + "," + h1 + "," + h2);
+std::string inicio(long long seed, const std::string& mapa, const std::string& h1, const std::string& h2, bool coop) {
+    return linha(SERVIDOR, std::string(1, INICIO) + std::to_string(seed) + "," + mapa + "," + h1 + "," + h2 +
+                               (coop ? ",coop" : ""));
 }
 std::string tick(long numero, const std::vector<std::string>& comandos) {
     std::string corpo = std::string(1, TICK) + std::to_string(numero);
@@ -111,6 +114,7 @@ std::string habilidade(int jogador, int id_torre, int idx) {
     return comando(jogador, std::string(1, HABILIDADE) + std::to_string(id_torre) + ":" + std::to_string(idx));
 }
 std::string envio(int jogador, const std::string& chave) { return comando(jogador, std::string(1, ENVIO) + chave); }
+std::string rodada(int jogador) { return comando(jogador, std::string(1, RODADA)); }
 std::string hash_estado(int jogador, long numero_tick, std::uint32_t valor) {
     return linha(jogador, std::string(1, HASH) + std::to_string(numero_tick) + "," + std::to_string(valor));
 }
@@ -156,7 +160,9 @@ Mensagem interpretar(const std::string& bruta) {
     }
     if (cmd == INICIO && servidor) {
         auto partes = dividir(corpo, ',');
-        if (partes.size() != 4 || !digitos(partes[0])) throw MensagemInvalida(l);
+        if ((partes.size() != 4 && !(partes.size() == 5 && partes[4] == "coop")) || !digitos(partes[0]))
+            throw MensagemInvalida(l);
+        m.coop = partes.size() == 5;
         m.seed = numero(partes[0], l);
         m.mapa = partes[1];
         m.herois[1] = partes[2];

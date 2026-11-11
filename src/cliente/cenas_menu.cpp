@@ -360,6 +360,7 @@ CenaBatalha::CenaBatalha(App& a, bool hospedar) : Cena(a), hospedar_(hospedar) {
     voltar_.atalho = "Esc";
     ir_ = {{ui::LARGURA - 304.0f, 638, 280, 68}, hospedar ? "HOSPEDAR" : "CONECTAR", ui::VERDE, 24};
     ir_.atalho = "Enter";
+    modo_ = {{900, 338, 332, 42}, "Modo: Batalha 1v1", ui::AZUL, 18};
     if (!hospedar_) herois_ = GradeHerois{40, 380, 9, 58};
 }
 
@@ -367,6 +368,7 @@ void CenaBatalha::evento(const ui::Evento& e) {
     herois_.evento(e);
     if (!hospedar_) ip_.evento(e);
     porta_.evento(e);
+    if (hospedar_ && modo_.clicou(e)) coop_ = !coop_;
     if (hospedar_ && e.tipo == ui::Evento::CLIQUE)
         for (size_t i = 0; i < mapas().size(); ++i)
             if (ui::dentro(rect_mapa(i), e.pos)) mapa_ = mapas()[i].chave;
@@ -390,7 +392,7 @@ void CenaBatalha::conectar() {
     if (hospedar_) {
         try {
             // escuta em todas as interfaces: o oponente vem pela rede local
-            servidor = std::make_shared<Servidor>("0.0.0.0", porta);
+            servidor = std::make_shared<Servidor>("0.0.0.0", porta, coop_);
             servidor->iniciar();
         } catch (const std::exception& ex) {
             erro_ = "Não foi possível abrir a porta " + std::to_string(porta) + ": " + ex.what();
@@ -414,11 +416,17 @@ void CenaBatalha::conectar() {
 void CenaBatalha::desenhar() {
     ui::fundo_gradiente(rgb(58, 120, 200), rgb(29, 63, 116));
     if (hospedar_) {
-        cabecalho("Hospedar batalha", "Você será o servidor da partida");
+        cabecalho(coop_ ? "Hospedar coop" : "Hospedar batalha", "Você será o servidor da partida");
         painel_passo({24, 80, 1232, 236}, "1 · Mapa");
         desenhar_mapas(40, 1200, mapa_, true);
         painel_passo({24, 332, 1232, 104}, "2 · Porta");
         porta_.desenhar();
+        modo_.rotulo = coop_ ? "Modo: Coop (2 no mesmo time)" : "Modo: Batalha 1v1";
+        modo_.cor = coop_ ? ui::VERDE : ui::AZUL;
+        modo_.desenhar();
+        ui::texto(coop_ ? "Os dois defendem a mesma pista, com vidas e dinheiro comuns."
+                        : "Cada um defende a sua pista e envia bloons ao outro.",
+                  modo_.rect.x + modo_.rect.width, modo_.rect.y + 62, 12, ui::BEGE, 0, Ancora::MIDRIGHT, ui::Peso::TEXTO);
         ui::texto("Porta TCP que ficará aberta. Libere no firewall se o oponente estiver em outro PC.", 214, 398, 14,
                   ui::BEGE, 0, Ancora::MIDLEFT, ui::Peso::TEXTO);
         painel_passo({24, 452, 1232, 176}, "3 · Herói");
@@ -475,7 +483,7 @@ void CenaLobby::atualizar(double dt) {
             auto ctl = std::make_unique<ControladorBatalha>(
                 con_, con_->numero(), msg.seed, msg.mapa,
                 std::map<int, std::string>{{1, msg.herois[1]}, {2, msg.herois[2]}}, servidor_, std::move(pendentes),
-                porta_);
+                porta_, msg.coop);
             iniciou_ = true;
             som::tocar("rodada");
             app.iniciar_jogo(std::move(ctl));
@@ -492,7 +500,7 @@ void CenaLobby::desenhar() {
     ui::painel_menu(r, 24);
     // status com os pontos em largura fixa (o texto centralizado nao "treme" mais)
     const bool aguardando = status_.rfind("Você é o jogador", 0) == 0;
-    const std::string txt = aguardando ? "Aguardando oponente" : status_;
+    const std::string txt = aguardando ? "Aguardando o outro jogador" : status_;
     const float wt = ui::medir(txt, 21).x;
     const float wj = aguardando ? ui::medir("JOGADOR 1", 12).x + 24 : 0;
     const float total = wj + (aguardando ? 12 : 0) + wt + 12 + 48;
@@ -513,8 +521,9 @@ void CenaLobby::desenhar() {
         DrawCircleV({x + 6 + i * 16.0f, cy + 4}, 5, aceso ? ui::BRANCO : rgb(255, 255, 255, 90));
     }
     if (servidor_) {
-        ui::texto("Seu oponente deve usar \"Batalha: Entrar\" com:", r.x + r.width / 2, r.y + 90, 17, ui::BEGE, 0,
-                  Ancora::CENTER, ui::Peso::TEXTO);
+        ui::texto(std::string(servidor_->coop() ? "Seu parceiro (coop)" : "Seu oponente") +
+                      " deve usar \"Batalha: Entrar\" com:",
+                  r.x + r.width / 2, r.y + 90, 17, ui::BEGE, 0, Ancora::CENTER, ui::Peso::TEXTO);
         // cartao com IP e porta: o que precisa ser ditado ao amigo
         const Rectangle c{r.x + 36, r.y + 116, r.width - 72, 112};
         ui::ret(ui::inflar(c, 6, 6), ui::TINTA, 18);

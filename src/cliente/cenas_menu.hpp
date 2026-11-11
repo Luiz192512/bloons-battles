@@ -83,6 +83,7 @@ public:
 
     void conectar();
     void ip_teste(const std::string& ip, const std::string& porta) { ip_.valor = ip, porta_.valor = porta; }
+    void coop_teste(bool v) { coop_ = v; }  // --tela hospedar-coop
 
 private:
     Rectangle rect_mapa(size_t i) const { return {40 + i * 304.5f, 124, 286.5f, 172}; }
@@ -90,7 +91,8 @@ private:
     std::string mapa_ = "prado";
     GradeHerois herois_{40, 496, 9, 58};
     ui::CampoTexto ip_, porta_;
-    ui::Botao voltar_, ir_;
+    ui::Botao voltar_, ir_, modo_;
+    bool coop_ = false;  // so ao hospedar: quem hospeda escolhe Batalha (1v1) ou Coop
     std::string erro_;
 };
 

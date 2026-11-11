@@ -70,9 +70,12 @@ App::App(const std::vector<std::string>& args) {
             const std::string t = args[i + 1];
             if (t == "solo") cena_ = std::make_unique<CenaSolo>(*this);
             else if (t == "macacos") cena_ = std::make_unique<CenaMacacos>(*this);
-            else if (t == "hospedar" || t == "lobby") cena_ = std::make_unique<CenaBatalha>(*this, true);
+            else if (t == "hospedar" || t == "lobby" || t == "hospedar-coop" || t == "lobby-coop")
+                cena_ = std::make_unique<CenaBatalha>(*this, true);
             else if (t.rfind("entrar", 0) == 0) cena_ = std::make_unique<CenaBatalha>(*this, false);
             if (auto* b = dynamic_cast<CenaBatalha*>(cena_.get())) {
+                if (t.size() > 5 && t.compare(t.size() - 5, 5, "-coop") == 0) b->coop_teste(true);
+                if (t == "lobby-coop") b->conectar();
                 if (t == "entrar-erro") {
                     b->ip_teste("127.0.0.1", "1");
                     b->conectar();

@@ -1748,7 +1748,7 @@ std::uint32_t Pista::hash() const {
 Partida::Partida(const std::string& modo_, const std::string& chave_mapa, int seed_, const std::string& dif,
                  const std::map<int, std::string>& herois)
     : modo(modo_), mapa(bl::mapa(chave_mapa)), seed(seed_) {
-    if (modo == "solo") {
+    if (modo == "solo" || modo == "coop") {
         const Dificuldade* d = achar_dificuldade(dif);
         if (!d) throw std::out_of_range("dificuldade desconhecida: " + dif);
         dificuldade = dif;
@@ -1776,7 +1776,8 @@ Partida::Partida(const std::string& modo_, const std::string& chave_mapa, int se
 }
 
 char Partida::aplicar(int jogador, const std::string& cmd) {
-    auto it = pistas.find(jogador);
+    // coop: os dois jogadores agem na mesma pista (a 1)
+    auto it = pistas.find(modo == "coop" ? 1 : jogador);
     if (it == pistas.end() || fim || cmd.empty()) return ERRO_INVALIDO;
     Pista& pista = *it->second;
     const char c = cmd[0];
@@ -1911,7 +1912,7 @@ bool Partida::continuar_freeplay() {
 }
 
 char Partida::iniciar_rodada() {
-    if (modo != "solo" || em_rodada || fim) return ERRO_INVALIDO;
+    if ((modo != "solo" && modo != "coop") || em_rodada || fim) return ERRO_INVALIDO;
     rodada += 1;
     em_rodada = true;
     Pista& p = *pistas[1];
@@ -1928,8 +1929,8 @@ void Partida::passo() {
     tick += 1;
     tempo += DT;
     for (auto& [j, p] : pistas) p->passo();
-    if (modo == "solo") passo_solo();
-    else passo_batalha();
+    if (modo == "batalha") passo_batalha();
+    else passo_solo();  // solo e coop
 }
 
 void Partida::passo_solo() {

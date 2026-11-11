@@ -333,7 +333,7 @@ private:
     std::unordered_map<std::int64_t, std::vector<Bloon*>> grade_;
 };
 
-// Uma partida: solo (1 pista) ou batalha (2 pistas).
+// Uma partida: solo (1 pista), batalha (2 pistas) ou coop (1 pista, 2 jogadores em rede).
 class Partida {
 public:
     Partida(const std::string& modo, const std::string& mapa, int seed = 1, const std::string& dificuldade = "medio",
@@ -355,8 +355,9 @@ public:
     // Segundos ate o jogador poder repetir este envio (0 = liberado). So leitura, para a interface.
     double recarga_envio(int jogador, const std::string& chave) const;
     std::uint32_t hash() const;
-    Pista& pista(int j) { return *pistas.at(j); }
-    const Pista& pista(int j) const { return *pistas.at(j); }
+    // no coop so existe a pista 1: o jogador 2 enxerga e age na mesma
+    Pista& pista(int j) { return *pistas.at(modo == "coop" ? 1 : j); }
+    const Pista& pista(int j) const { return *pistas.at(modo == "coop" ? 1 : j); }
 
     std::string modo;
     const Mapa& mapa;

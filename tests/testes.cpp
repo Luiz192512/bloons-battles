@@ -127,6 +127,23 @@ TESTE(protocolo_ida_e_volta) {
     CHECA(m.comando == P::ERRO && m.jogador == 1 && m.codigo == 'M');
 }
 
+TESTE(protocolo_coop) {
+    CHECA_IGUAL(P::rodada(2), std::string("2N\n"));
+    CHECA_IGUAL(P::inicio(8231, "prado", "quincy", "adora", true), std::string("0I8231,prado,quincy,adora,coop\n"));
+    CHECA(!P::interpretar(P::inicio(7, "prado", "quincy", "psi")).coop);
+    CHECA(P::interpretar(P::inicio(7, "prado", "quincy", "psi", true)).coop);
+    auto m = P::interpretar(P::rodada(1));
+    CHECA(m.comando == P::RODADA && m.cmd == "N");
+    CHECA(P::comando_valido("N") && !P::comando_valido("N1") && P::eh_comando_jogo('N'));
+    bool lancou = false;
+    try {
+        P::interpretar("0I7,prado,quincy,psi,versus");
+    } catch (const P::MensagemInvalida&) {
+        lancou = true;
+    }
+    CHECA(lancou);
+}
+
 TESTE(protocolo_invalidas) {
     for (const char* l : {"", "X", "1Z", "1Tdardo@x,4", "1U5:7", "1V", "1M3:9", "0Fx", "1Pextra", "1J", "1Jso_um",
                           "0K1|9Tdardo@1,1", "0K1|1Qqq", "1Tdardo@12345,1", "0Ix,prado,a,b", "1H1"}) {
@@ -1037,6 +1054,49 @@ std::uint32_t jogar_batalha() {
 
 TESTE(sim_determinismo_batalha) { CHECA_IGUAL(jogar_batalha(), jogar_batalha()); }
 
+namespace {
+// Coop: os comandos dos dois jogadores caem na mesma pista. A rodada e iniciada por quem apertar primeiro.
+std::uint32_t jogar_coop(int rodadas_ate) {
+    Partida p("coop", "prado", 5, "medio", {{1, "quincy"}, {2, "adora"}});
+    for (int i = 0; i < 30 * 40; ++i) {
+        if (i == 5) p.aplicar(1, "Tdardo@230,250");
+        if (i == 8) p.aplicar(2, "Tdardo@600,500");  // jogador 2 na mesma pista
+        if (i == 20) p.aplicar(2, "N");
+        if (i == 21) p.aplicar(1, "N");              // segunda tentativa na mesma rodada: recusada
+        if (i == 60) p.aplicar(2, "U1:0");           // o jogador 2 melhora a torre do jogador 1
+        if (i == 90) p.aplicar(1, "Tquincy@600,250");
+        if (i > 100 && i % 150 == 0) p.aplicar(i % 300 ? 1 : 2, "N");
+        p.passo();
+        if (p.rodada >= rodadas_ate && !p.em_rodada) break;
+    }
+    return p.hash();
+}
+}  // namespace
+
+TESTE(sim_coop_pista_unica_compartilhada) {
+    Partida p("coop", "prado", 1, "medio", {{1, "quincy"}, {2, "adora"}});
+    CHECA_IGUAL(p.pistas.size(), size_t(1));
+    CHECA(&p.pista(1) == &p.pista(2));  // o jogador 2 enxerga a mesma pista
+    CHECA_IGUAL(p.aplicar(1, "Tdardo@230,250"), OK);
+    CHECA_IGUAL(p.aplicar(2, "Tdardo@600,500"), OK);
+    CHECA_IGUAL(p.pista(1).torres.size(), size_t(2));
+    CHECA_IGUAL(p.pista(2).dinheiro, 650.0 - 400);          // caixa unico
+    CHECA_IGUAL(p.aplicar(2, "U1:0"), OK);                  // melhora a torre colocada pelo jogador 1
+    CHECA_IGUAL(p.aplicar(2, "Tadora@500,500"), ERRO_HEROI);  // so ha um heroi na pista: o do anfitriao
+    CHECA_IGUAL(p.aplicar(1, "Sr8"), ERRO_INVALIDO);        // envios so existem na batalha
+    CHECA(!p.em_rodada);
+    CHECA_IGUAL(p.aplicar(2, "N"), OK);
+    CHECA(p.em_rodada && p.rodada == 1);
+    CHECA_IGUAL(p.aplicar(1, "N"), ERRO_INVALIDO);          // ja em andamento
+}
+
+TESTE(sim_coop_determinismo_e_nao_afeta_batalha) {
+    CHECA_IGUAL(jogar_coop(2), jogar_coop(2));
+    // a batalha continua recusando N (so o solo e o coop iniciam rodada por comando)
+    Partida b("batalha", "prado", 1);
+    CHECA_IGUAL(b.aplicar(1, "N"), ERRO_INVALIDO);
+}
+
 TESTE(sim_envio_vai_para_o_oponente_e_aumenta_eco) {
     Partida p("batalha", "prado", 1);
     for (int i = 0; i < static_cast<int>(3.5 / DT); ++i) p.passo();
@@ -1264,6 +1324,68 @@ TESTE(servidor_desconexao_da_vitoria_ao_oponente) {
     b.proxima(P::INICIO);
     a.fechar();
     CHECA_IGUAL(b.proxima(P::FIM_JOGO), std::string("0F2"));
+    b.fechar();
+    servidor.parar();
+}
+
+TESTE(servidor_coop_dois_clientes_mesma_partida) {
+    Servidor servidor("127.0.0.1", 0, true);
+    servidor.iniciar();
+    CHECA(servidor.coop());
+    Cliente a(servidor.porta());
+    a.enviar(P::entrar("quincy", "lago"));
+    CHECA_IGUAL(a.proxima(), std::string("0J1"));
+    Cliente b(servidor.porta());
+    b.enviar(P::entrar("adora", "prado"));
+    CHECA_IGUAL(b.proxima(), std::string("0J2"));
+    const std::string ib = b.proxima(), ia = a.proxima();
+    CHECA_IGUAL(ia, ib);
+    auto inicio = P::interpretar(ia);
+    CHECA(inicio.coop && inicio.mapa == "lago");
+
+    // os dois mandam comandos (inclusive "N" para iniciar a rodada); os dois recebem a mesma ordem
+    a.enviar(P::torre(1, "dardo", 100, 100));
+    b.enviar(P::rodada(2));
+    std::vector<std::pair<int, std::string>> vistos_a, vistos_b;
+    while (vistos_a.size() < 2) {
+        auto m = P::interpretar(a.proxima());
+        vistos_a.insert(vistos_a.end(), m.comandos.begin(), m.comandos.end());
+    }
+    while (vistos_b.size() < 2) {
+        auto m = P::interpretar(b.proxima());
+        vistos_b.insert(vistos_b.end(), m.comandos.begin(), m.comandos.end());
+    }
+    CHECA(vistos_a == vistos_b);
+    auto ordenado = vistos_a;
+    std::sort(ordenado.begin(), ordenado.end());
+    CHECA((ordenado == std::vector<std::pair<int, std::string>>{{1, "Tdardo@100,100"}, {2, "N"}}));
+
+    // hashes iguais: nenhuma dessincronia; o servidor nao responde "0D"
+    a.enviar(P::hash_estado(1, 45, 777));
+    b.enviar(P::hash_estado(2, 45, 777));
+    a.enviar(P::envio(2, "r8"));  // origem trocada continua barrada
+    CHECA_IGUAL(a.proxima(P::ERRO), std::string("0X1M"));
+
+    // o parceiro sai no meio da partida: o outro recebe fim sem vencedor (0), nao "vitoria"
+    b.fechar();
+    CHECA_IGUAL(a.proxima(P::FIM_JOGO), std::string("0F0"));
+    a.fechar();
+    servidor.parar();
+}
+
+TESTE(servidor_coop_desistir_nao_da_vitoria_ao_parceiro) {
+    Servidor servidor("127.0.0.1", 0, true);
+    servidor.iniciar();
+    Cliente a(servidor.porta()), b(servidor.porta());
+    a.enviar(P::entrar("quincy", "prado"));
+    CHECA_IGUAL(a.proxima(), std::string("0J1"));
+    b.enviar(P::entrar("quincy", "prado"));
+    CHECA_IGUAL(b.proxima(), std::string("0J2"));
+    a.proxima(P::INICIO);
+    b.proxima(P::INICIO);
+    a.enviar(P::desistir(1));
+    CHECA_IGUAL(b.proxima(P::FIM_JOGO), std::string("0F0"));
+    a.fechar();
     b.fechar();
     servidor.parar();
 }

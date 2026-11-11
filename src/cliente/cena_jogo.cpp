@@ -83,7 +83,7 @@ CenaJogo::CenaJogo(App& a, std::unique_ptr<Controlador> controle)
     : Cena(a), ctl_(std::move(controle)), chave_mapa_(ctl_->partida->mapa.def.chave),
       render_(ctl_->pista(), chave_mapa_), mostrar_log_(false) {
     // o log de rede (F1) comeca fechado: ele tapava a trilha na Batalha
-    if (ctl_->online()) render_op_ = std::make_unique<RenderPista>(ctl_->oponente(), chave_mapa_, false);
+    if (ctl_->vs()) render_op_ = std::make_unique<RenderPista>(ctl_->oponente(), chave_mapa_, false);
     heroi_ = ctl_->pista().heroi_escolhido;
     std::vector<std::string> chaves;
     if (!heroi_.empty()) chaves.push_back(heroi_);
@@ -187,7 +187,7 @@ void CenaJogo::tecla(int k) {
         depura_t_ = 0;
         return;
     }
-    if (k == KEY_O && ctl_->online()) {
+    if (k == KEY_O && ctl_->vs()) {
         op_grande_ = !op_grande_;
         return;
     }
@@ -264,12 +264,12 @@ void CenaJogo::clique(Vector2 pos) {
         op_grande_ = false;
         return;
     }
-    if (ctl_->online() && mostrar_op_ && ui::dentro(ui::inflar(rect_mini_, 6, 50), pos) && colocando_.empty()) {
+    if (ctl_->vs() && mostrar_op_ && ui::dentro(ui::inflar(rect_mini_, 6, 50), pos) && colocando_.empty()) {
         op_grande_ = true;
         return;
     }
     if (pos.x >= PAINEL_X) {
-        if (ui::dentro(botao_play_, pos) && !ctl_->online()) {
+        if (ui::dentro(botao_play_, pos) && !ctl_->vs()) {
             ctl_->botao_play();
             som::tocar("rodada");
             return;
@@ -441,7 +441,7 @@ void CenaJogo::atualizar(double dt) {
     for (const Evento& av : render_.avisos) {
         if (av.tipo == "fim_rodada") {
             const int r = static_cast<int>(av.v);
-            if (ctl_->online()) {
+            if (ctl_->vs()) {
                 banner_ = {"Rodada " + std::to_string(r), 1.6};
                 som::tocar("rodada");
             } else {
@@ -523,7 +523,7 @@ void CenaJogo::desenhar() {
     }
     if (!colocando_.empty() && mouse.x < PAINEL_X) previa(mouse);
     hud_topo();
-    if (ctl_->online()) {
+    if (ctl_->vs()) {
         painel_envios(mouse);
         if (mostrar_op_) mini_oponente();
     }
@@ -657,7 +657,7 @@ void CenaJogo::painel_sandbox(Vector2 mouse) {
 void CenaJogo::hud_topo() {
     Pista& p = pista();
     const std::string vidas = ui::formatar(std::max(0, p.vidas)), din = "$" + ui::formatar(p.dinheiro);
-    const bool on = ctl_->online();
+    const bool on = ctl_->vs();
     const std::string eco = "+" + ui::formatar(p.eco);
     float w = 10 + 30 + 6 + ui::medir(vidas, 23).x + 18 + 30 + 6 + ui::medir(din, 23).x + 18;
     if (on) w += 28 + 6 + ui::medir(eco, 20).x + 8 + 62;
@@ -689,12 +689,12 @@ void CenaJogo::painel_lateral(Vector2 mouse) {
     ui::placa(pr, ui::MADEIRA_ESCURA, 12);
     arte::icone("rodada", pr.x + 12, pr.y + 12, 32);
     ui::texto("RODADA", pr.x + 50, pr.y + 13, 9, ui::BEGE, 0);
-    const std::string rod = ctl_->online() ? std::to_string(std::max(1, p.rodada))
+    const std::string rod = ctl_->vs() ? std::to_string(std::max(1, p.rodada))
                    : (ctl_->partida->em_freeplay || p.sandbox) ? std::to_string(std::max(1, p.rodada))
                                                 : std::to_string(std::max(1, p.rodada)) + "/" + std::to_string(p.ultima_rodada);
     ui::texto(rod, pr.x + 48, pr.y + 36, 23, ui::BRANCO, 4, Ancora::MIDLEFT);
     const float dx = pr.x + pr.width - 12;
-    if (ctl_->online()) {
+    if (ctl_->vs()) {
         const double falta = p.tempo_para_rodada();
         ui::texto("próxima em " + std::to_string(static_cast<int>(std::ceil(falta))) + " s", dx, pr.y + 18, 12,
                   ui::BEGE, 0, Ancora::MIDRIGHT, ui::Peso::TEXTO);
@@ -760,7 +760,7 @@ void CenaJogo::painel_lateral(Vector2 mouse) {
         ui::tecla(tecla, r.x + 4, r.y + 5, 9);
         if (sobre) dicas_.push_back({mouse, dfn.nome, dfn.heroi ? dfn.titulo : dfn.desc});
     }
-    if (ctl_->online()) {
+    if (ctl_->vs()) {
         const float y = ui::ALTURA - 124.0f;
         const Rectangle re{PAINEL_X + 8, y, 224, 52};
         ui::placa(re, ui::ECO_ESCURO, 12);
@@ -808,6 +808,15 @@ void CenaJogo::painel_lateral(Vector2 mouse) {
         for (float dx : {-16.0f, 4.0f}) triangulo({c.x + dx, c.y - 16}, {c.x + dx, c.y + 14}, {c.x + dx + 18, c.y - 1});
     }
     ui::tecla_centro("Espaço", c.x, r.y + r.height + 4, 8);
+    // coop: rodada automática e velocidade mudariam a simulação só neste PC (o lockstep não aceita)
+    if (ctl_->online()) {
+        ui::texto("COOP", PAINEL_X + 150, ui::ALTURA - 100.0f, 14, ui::AMARELO, 3, Ancora::MIDLEFT);
+        ui::texto(p.em_rodada ? "rodada em andamento" : "qualquer um inicia", PAINEL_X + 150, ui::ALTURA - 76.0f, 12,
+                  ui::BEGE, 0, Ancora::MIDLEFT, ui::Peso::TEXTO);
+        if (sobre_play && !p.em_rodada)
+            dicas_.push_back({mouse, "Iniciar rodada", "Começa a próxima rodada para os dois jogadores."});
+        return;
+    }
     const Rectangle ra{PAINEL_X + 118, ui::ALTURA - 104.0f, 104, 34};
     ui::ret(ra, ui::TINTA, 17);
     ui::ret(ui::inflar(ra, -6, -6), ui::MADEIRA_ESCURA, 12);
@@ -1018,7 +1027,7 @@ void CenaJogo::painel_upgrade(const TorreP& tp, Vector2 mouse) {
     const Torre& t = *tp;
     // torre na metade esquerda -> painel a direita (e vice-versa); na Batalha fica abaixo do mini mapa
     const float x = t.x > LARGURA_MAPA / 2.0 ? 12.0f : LARGURA_MAPA - UP_W - 12;
-    const float y = ctl_->online() ? 240.0f : 80.0f;
+    const float y = ctl_->vs() ? 240.0f : 80.0f;
     const Rectangle r{x, y, UP_W, UP_H};
     ui::ret(ui::mover(r, 0, 6), rgb(22, 20, 26, 115), 18);
     ui::ret(r, ui::TINTA, 18);
@@ -1150,7 +1159,7 @@ void CenaJogo::painel_heroi(const Torre& t, float x, float y, float w) {
 void CenaJogo::habilidades(Vector2 mouse) {
     auto habs = hab_lista();
     if (habs.empty()) return;
-    const float topo = ctl_->online() ? 540.0f : 640.0f;
+    const float topo = ctl_->vs() ? 540.0f : 640.0f;
     const double agora = ui::tempo();
     for (size_t i = 0; i < habs.size(); ++i) {
         const Hab& hb = habs[i];
@@ -1384,9 +1393,10 @@ void CenaJogo::tela_pausa() {
 
 void CenaJogo::tela_fim() {
     const int v = ctl_->vencedor();
-    const bool ganhou = v == ctl_->meu;
+    const bool ganhou = ctl_->ganhou();
     std::string titulo;
     if (!ctl_->online()) titulo = ganhou ? "VITÓRIA!" : "FIM DE JOGO";
+    else if (!ctl_->vs()) titulo = ganhou ? "VITÓRIA!" : ctl_->partida->fim ? "DERROTA" : "PARCEIRO SAIU";
     else titulo = ganhou ? "VITÓRIA!" : v == 0 ? "EMPATE" : "DERROTA";
     const Rectangle r = sobreposicao(titulo, ganhou ? ui::AMARELO : rgb(255, 110, 100));
     Pista& p = pista();
