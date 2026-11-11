@@ -139,6 +139,22 @@ publicam em memória compartilhada. Precisa rodar no mesmo PC de quem hospeda:
 ./build/bloons_monitor 5050
 ```
 
+## Requisitos do trabalho: onde cada um é cumprido
+
+| Requisito do enunciado | Onde está no projeto | Como conferir |
+|---|---|---|
+| **R1. Pelo menos 2 usuários, cada um em um processo distinto** | Cada jogador abre o próprio `BloonsBattles.exe`; o servidor roda dentro de quem hospeda ou separado (`bloons_servidor`). Modos Batalha 1v1 e Coop em LAN. | Abra o jogo duas vezes ([Como jogar](#como-jogar)). O teste `servidor_partida_completa` usa dois clientes TCP reais |
+| **R2. Comunicação por socket, sem biblioteca de rede de alto nível** | [src/rede/socket.cpp](src/rede/socket.cpp): `socket`, `bind`, `listen`, `accept`, `connect`, `send`, `recv` direto (Winsock2 no Windows, POSIX no Linux). Servidor em [src/servidor/servidor.cpp](src/servidor/servidor.cpp), cliente em [src/cliente/conexao.cpp](src/cliente/conexao.cpp) | Painel de mensagens trocadas na partida (tecla F1) |
+| **R3. Memória compartilhada com exclusão mútua** | **Entre threads:** classe `Sala` em [src/servidor/sala.hpp](src/servidor/sala.hpp) com `lock_sala_`, `lock_fila_` e `lock_hash_` (`std::mutex`). **Entre processos:** [src/ipc/memoria.cpp](src/ipc/memoria.cpp) (`CreateFileMapping` + `CreateMutex` no Windows, `shm_open` + `sem_open` no Linux) e o placar em [src/ipc/placar.cpp](src/ipc/placar.cpp), lido pelo `bloons_monitor` | `bloons_monitor 5050` com uma partida aberta. Testes `mutex_*` e `ipc_*`. Explicação completa em [docs/plano.md](docs/plano.md), seção 4 |
+| **R4. Ações por códigos nas mensagens; estado da "vez" nos dois processos** | Cada ação é um código na mensagem (`T` torre, `U` upgrade, `V` venda, `M` alvo, `B` habilidade, `S` envio, `N` rodada, `A` mira, `O` opção, `C` coleta). O estado da sala (`AGUARDANDO`, `EM_JOGO`, `FIM`) e o número do tick existem no servidor e nos dois clientes e só avançam pelas mensagens `0K...` (lockstep, 15 ticks/s). Hash do estado a cada 3 s detecta dessincronia | [docs/plano.md](docs/plano.md), seção 2. Testes `sim_determinismo_*` e `servidor_*` |
+| **R5. Notação própria de mensagens** | Uma linha ASCII `<origem><comando><argumentos>`, por exemplo `1Tdardo@230,250` e `0K451\|1Tdardo@230,250\|2Sr8`. Definida e validada em [src/comum/protocolo.hpp](src/comum/protocolo.hpp) e [protocolo.cpp](src/comum/protocolo.cpp) | Tabela completa em [docs/plano.md](docs/plano.md), seção 3. Testes `protocolo_*` |
+| **R6. Linguagem aceita** | C++17 (com raylib só para janela, desenho e som) | [CMakeLists.txt](CMakeLists.txt) |
+| **R7. A interface não pode consumir o tempo de R2 a R5** | Arte e sons gerados por código ([src/cliente/](src/cliente/)); rede, threads e memória compartilhada são módulos separados da interface ([src/rede](src/rede), [src/servidor](src/servidor), [src/ipc](src/ipc)) e têm testes próprios | `ctest` roda tudo sem abrir janela |
+| **R8. Jogo diferente do de outra dupla** | Tower defense inspirado no Bloons TD Battles 2, com 22 torres, 18 heróis, envio de bloons e modo Coop | Decisão do professor |
+| **R9. Entrega até 15/11/2026 23:59, vídeo de 1 min, código com e sem executável** | Roteiro do vídeo em [docs/plano.md](docs/plano.md) seção 5; zips gerados por `scripts\publicar_release.bat` ou `scripts/empacotar.sh` ([Entrega](#entrega)) | Release do GitHub com `BloonsBattles.exe`, `BloonsBattles_codigo.zip` e `BloonsBattles_com_executavel.zip` |
+
+Respostas do formulário ("Como e quais informações são trocadas entre os processos?" e "Como é feito o gerenciamento da exclusão mútua?"): [docs/plano.md](docs/plano.md), seção 6.
+
 ## Testes
 
 ```bash
