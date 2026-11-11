@@ -407,6 +407,14 @@ void CenaJogo::enviar(const Envio& env) {
 
 // ============================================================== atualizar
 void CenaJogo::atualizar(double dt) {
+    if (g_auto_jogar && ctl_->online() && !ctl_->terminou()) {
+        // roteiro de teste: cada jogador coloca um dardo, melhora o do outro e inicia a rodada
+        auto_t_ += dt;
+        const bool eu1 = ctl_->meu == 1;
+        if (auto_passo_ == 0 && auto_t_ > 2) ctl_->enviar(eu1 ? "Tdardo@230,250" : "Tdardo@600,500"), auto_passo_ = 1;
+        if (auto_passo_ == 1 && auto_t_ > 5) ctl_->enviar(eu1 ? "U2:0" : "U1:0"), auto_passo_ = 2;
+        if (auto_passo_ == 2 && auto_t_ > 7) ctl_->botao_play(), auto_passo_ = 3;
+    }
     // cursor para as Dartlings em modo Normal; a simulacao so conhece o ponto que chega por comando
     mira_espera_ -= dt;
     const Vector2 cur = ui::mouse();

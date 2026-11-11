@@ -14,6 +14,9 @@
 
 namespace bl {
 
+// --auto (so para teste): a partida em rede joga sozinha, para conferir dois clientes lado a lado
+inline bool g_auto_jogar = false;
+
 class CenaJogo : public Cena {
 public:
     CenaJogo(App& app, std::unique_ptr<Controlador> controle);
@@ -113,6 +116,8 @@ private:
     Vector2 mira_enviada_{-1, -1};
     std::pair<std::string, double> msg_{"", 0}, banner_{"", 0};
     bool menu_pausa_ = false;
+    double auto_t_ = 0;
+    int auto_passo_ = 0;
     bool mostrar_log_;
     bool mostrar_op_ = true;
     bool op_grande_ = false;

@@ -76,6 +76,7 @@ App::App(const std::vector<std::string>& args) {
             if (auto* b = dynamic_cast<CenaBatalha*>(cena_.get())) {
                 if (t.size() > 5 && t.compare(t.size() - 5, 5, "-coop") == 0) b->coop_teste(true);
                 if (t == "lobby-coop") b->conectar();
+                if (t == "entrar-auto") b->ip_teste("127.0.0.1", "5050"), b->conectar();
                 if (t == "entrar-erro") {
                     b->ip_teste("127.0.0.1", "1");
                     b->conectar();
@@ -83,6 +84,8 @@ App::App(const std::vector<std::string>& args) {
                 if (t == "lobby") b->conectar();
             }
             if (proxima_) cena_ = std::move(proxima_);
+        } else if (args[i] == "--auto") {
+            g_auto_jogar = true;
         } else if (args[i] == "--fps") {
             mostrar_fps_ = true;
         } else if (args[i] == "--pausa") {
