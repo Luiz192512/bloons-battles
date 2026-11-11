@@ -65,6 +65,9 @@ constexpr char VENDA = 'V';
 constexpr char MODO = 'M';
 constexpr char HABILIDADE = 'B';
 constexpr char ENVIO = 'S';
+constexpr char MIRA = 'A';    // 1A12@300,200: ponto de mira da torre 12 (Dartling, Helicoptero, Ace)
+constexpr char OPCAO = 'O';   // 1O12:1: opcao da torre 12 (mao do Bumerangue, rota do Heli, ...)
+constexpr char COLETA = 'C';  // 1C345: coletar a banana/caixa de id 345
 constexpr char RODADA = 'N';  // coop: iniciar a proxima rodada (qualquer um dos dois)
 bool eh_comando_jogo(char c);
 

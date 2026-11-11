@@ -1336,6 +1336,72 @@ TESTE(rede_ips_locais_sem_loopback_nem_link_local) {
     }
 }
 
+TESTE(servidor_entrada_simultanea_recebe_inicio_nos_dois) {
+    // B-03: os dois conectam no mesmo instante; os dois precisam receber "0I"
+    std::atomic<int> sem_inicio{0};
+    for (int rodada = 0; rodada < 25; ++rodada) {
+        Servidor servidor("127.0.0.1", 0);
+        servidor.iniciar();
+        std::atomic<bool> largar{false};
+        auto jogador = [&] {
+            try {
+                Cliente c(servidor.porta());
+                while (!largar) std::this_thread::yield();
+                c.enviar(P::entrar("quincy", "prado"));
+                c.proxima(P::INICIO);
+                c.fechar();
+            } catch (const Falha&) {
+                ++sem_inicio;
+            }
+        };
+        std::thread a(jogador), b(jogador);
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        largar = true;
+        a.join();
+        b.join();
+        servidor.parar();
+    }
+    CHECA_IGUAL(sem_inicio.load(), 0);
+}
+
+TESTE(servidor_desistir_na_sala_de_espera_nao_encerra_a_sala) {
+    // B-04
+    Servidor servidor("127.0.0.1", 0);
+    servidor.iniciar();
+    Cliente a(servidor.porta());
+    a.enviar(P::entrar("quincy", "prado"));
+    CHECA_IGUAL(a.proxima(), std::string("0J1"));
+    a.enviar(P::desistir(1));
+    Cliente b(servidor.porta());
+    b.enviar(P::entrar("quincy", "prado"));
+    CHECA_IGUAL(b.proxima(), std::string("0J2"));  // a sala continua aberta e a partida comeca
+    CHECA(P::interpretar(b.proxima(P::INICIO)).comando == P::INICIO);
+    a.fechar();
+    b.fechar();
+    servidor.parar();
+}
+
+TESTE(protocolo_mira_opcao_e_coleta) {
+    // B-06: a simulacao ja aceitava A, O e C, mas a rede os rejeitava (Dartling, Bumerangue e bananas online)
+    for (const char* ok : {"1A12@300,200", "2O7:1", "1C345", "1C123456789"}) CHECA(P::interpretar(ok).cmd == std::string(ok).substr(1));
+    bool lancou = false;
+    for (const char* ruim : {"1A12@300", "1A@1,2", "1O7", "1O7:123", "1C", "1C1234567890", "1Cx"}) {
+        try {
+            P::interpretar(ruim);
+        } catch (const P::MensagemInvalida&) {
+            continue;
+        }
+        lancou = true;
+    }
+    CHECA(!lancou);
+    auto t = P::interpretar("0K9|1A12@300,200|2C345|1O7:1");
+    CHECA_IGUAL(t.comandos.size(), size_t(3));
+    // e a partida coop aplica de verdade o A e o C
+    Partida p("coop", "prado", 1, "medio", {{1, "quincy"}, {2, "quincy"}});
+    p.aplicar(1, "Tdardo@230,250");
+    CHECA_IGUAL(p.aplicar(2, "C999999"), ERRO_INVALIDO);  // id inexistente: recusado, mas e o comando que chega
+}
+
 TESTE(servidor_coop_dois_clientes_mesma_partida) {
     Servidor servidor("127.0.0.1", 0, true);
     servidor.iniciar();

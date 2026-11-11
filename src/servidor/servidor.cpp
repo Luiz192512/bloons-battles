@@ -149,17 +149,21 @@ void Servidor::atender(ConexaoP con, std::string endereco) {
                 if (msg.comando != P::ENTRAR) continue;
                 const std::string heroi = achar_heroi(msg.heroi) ? msg.heroi : "quincy";
                 const std::string mapa = achar_mapa(msg.mapa) ? msg.mapa : "prado";
-                auto vaga = sala.reservar_vaga(heroi, mapa);
+                // reservar a vaga e registrar o socket e UMA operacao so, sob lock_clientes_ (ordem: clientes -> sala).
+                // Sem isso, o outro jogador podia iniciar a partida e transmitir o inicio entre as duas coisas,
+                // e este jogador nunca recebia o "0I".
+                std::optional<int> vaga;
+                {
+                    std::lock_guard<std::mutex> trava(lock_clientes_);
+                    vaga = sala.reservar_vaga(heroi, mapa);
+                    if (vaga) clientes_[*vaga] = con;
+                }
                 if (!vaga) {
                     con->sock.enviar_tudo(P::erro(0, P::ERRO_SALA_CHEIA));
                     sair = true;
                     break;
                 }
                 numero = *vaga;
-                {
-                    std::lock_guard<std::mutex> trava(lock_clientes_);
-                    clientes_[numero] = con;
-                }
                 publicar([&](ipc::Placar& pl) {
                     pl.jogador[numero].conectado = 1;
                     ipc::copiar_texto(pl.jogador[numero].heroi, sizeof pl.jogador[numero].heroi, heroi);
@@ -225,7 +229,8 @@ void Servidor::tratar(int numero, const P::Mensagem& msg) {
             transmitir(P::dessinc(msg.tick));
         }
     } else if (cmd == P::FIM_JOGO) {
-        if (sala.encerrar()) {
+        // desistir so vale durante a partida (na sala de espera nao ha o que desistir)
+        if (sala.em_jogo() && sala.encerrar()) {
             publicar([&](ipc::Placar& pl) {
                 pl.estado = ipc::FIM;
                 pl.vencedor = sala.vencedor_se_sair(numero);

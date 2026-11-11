@@ -51,7 +51,8 @@ std::string linha(int origem, const std::string& corpo) { return std::to_string(
 }  // namespace
 
 bool eh_comando_jogo(char c) {
-    return c == TORRE || c == UPGRADE || c == VENDA || c == MODO || c == HABILIDADE || c == ENVIO || c == RODADA;
+    return c == TORRE || c == UPGRADE || c == VENDA || c == MODO || c == HABILIDADE || c == ENVIO || c == RODADA ||
+           c == MIRA || c == OPCAO || c == COLETA;
 }
 
 bool comando_valido(const std::string& cmd) {
@@ -74,6 +75,15 @@ bool comando_valido(const std::string& cmd) {
             return par(r, ':', d15, [](const std::string& s) { return digitos(s, 1, 1); });
         case RODADA:
             return r.empty();
+        case MIRA:
+            return par(r, '@', d15, [](const std::string& xy) {
+                return par(xy, ',', [](const std::string& s) { return digitos(s, 1, 4); },
+                           [](const std::string& s) { return digitos(s, 1, 4); });
+            });
+        case OPCAO:
+            return par(r, ':', d15, [](const std::string& s) { return digitos(s, 1, 2); });
+        case COLETA:
+            return digitos(r, 1, 9);  // o id vem do contador da pista e passa de 5 digitos em partidas longas
         case ENVIO: {
             if (r.empty() || r.size() > 6) return false;
             for (char c : r)
