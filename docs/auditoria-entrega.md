@@ -11,7 +11,7 @@ não só lendo o código.
 | Ferramentas desta máquina | MinGW-w64 (g++ 16.2) e CMake do Visual Studio Build Tools 18 (o `compilar.bat` não achou o `vswhere`, então usei MinGW direto) |
 | Configurar e compilar | `cmake -S . -B build -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release` e `cmake --build build --parallel`: sem erros |
 | Testes antes das mudanças | **35 ok, 0 falha** (`bloons_testes.exe`) |
-| Testes depois das mudanças | **41 ok, 0 falha** (6 novos: protocolo coop, sim coop x2, servidor coop x2, IPs locais) |
+| Testes depois das mudanças | **41 ok** na base sem 3D e **62 ok, 0 falha** na branch `luiz/coop-lan-3d` (a que tem os modelos 3D, a do seu build-release); 6 testes são novos: protocolo coop, sim coop x2, servidor coop x2, IPs locais |
 | Cliente gráfico | `--demo solo`, `--demo batalha` e `--vitrine 0` abrem, desenham e saem com código 0 (capturas conferidas) |
 | Contagem na documentação | README dizia 27 e `btd6-transformacao.md` dizia 35. A real era 35; agora 41 e o README foi corrigido |
 | Linux | **Não testado** (sem WSL com distribuição nesta máquina) |
