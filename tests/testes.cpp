@@ -1052,7 +1052,11 @@ std::uint32_t jogar_batalha() {
 }
 }  // namespace
 
-TESTE(sim_determinismo_batalha) { CHECA_IGUAL(jogar_batalha(), jogar_batalha()); }
+TESTE(sim_determinismo_batalha) {
+    CHECA_IGUAL(jogar_batalha(), jogar_batalha());
+    // impresso para comparar compiladores/sistemas: o mesmo valor em MSVC, MinGW e Linux prova o lockstep entre eles
+    std::printf("    hash batalha=%08x\n", static_cast<unsigned>(jogar_batalha()));
+}
 
 namespace {
 // Coop: os comandos dos dois jogadores caem na mesma pista. A rodada e iniciada por quem apertar primeiro.

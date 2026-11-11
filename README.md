@@ -145,7 +145,7 @@ publicam em memória compartilhada. Precisa rodar no mesmo PC de quem hospeda:
 ctest --test-dir build --output-on-failure
 ```
 
-São 41 testes: protocolo (inclusive o coop), dados das torres, regras de upgrade, simulação e determinismo,
+São 65 testes: protocolo (inclusive o coop), dados das torres, regras de upgrade, simulação e determinismo,
 exclusão mútua com threads concorrentes, o servidor com clientes TCP reais e a memória
 compartilhada entre processos (inclusive abrindo o `bloons_monitor` como processo separado).
 

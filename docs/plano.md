@@ -99,6 +99,9 @@ Origem `0` = servidor, `1`/`2` = jogador.
 | `1B12:0` | C→S | usar a habilidade 0 da torre 12 |
 | `2Sr8` | C→S | jogador 2 envia "8 Vermelhos" ao oponente |
 | `1N` | C→S | coop: iniciar a próxima rodada (qualquer um dos dois) |
+| `1A12@300,200` | C→S | ponto de mira da torre 12 (Dartling, Helicóptero, Ás) |
+| `1O12:1` | C→S | opção da torre 12 (mão do Bumerangue, rota do Heli) |
+| `1C345` | C→S | coletar a banana ou caixa de id 345 |
 | `0K451\|1Tdardo@230,250\|2Sr8` | S→todos | tick 451 com os comandos a aplicar, em ordem |
 | `1H450,123456` | C→S | hash do estado no tick 450 |
 | `0D450` | S→todos | estados divergiram no tick 450 |
