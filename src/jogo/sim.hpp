@@ -103,11 +103,47 @@ struct Torre {
     int pops = 0;
     double investido;
     int modo = 0;
+    // ponto escolhido pelo jogador (comando A): cursor da Dartling, alvo fixo do Morteiro
+    double mx = 0.0, my = 0.0;
+    bool tem_mira = false;
+    int mao = 0;  // Bumerangue (comando O): 0 arremessa com a direita, 1 com a esquerda (inverte o arco)
+    // As (comando O): 0 circulo, 1 infinito, 2 oito, 3 em volta do ponto mirado (Rota Centralizada).
+    // Heli: 0 procura bloons, 1 voa ate o ponto mirado e fica, 2 patrulha entre o heliponto e o ponto mirado.
+    int rota = 0;
+    bool patrulha_volta = false;
     double ang = -90.0;
     double turbo = 1.0, turbo_t = 0.0;
+    // Overclock e Ultraimpulso: torre escolhida pelo jogador para receber o impulso (0 = a mais proxima)
+    int alvo_torre = 0;
+    bool escolhe_torre() const { return chave == "engenheiro" && caminhos[1] >= 4; }
+    // cargas permanentes de Ultraimpulso recebidas (ate 10; cada uma acelera 4%)
+    int ultra = 0;
+    // Robo Macaco em diante: o segundo braco tem a propria prioridade de alvo
+    int modo2 = 0;
+    bool dois_bracos() const { return chave == "super" && caminhos[1] >= 3; }
+    // Submarino com Submergir e Apoiar: submerso so pulsa o radar; na tona so atira
+    bool submerso = false;
+    bool pode_submergir() const { return chave == "submarino" && caminhos[0] >= 3; }
+    // Banco Macaco: saldo guardado, que rende juros a cada rodada ate o teto
+    double banco = 0.0;
+    // Mini-Comanche: id do Heli que o chamou (0 = torre comum) e a espera para chamar de novo
+    int mae = 0;
+    double comanche_t = 0.0;
+    // transformacao temporaria por habilidade (Fa-Clube, Transformacao): so muda o desenho da torre
+    std::string disfarce;
+    double disfarce_t = 0.0;
+    // habilidade "espiral" (Turbilhao de Laminas): bracos de projeteis que giram por alguns segundos
+    double espiral_t = 0.0, espiral_ang = 0.0, espiral_prox = 0.0;
+    int espiral_bracos = 0;
+    AtaqueP espiral_at;
     double temporaria;
     double orbita = 0.0;
     Buffs buff;
+    Buffs sacrificio;            // bonus permanente das torres sacrificadas (Templo do Sol)
+    // Necromante: bloons estourados no alcance enchem o cemiterio, e cada zumbi gasta o que usa de pierce
+    double cemiterio = 0;
+    bool necromante = false;
+    double renda_sacrificio = 0;  // dinheiro por rodada das fazendas sacrificadas (Macacopolis)
     std::vector<std::pair<int, double>> pontos_trilha;
     Stats st;
     std::vector<AtaqueP> ats;  // st.ataques congelados (projeteis guardam o ataque que os criou)
@@ -151,6 +187,14 @@ struct Pilha {
     std::string visual;
 };
 
+// Dinheiro caido no mapa (bananas da Fazenda, caixas de suprimentos): so entra na conta quando o
+// jogador coleta (comando C); se o tempo acabar, some.
+struct Coletavel {
+    int id;
+    double x, y, valor, vida;
+    std::string visual;
+};
+
 struct Agendado {
     double t;
     std::string nome;
@@ -177,6 +221,15 @@ public:
     char upar(int tid, int p);
     char vender(int tid);
     char mudar_modo(int tid, int modo);
+    char mirar(int tid, double x, double y);
+    // Upgrades especiais do BTD6. requisito: texto do que falta para comprar (vazio = liberado).
+    // sacrificio: texto de aviso se a compra destroi torres vizinhas (vazio = compra comum).
+    std::string requisito_upgrade(const Torre& t, int p) const;
+    std::string aviso_sacrificio(const Torre& t, int p) const;
+    char coletar(int cid);
+    void soltar(double x, double y, double valor, double vida, const std::string& visual);
+    char opcao(int tid, int valor);
+    double teto_banco(const Torre& t) const;
     char usar_habilidade(int tid, int idx);
 
     // bloons
@@ -190,6 +243,7 @@ public:
     void xp(double v);
     void pagar_renda();
     void receber(double v);  // entrada de dinheiro; metade vai para a divida do emprestimo
+    Bloon* alvo(const Torre& t, const Ataque& at, double alcance) const;  // bloon escolhido pelo modo de alvo
     AtaqueP critico(Torre& t, size_t i, const AtaqueP& at);  // conta o tiro; no critico devolve o ataque forte
     bool jogar_pocao(const TorreP& f, const Ataque& at);     // Alquimista joga uma pocao numa torre no alcance
     void evento(Evento e);
@@ -218,6 +272,7 @@ public:
     std::vector<BloonP> bloons;
     std::vector<std::unique_ptr<Projetil>> projeteis;
     std::vector<std::unique_ptr<Pilha>> pilhas;
+    std::vector<Coletavel> coletaveis;
     std::map<int, TorreP> torres;
     std::vector<Agendado> fila;
     double tempo = 0.0;
@@ -225,11 +280,17 @@ public:
     int prox_torre = 1;
     std::vector<Evento> eventos;
     std::string heroi_escolhido;
+    // modo de restricao (So Primarias, So Militares, So Magicas): categoria unica permitida; vazio = todas
+    std::string restricao;
+    bool permitida(const DefTorre& dfn) const { return dfn.heroi || restricao.empty() || dfn.categoria == restricao; }
     bool tem_heroi = false;
     int pops_total = 0;
     int vazou = 0;
     double buff_t = 0.0;
     double lentidao_global_t = 0.0, lentidao_global_f = 1.0;
+    // Lenda da Noite: segundos de buraco negro aberto na saida e recarga ate poder abrir outro
+    double buraco_t = 0.0, buraco_rec = 0.0;
+    std::vector<TorreP> necromantes;  // refeito junto com os buffs
     Pista* oponente = nullptr;
     int proximo_cam = 0;
 
@@ -241,16 +302,19 @@ private:
     void executar_habilidade(const TorreP& t, const J& h);
     std::pair<int, double> ponto_trilha_mais_avancado(const Torre& t) const;
     void invocar(const Torre& t, const std::string& base, double dur, const J& nivel);
+    void comanches(Torre& t);
     void spawns();
     void grade();
     std::vector<Bloon*> vizinhos(double x, double y, double r) const;
     void recalcular_buffs();
-    Bloon* alvo(const Torre& t, const Ataque& at, double alcance) const;
+    // ponto onde o bloon vai estar quando um projetil reto, saindo da torre, chegar nele
+    Posicao mira_antecipada(const Torre& t, const Ataque& at, const Bloon& b) const;
     void mover_torre(Torre& t);
     void passo_torre(const TorreP& t);
     AtaqueP ataque_efetivo(const Torre& t, const AtaqueP& at) const;
     void disparar(const TorreP& t, const AtaqueP& at, double ang, Bloon* alvo = nullptr);
     void aura(const TorreP& t, const AtaqueP& at, double raio);
+    void raio_em_linha(Torre& t, const Ataque& at, double ax, double ay);
     void hitscan(const TorreP& t, const AtaqueP& at, Bloon& alvo);
     void cadeia(const TorreP& t, const AtaqueP& at, Bloon& alvo);
     Bloon* mais_proximo(double x, double y, double r, const std::unordered_set<int>& excluir, bool camo);
@@ -263,12 +327,13 @@ private:
     void colidir(Projetil& p);
     void passo_pilhas();
     void mover_bloons();
+    void sacrificar(Torre& t, int p);
     void regenerar(Bloon& b);
 
     std::unordered_map<std::int64_t, std::vector<Bloon*>> grade_;
 };
 
-// Uma partida: solo (1 pista) ou batalha (2 pistas).
+// Uma partida: solo (1 pista), batalha (2 pistas) ou coop (1 pista, 2 jogadores em rede).
 class Partida {
 public:
     Partida(const std::string& modo, const std::string& mapa, int seed = 1, const std::string& dificuldade = "medio",
@@ -278,17 +343,21 @@ public:
     char aplicar(int jogador, const std::string& cmd);
     char enviar(int jogador, const std::string& chave);
     char iniciar_rodada();
+    // Sandbox: "b:<bloon>:<qtd>:<c|r|f...>", "r:<rodada>", "l" (limpa bloons), "t" (limpa torres), "h" (recarrega)
+    char comando_sandbox(const std::string& corpo);
     // BTD6: depois de vencer no solo, da para seguir jogando em freeplay (sem ultima rodada)
     bool continuar_freeplay();
     bool em_freeplay = false;
+    bool sandbox = false;
     void passo();
     double tempo_para_rodada() const;
     double tempo_para_eco() const;
     // Segundos ate o jogador poder repetir este envio (0 = liberado). So leitura, para a interface.
     double recarga_envio(int jogador, const std::string& chave) const;
     std::uint32_t hash() const;
-    Pista& pista(int j) { return *pistas.at(j); }
-    const Pista& pista(int j) const { return *pistas.at(j); }
+    // no coop so existe a pista 1: o jogador 2 enxerga e age na mesma
+    Pista& pista(int j) { return *pistas.at(modo == "coop" ? 1 : j); }
+    const Pista& pista(int j) const { return *pistas.at(modo == "coop" ? 1 : j); }
 
     std::string modo;
     const Mapa& mapa;

@@ -13,6 +13,9 @@ coloca macacos (torres) para estourá-los. Tem dois modos:
 - **Batalha (2 jogadores em rede):** cada jogador defende a própria pista e gasta dinheiro para
   **enviar bloons ao oponente**. Cada envio aumenta a renda (eco), paga a cada 6 s. Perde quem
   zerar as 150 vidas primeiro.
+- **Coop em LAN (2 jogadores no mesmo time):** quem hospeda escolhe "Modo: Coop" na tela de
+  hospedar. Os dois defendem a **mesma pista** contra as mesmas rodadas, com vidas e dinheiro
+  comuns. Veja a seção 2.1.
 
 Conteúdo:
 
@@ -61,6 +64,23 @@ Threads:
 | Cliente | rede-hb | heartbeat a cada 2 s |
 | Cliente | principal (raylib) | consome a fila, simula e desenha |
 
+### 2.1 Modo Coop (design)
+
+Reaproveita a rede, a sala de espera e o lockstep da Batalha; não há segundo protocolo. Decisões
+(a opção mais simples que funciona):
+
+| Questão | Decisão |
+|---|---|
+| Ordenação dos comandos | Igual à Batalha: o servidor enfileira os comandos dos dois e os transmite no tick. Os dois clientes aplicam todos na **mesma pista** (`Partida` com modo `"coop"`, uma só `Pista`). Os comandos dos dois jogadores só mudam de ordem pela fila do servidor, que é única, então não há divergência. |
+| Vidas e dinheiro | Comuns (um só caixa e 150 vidas). Evita reescrever a economia por jogador. |
+| Propriedade das torres | Nenhuma: qualquer um coloca, melhora, vende e usa habilidade em qualquer torre. |
+| Herói | Um só por pista: o do anfitrião (jogador 1). O herói do jogador 2 é ignorado. |
+| Rodadas | Como no solo (dificuldade Médio, 60 rodadas). Qualquer um inicia a rodada com Espaço ou pelo botão, enviando `1N`/`2N`; se já houver rodada em andamento o comando é recusado de forma idêntica nos dois clientes. Sem velocidade 3x nem rodada automática (mudariam a simulação só num PC e quebrariam o lockstep). |
+| Fim | Vitória: chegar à última rodada. Derrota: vidas zeradas. Se o parceiro sai ou desiste, o servidor envia `0F0` (fim sem vencedor) e a tela mostra "PARCEIRO SAIU". |
+| Menu e sala | Tela de hospedar tem o botão "Modo: Batalha 1v1 / Coop". Quem entra não escolhe o modo: ele vem na mensagem de início (`0I...,coop`). |
+| Exclusão mútua | Nada novo: `Sala` continua com `lock_sala`/`lock_fila`/`lock_hash`. O flag `coop` é escrito uma vez antes de qualquer thread existir e só lido depois. |
+| Placar em memória compartilhada | Inalterado: cada cliente escreve a própria linha (no coop as duas mostram a mesma pista). |
+
 ## 3. Notação de mensagens
 
 Uma mensagem por linha ASCII terminada em `\n`: `<origem><comando><argumentos>`.
@@ -71,17 +91,22 @@ Origem `0` = servidor, `1`/`2` = jogador.
 | `1Jquincy,prado` | C→S | entrar com o herói Quincy, sugerindo o mapa "prado" |
 | `0J1` | S→C | você é o jogador 1 |
 | `0I8231,prado,quincy,adora` | S→todos | início: semente, mapa, herói do J1, herói do J2 |
+| `0I8231,prado,quincy,adora,coop` | S→todos | idem, partida cooperativa (uma pista só) |
 | `1Tdardo@230,250` | C→S | colocar Macaco Dardo em (230, 250) |
 | `1U12:0` | C→S | upgrade da torre 12 no caminho 0 |
 | `1V12` | C→S | vender a torre 12 |
 | `1M12:3` | C→S | alvo da torre 12: 0 primeiro, 1 último, 2 perto, 3 forte |
 | `1B12:0` | C→S | usar a habilidade 0 da torre 12 |
 | `2Sr8` | C→S | jogador 2 envia "8 Vermelhos" ao oponente |
+| `1N` | C→S | coop: iniciar a próxima rodada (qualquer um dos dois) |
+| `1A12@300,200` | C→S | ponto de mira da torre 12 (Dartling, Helicóptero, Ás) |
+| `1O12:1` | C→S | opção da torre 12 (mão do Bumerangue, rota do Heli) |
+| `1C345` | C→S | coletar a banana ou caixa de id 345 |
 | `0K451\|1Tdardo@230,250\|2Sr8` | S→todos | tick 451 com os comandos a aplicar, em ordem |
 | `1H450,123456` | C→S | hash do estado no tick 450 |
 | `0D450` | S→todos | estados divergiram no tick 450 |
 | `1F` | C→S | desistir |
-| `0F2` | S→todos | fim de jogo, jogador 2 venceu |
+| `0F2` | S→todos | fim de jogo, jogador 2 venceu (`0F0` no coop: parceiro saiu, sem vencedor) |
 | `0X1M` | S→C | erro do jogador 1 (M = mensagem inválida, S = sala cheia, O = fora de hora) |
 | `1P` / `0P` | ambos | heartbeat (8 s sem nada = desconectado) |
 
@@ -152,6 +177,10 @@ publicado pelo servidor.
   mapa do oponente (tecla O).
 - **45 a 60 s:** usar uma habilidade, vidas zerando, tela de vitória e derrota.
 
+Variação com o modo Coop (se o vídeo mostrar o coop em vez da batalha): hospedar com "Modo: Coop",
+o outro entra pelo IP, os dois colocam torres na mesma pista (F1 mostra `1T...` e `2T...` dentro do
+mesmo `0K...`), um aperta Espaço (`1N`) e a rodada começa nos dois PCs.
+
 ## 6. Respostas do formulário
 
 **Como e quais informações são trocadas entre os processos?**
@@ -160,7 +189,7 @@ publicado pelo servidor.
 > texto `<origem><comando><argumentos>` (origem 0 = servidor, 1 ou 2 = jogador). Os clientes
 > enviam só as ações do jogador: colocar torre (`1Tdardo@230,250`), upgrade (`1U12:0`), venda
 > (`1V12`), prioridade de alvo (`1M12:3`), habilidade (`1B12:0`) e envio de bloons ao oponente
-> (`2Sr8`). O servidor põe as ações numa fila e, 15 vezes por segundo, transmite um tick com todas
+> (`2Sr8`); no modo Coop também iniciar a rodada (`1N`). O servidor põe as ações numa fila e, 15 vezes por segundo, transmite um tick com todas
 > elas em ordem (`0K451|1Tdardo@230,250|2Sr8`). Os dois clientes aplicam os mesmos comandos no
 > mesmo tick numa simulação determinística e chegam ao mesmo estado. Também trocamos entrada
 > (`J`), início com semente, mapa e heróis (`I`), hash do estado para detectar dessincronia

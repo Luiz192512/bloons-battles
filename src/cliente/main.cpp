@@ -5,7 +5,7 @@
 #include "cliente/app.hpp"
 
 int main(int argc, char** argv) {
-    // opcoes de desenvolvimento do visual (ver cliente/vitrine.hpp): --vitrine, --demo, --captura
+    // opcoes de desenvolvimento do visual (ver cliente/vitrine.hpp): --vitrine, --demo, --sandbox, --sel, --bloons, --captura
     std::vector<std::string> args(argv + 1, argv + argc);
     bl::App app(args);
     app.rodar();

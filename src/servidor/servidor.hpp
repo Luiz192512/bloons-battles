@@ -32,12 +32,14 @@ public:
     static constexpr int TICKS_POR_SEGUNDO = 15;
 
     // Abre o socket (bind + listen). porta 0 escolhe uma livre. Lanca rede::ErroRede.
-    explicit Servidor(const std::string& host = proto::HOST_PADRAO, int porta = proto::PORTA_PADRAO);
+    explicit Servidor(const std::string& host = proto::HOST_PADRAO, int porta = proto::PORTA_PADRAO,
+                      bool coop = false);
     ~Servidor();
 
     void iniciar();
     void parar();
     int porta() const { return porta_; }
+    bool coop() const { return sala.coop; }
 
     // Chamado a cada evento importante (opcional).
     std::function<void(const std::string&)> log;
@@ -68,7 +70,7 @@ private:
     int porta_;
     std::atomic<bool> rodando_{false};
 
-    std::mutex lock_clientes_;  // protege clientes_ e todas_
+    std::mutex lock_clientes_;  // protege clientes_ e todas_ (ordem de aquisicao: lock_clientes_ -> lock_sala)
     std::map<int, ConexaoP> clientes_;
     std::vector<ConexaoP> todas_;
 

@@ -3,6 +3,7 @@
 #include <cmath>
 
 #include "cliente/arte.hpp"
+#include "cliente/modelos3d.hpp"
 #include "cliente/som.hpp"
 #include "rlgl.h"
 
@@ -51,7 +52,7 @@ void info_heroi_card(const DefTorre& h, Rectangle r) {
     const Vector2 c{r.x + 16 + 48, r.y + r.height / 2};
     DrawCircleV(c, 48, ui::TINTA);
     DrawCircleV(c, 44, rgb(247, 215, 116));
-    arte::torre_viva(h.chave, {}, c.x, c.y + 4, 86, ui::tempo());
+    if (!m3d::retrato(h.chave, c.x, c.y, 84) && !m3d::torre(h.chave, {0, 0, 0}, c.x, c.y + 26, 56, 90, anim::TipoMira::FIXA)) arte::torre_viva(h.chave, {}, c.x, c.y + 4, 86, ui::tempo());
     const float x = r.x + 132;
     ui::texto(h.nome, x, r.y + 30, 23, ui::AMARELO, 5, Ancora::MIDLEFT);
     ui::texto(h.titulo, x, r.y + 58, 14, ui::BEGE, 0, Ancora::MIDLEFT, ui::Peso::TEXTO);
@@ -66,10 +67,11 @@ void info_heroi_card(const DefTorre& h, Rectangle r) {
 CenaMenu::CenaMenu(App& a) : Cena(a) {
     const float x = 470, w = 340;
     botoes_ = {
-        {{x, 318, w, 72}, "Jogar Solo", ui::VERDE, 28},
-        {{x, 402, w, 62}, "Batalha: Hospedar", ui::AZUL, 22},
-        {{x, 476, w, 62}, "Batalha: Entrar", ui::AZUL, 22},
-        {{x, 558, w, 52}, "Sair", ui::VERMELHO, 19},
+        {{x, 316, w, 64}, "Jogar Solo", ui::VERDE, 26},
+        {{x, 388, w, 54}, "Batalha: Hospedar", ui::AZUL, 21},
+        {{x, 450, w, 54}, "Batalha: Entrar", ui::AZUL, 21},
+        {{x, 512, w, 48}, "Macacos e Upgrades", ui::AMARELO, 18},
+        {{x, 568, w, 46}, "Sair", ui::VERMELHO, 18},
     };
 }
 
@@ -80,6 +82,7 @@ void CenaMenu::evento(const ui::Evento& e) {
         if (i == 0) app.trocar(std::make_unique<CenaSolo>(app));
         else if (i == 1) app.trocar(std::make_unique<CenaBatalha>(app, true));
         else if (i == 2) app.trocar(std::make_unique<CenaBatalha>(app, false));
+        else if (i == 3) app.trocar(std::make_unique<CenaMacacos>(app));
         else app.sair();
     }
 }
@@ -130,7 +133,9 @@ const DefTorre& GradeHerois::desenhar() const {
         if (sel) ui::ret(ui::inflar(r, 4, 4), ui::TINTA, 14);
         ui::ret(r, sel ? ui::AMARELO : ui::TINTA, 12);
         ui::ret(ui::inflar(r, sel ? -8.0f : -6.0f, sel ? -8.0f : -6.0f), sel ? rgb(247, 215, 116) : sobre ? rgb(255, 246, 218) : ui::BEGE, 8);
-        arte::torre_icone(herois()[i].chave, {}, r.x + r.width / 2, r.y + r.height / 2 + 1, 50);
+        if (!m3d::retrato_em(herois()[i].chave, ui::inflar(r, -12, -12)) &&
+            !m3d::torre(herois()[i].chave, {0, 0, 0}, r.x + r.width / 2, r.y + r.height / 2 + 15, 30, 90, anim::TipoMira::FIXA))
+            arte::torre_icone(herois()[i].chave, {}, r.x + r.width / 2, r.y + r.height / 2 + 1, 50);
     }
     return *achar_heroi(escolhido);
 }
@@ -179,7 +184,100 @@ void cabecalho(const std::string& t, const std::string& sub) {
 
 }  // namespace
 
+// ====================================================================== MACACOS
+CenaMacacos::CenaMacacos(App& a) : Cena(a) {
+    voltar_ = {{24, 646, 180, 56}, "Voltar", ui::AZUL, 19};
+    voltar_.atalho = "Esc";
+}
+
+void CenaMacacos::evento(const ui::Evento& e) {
+    if (e.tipo == ui::Evento::CLIQUE)
+        for (size_t i = 0; i < torres().size(); ++i)
+            if (ui::dentro(rect_torre(i), e.pos)) {
+                torre_ = torres()[i].chave;
+                som::tocar("colocar");
+            }
+    if (voltar_.clicou(e) || (e.tipo == ui::Evento::TECLA && e.tecla == KEY_ESCAPE)) app.ir_menu();
+}
+
+void CenaMacacos::desenhar() {
+    auto cor_cat = [](const DefTorre& d) {
+        return d.categoria == "militar" ? rgb(143, 160, 74) : d.categoria == "magica" ? rgb(166, 95, 232)
+               : d.categoria == "suporte" ? rgb(242, 169, 58) : ui::AZUL;
+    };
+    auto nome_cat = [](const DefTorre& d) {
+        return d.categoria == "militar" ? "Militar" : d.categoria == "magica" ? "Mágica" : d.categoria == "suporte" ? "Suporte" : "Primária";
+    };
+    auto boneco = [](const std::string& chave, const std::array<int, 3>& cam, float x, float y, float px) {
+        if (!m3d::torre(chave, cam, x, y, px, 90, anim::TipoMira::FIXA)) arte::torre_icone(chave, {}, x, y - px * 0.4f, px * 1.7f);
+    };
+    ui::fundo_gradiente(rgb(90, 170, 70), rgb(47, 107, 40));
+    cabecalho("Macacos e Upgrades", "os 3 caminhos e os 15 upgrades de cada torre");
+    const Vector2 m = ui::mouse();
+    painel_passo({24, 80, 292, 548}, "");
+    for (size_t i = 0; i < torres().size(); ++i) {
+        const DefTorre& d = torres()[i];
+        const bool sel = d.chave == torre_, sobre = ui::dentro(rect_torre(i), m);
+        const Rectangle r = ui::mover(rect_torre(i), 0, sobre && !sel ? -2.0f : 0);
+        ui::ret(r, sel ? ui::AMARELO : ui::TINTA, 10);
+        const Rectangle f = ui::inflar(r, -6, -6);
+        ui::ret(f, sobre || sel ? rgb(255, 246, 218) : ui::BEGE, 7);
+        DrawRectangleRec({f.x + 2, f.y, f.width - 4, 3}, cor_cat(d));
+        if (!m3d::retrato_em(d.chave, {f.x, f.y + 3, f.width, f.height - 3})) boneco(d.chave, {0, 0, 0}, r.x + r.width / 2, r.y + 44, 32);
+    }
+    const DefTorre& d = definicao(torre_);
+    painel_passo({332, 80, 924, 548}, "");
+    // upgrade sob o cursor: o boneco do topo mostra aquela variacao
+    std::array<int, 3> cam{0, 0, 0};
+    for (int p = 0; p < 3; ++p)
+        for (int k = 0; k < 5; ++k)
+            if (ui::dentro(rect_up(p, k), m)) cam[static_cast<size_t>(p)] = k + 1;
+    DrawEllipse(410, 196, 58, 16, ui::com_alfa(ui::TINTA, 90));
+    boneco(d.chave, cam, 410, 186, 66);
+    ui::texto(d.nome, 490, 116, 26, ui::BRANCO, 5, Ancora::MIDLEFT);
+    const float wn = ui::medir(d.nome, 26).x;
+    ui::pilula(nome_cat(d), 490 + wn + 60, 116, cor_cat(d), ui::TINTA, 12);
+    ui::pilula_preco(d.custo, 490 + wn + 150, 116, true, 13);
+    ui::texto(d.desc, 490, 150, 14, ui::BEGE, 0, Ancora::MIDLEFT, ui::Peso::TEXTO);
+    ui::texto("Passe o cursor num upgrade para ver o macaco com ele. Preços do nível Médio.", 490, 176, 12,
+              rgb(217, 191, 134), 0, Ancora::MIDLEFT, ui::Peso::TEXTO);
+    for (int p = 0; p < 3 && p < static_cast<int>(d.caminhos.size()); ++p) {
+        for (int k = 0; k < 5 && k < static_cast<int>(d.caminhos[static_cast<size_t>(p)].size()); ++k) {
+            const Upgrade& u = d.caminhos[static_cast<size_t>(p)][static_cast<size_t>(k)];
+            const Rectangle r = rect_up(p, k);
+            const bool sobre = ui::dentro(r, m);
+            ui::ret(r, sobre ? ui::AMARELO : ui::TINTA, 10);
+            const Rectangle f = ui::inflar(r, -6, -6);
+            ui::ret(f, sobre ? rgb(255, 246, 218) : ui::BEGE, 7);
+            DrawRectangleRec({f.x + 2, f.y, f.width - 4, 3}, k >= 4 ? ui::VERMELHO : k >= 2 ? ui::AMARELO : ui::VERDE);
+            ui::tecla_centro(std::to_string(k + 1), f.x + 12, f.y + 15, 9);
+            float y = f.y + 15;
+            for (const std::string& l : ui::quebrar(u.nome, 12, f.width - 34)) {
+                ui::texto(l, f.x + 26, y, 12, ui::MADEIRA_ESCURA, 0, Ancora::MIDLEFT);
+                y += 14;
+            }
+            ui::texto("$" + ui::formatar(u.custo), f.x + f.width - 6, f.y + f.height - 11, 12, rgb(110, 69, 35), 0, Ancora::MIDRIGHT);
+            y = std::max(y, f.y + 44) + 2;
+            int linhas = 0;
+            for (const std::string& l : ui::quebrar(u.desc.empty() ? std::string("Melhora o anterior.") : u.desc, 11, f.width - 12, ui::Peso::TEXTO)) {
+                if (++linhas > 5 || y > f.y + f.height - 24) break;
+                ui::texto(l, f.x + 6, y, 11, rgb(70, 44, 24), 0, Ancora::MIDLEFT, ui::Peso::TEXTO);
+                y += 13;
+            }
+        }
+    }
+    voltar_.desenhar();
+}
+
 // ====================================================================== SOLO
+namespace {
+struct Restricao {
+    const char* chave;
+    const char* nome;
+};
+const Restricao RESTRICOES[4] = {{"", "Todas as torres"}, {"primaria", "Só Primárias"}, {"militar", "Só Militares"}, {"magica", "Só Mágicas"}};
+}  // namespace
+
 CenaSolo::CenaSolo(App& a) : Cena(a) {
     voltar_ = {{24, 646, 180, 56}, "Voltar", ui::AZUL, 19};
     voltar_.atalho = "Esc";
@@ -194,12 +292,14 @@ void CenaSolo::evento(const ui::Evento& e) {
             if (ui::dentro(rect_mapa(i), e.pos)) mapa_ = mapas()[i].chave;
         for (size_t i = 0; i < DIFICULDADES.size(); ++i)
             if (ui::dentro(rect_dif(i), e.pos)) dif_ = DIFICULDADES[i].chave;
+        for (size_t i = 0; i < 4; ++i)
+            if (ui::dentro(rect_restricao(i), e.pos)) restricao_ = RESTRICOES[i].chave;
     }
     if (voltar_.clicou(e) || (e.tipo == ui::Evento::TECLA && e.tecla == KEY_ESCAPE)) app.ir_menu();
     if (jogar_.clicou(e) || (e.tipo == ui::Evento::TECLA && e.tecla == KEY_ENTER)) {
         som::tocar("rodada");
         int seed = std::uniform_int_distribution<int>(1, 999999)(app.rng);
-        app.iniciar_jogo(std::make_unique<ControladorSolo>(mapa_, dif_, herois_.escolhido, seed));
+        app.iniciar_jogo(std::make_unique<ControladorSolo>(mapa_, dif_, herois_.escolhido, seed, restricao_));
     }
 }
 
@@ -226,8 +326,17 @@ void CenaSolo::desenhar() {
         ui::ret({f.x + 4, f.y + 2, f.width - 8, 3}, rgb(255, 255, 255, 77), 2);
         ui::texto(d.nome, r.x + r.width / 2, r.y + 20, 15, sel ? ui::BRANCO : ui::MADEIRA_ESCURA, sel ? 4 : 0, Ancora::CENTER);
         const std::string vidas = std::to_string(d.vidas) + (d.vidas == 1 ? " vida" : " vidas");
-        ui::texto(vidas + " · R" + std::to_string(d.primeira_rodada) + " a R" + std::to_string(d.ultima_rodada),
+        ui::texto(d.sandbox ? std::string("dinheiro e vidas infinitos")
+                            : vidas + " · R" + std::to_string(d.primeira_rodada) + " a R" + std::to_string(d.ultima_rodada),
                   r.x + r.width / 2, r.y + 40, 11, sel ? ui::BRANCO : rgb(110, 69, 35), 0, Ancora::CENTER, ui::Peso::TEXTO);
+    }
+    for (size_t i = 0; i < 4; ++i) {
+        const bool sel = restricao_ == RESTRICOES[i].chave;
+        const Rectangle r = rect_restricao(i);
+        ui::ret(r, ui::TINTA, 12);
+        ui::ret(ui::inflar(r, -3, -3), sel ? ui::VERDE : ui::dentro(r, m) ? rgb(255, 246, 218) : ui::BEGE, 9);
+        ui::texto(RESTRICOES[i].nome, r.x + r.width / 2, r.y + 12, 11, sel ? ui::BRANCO : ui::MADEIRA_ESCURA, sel ? 3 : 0,
+                  Ancora::CENTER);
     }
     painel_passo({24, 452, 1232, 176}, "3 · Herói");
     const DefTorre& h = herois_.desenhar();
@@ -251,6 +360,7 @@ CenaBatalha::CenaBatalha(App& a, bool hospedar) : Cena(a), hospedar_(hospedar) {
     voltar_.atalho = "Esc";
     ir_ = {{ui::LARGURA - 304.0f, 638, 280, 68}, hospedar ? "HOSPEDAR" : "CONECTAR", ui::VERDE, 24};
     ir_.atalho = "Enter";
+    modo_ = {{900, 338, 332, 42}, "Modo: Batalha 1v1", ui::AZUL, 18};
     if (!hospedar_) herois_ = GradeHerois{40, 380, 9, 58};
 }
 
@@ -258,6 +368,7 @@ void CenaBatalha::evento(const ui::Evento& e) {
     herois_.evento(e);
     if (!hospedar_) ip_.evento(e);
     porta_.evento(e);
+    if (hospedar_ && modo_.clicou(e)) coop_ = !coop_;
     if (hospedar_ && e.tipo == ui::Evento::CLIQUE)
         for (size_t i = 0; i < mapas().size(); ++i)
             if (ui::dentro(rect_mapa(i), e.pos)) mapa_ = mapas()[i].chave;
@@ -281,7 +392,7 @@ void CenaBatalha::conectar() {
     if (hospedar_) {
         try {
             // escuta em todas as interfaces: o oponente vem pela rede local
-            servidor = std::make_shared<Servidor>("0.0.0.0", porta);
+            servidor = std::make_shared<Servidor>("0.0.0.0", porta, coop_);
             servidor->iniciar();
         } catch (const std::exception& ex) {
             erro_ = "Não foi possível abrir a porta " + std::to_string(porta) + ": " + ex.what();
@@ -305,12 +416,18 @@ void CenaBatalha::conectar() {
 void CenaBatalha::desenhar() {
     ui::fundo_gradiente(rgb(58, 120, 200), rgb(29, 63, 116));
     if (hospedar_) {
-        cabecalho("Hospedar batalha", "Você será o servidor da partida");
+        cabecalho(coop_ ? "Hospedar coop" : "Hospedar batalha", "Você será o servidor da partida");
         painel_passo({24, 80, 1232, 236}, "1 · Mapa");
         desenhar_mapas(40, 1200, mapa_, true);
         painel_passo({24, 332, 1232, 104}, "2 · Porta");
         porta_.desenhar();
-        ui::texto("Porta TCP que ficará aberta. Libere no firewall se o oponente estiver em outro PC.", 214, 398, 14,
+        modo_.rotulo = coop_ ? "Modo: Coop (2 no mesmo time)" : "Modo: Batalha 1v1";
+        modo_.cor = coop_ ? ui::VERDE : ui::AZUL;
+        modo_.desenhar();
+        ui::texto(coop_ ? "Os dois defendem a mesma pista, com vidas e dinheiro comuns."
+                        : "Cada um defende a sua pista e envia bloons ao outro.",
+                  modo_.rect.x + modo_.rect.width, modo_.rect.y + 62, 12, ui::BEGE, 0, Ancora::MIDRIGHT, ui::Peso::TEXTO);
+        ui::texto("Porta TCP que ficará aberta. Libere no firewall se o outro jogador estiver em outro PC.", 214, 398, 14,
                   ui::BEGE, 0, Ancora::MIDLEFT, ui::Peso::TEXTO);
         painel_passo({24, 452, 1232, 176}, "3 · Herói");
         const DefTorre& h = herois_.desenhar();
@@ -366,7 +483,7 @@ void CenaLobby::atualizar(double dt) {
             auto ctl = std::make_unique<ControladorBatalha>(
                 con_, con_->numero(), msg.seed, msg.mapa,
                 std::map<int, std::string>{{1, msg.herois[1]}, {2, msg.herois[2]}}, servidor_, std::move(pendentes),
-                porta_);
+                porta_, msg.coop);
             iniciou_ = true;
             som::tocar("rodada");
             app.iniciar_jogo(std::move(ctl));
@@ -383,7 +500,7 @@ void CenaLobby::desenhar() {
     ui::painel_menu(r, 24);
     // status com os pontos em largura fixa (o texto centralizado nao "treme" mais)
     const bool aguardando = status_.rfind("Você é o jogador", 0) == 0;
-    const std::string txt = aguardando ? "Aguardando oponente" : status_;
+    const std::string txt = aguardando ? "Aguardando o outro jogador" : status_;
     const float wt = ui::medir(txt, 21).x;
     const float wj = aguardando ? ui::medir("JOGADOR 1", 12).x + 24 : 0;
     const float total = wj + (aguardando ? 12 : 0) + wt + 12 + 48;
@@ -404,8 +521,9 @@ void CenaLobby::desenhar() {
         DrawCircleV({x + 6 + i * 16.0f, cy + 4}, 5, aceso ? ui::BRANCO : rgb(255, 255, 255, 90));
     }
     if (servidor_) {
-        ui::texto("Seu oponente deve usar \"Batalha: Entrar\" com:", r.x + r.width / 2, r.y + 90, 17, ui::BEGE, 0,
-                  Ancora::CENTER, ui::Peso::TEXTO);
+        ui::texto(std::string(servidor_->coop() ? "Seu parceiro (coop)" : "Seu oponente") +
+                      " deve usar \"Batalha: Entrar\" com:",
+                  r.x + r.width / 2, r.y + 90, 17, ui::BEGE, 0, Ancora::CENTER, ui::Peso::TEXTO);
         // cartao com IP e porta: o que precisa ser ditado ao amigo
         const Rectangle c{r.x + 36, r.y + 116, r.width - 72, 112};
         ui::ret(ui::inflar(c, 6, 6), ui::TINTA, 18);

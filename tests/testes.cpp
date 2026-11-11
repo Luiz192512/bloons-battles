@@ -127,6 +127,23 @@ TESTE(protocolo_ida_e_volta) {
     CHECA(m.comando == P::ERRO && m.jogador == 1 && m.codigo == 'M');
 }
 
+TESTE(protocolo_coop) {
+    CHECA_IGUAL(P::rodada(2), std::string("2N\n"));
+    CHECA_IGUAL(P::inicio(8231, "prado", "quincy", "adora", true), std::string("0I8231,prado,quincy,adora,coop\n"));
+    CHECA(!P::interpretar(P::inicio(7, "prado", "quincy", "psi")).coop);
+    CHECA(P::interpretar(P::inicio(7, "prado", "quincy", "psi", true)).coop);
+    auto m = P::interpretar(P::rodada(1));
+    CHECA(m.comando == P::RODADA && m.cmd == "N");
+    CHECA(P::comando_valido("N") && !P::comando_valido("N1") && P::eh_comando_jogo('N'));
+    bool lancou = false;
+    try {
+        P::interpretar("0I7,prado,quincy,psi,versus");
+    } catch (const P::MensagemInvalida&) {
+        lancou = true;
+    }
+    CHECA(lancou);
+}
+
 TESTE(protocolo_invalidas) {
     for (const char* l : {"", "X", "1Z", "1Tdardo@x,4", "1U5:7", "1V", "1M3:9", "0Fx", "1Pextra", "1J", "1Jso_um",
                           "0K1|9Tdardo@1,1", "0K1|1Qqq", "1Tdardo@12345,1", "0Ix,prado,a,b", "1H1"}) {
@@ -314,6 +331,554 @@ TESTE(btd6_armadilha_e_emprestimo) {
     CHECA_IGUAL(pi.divida, 75.0);
 }
 
+TESTE(b28_projetil_antecipa_o_alvo_na_borda_do_alcance) {
+    // um rosa cruzando a linha de tiro a 175 px: sem antecipar, o dardo passava 50 px atras dele
+    Partida p = solo();
+    Pista& pi = p.pista(1);
+    pi.dinheiro = 1e6;
+    CHECA_IGUAL(p.aplicar(1, "Tdardo@240,285"), OK);
+    for (int k = 0; k < 2; ++k) CHECA_IGUAL(p.aplicar(1, "U1:2"), OK);
+    BloonP rosa = pi.criar_bloon("rosa", 430);
+    for (int i = 0; i < 15; ++i) p.passo();
+    CHECA(!rosa->vivo);
+}
+
+TESTE(b01_dartling_atira_no_ponto_mirado) {
+    Partida p = solo();
+    Pista& pi = p.pista(1);
+    pi.dinheiro = 1e6;
+    CHECA_IGUAL(p.aplicar(1, "Tdartling@700,300"), OK);
+    CHECA_IGUAL(p.aplicar(1, "Tdardo@300,240"), OK);
+    CHECA_IGUAL(p.aplicar(1, "A2@100,100"), ERRO_INVALIDO);  // so a Dartling mira num ponto
+    CHECA_IGUAL(p.aplicar(1, "A1@5000,100"), ERRO_INVALIDO);
+    CHECA_IGUAL(p.aplicar(1, "V2"), OK);
+    // mira para longe do bloon: ele passa ileso; mira nele: estoura
+    CHECA_IGUAL(p.aplicar(1, "A1@1000,700"), OK);
+    BloonP b = pi.criar_bloon("vermelho", 50);
+    for (int i = 0; i < 30; ++i) p.passo();
+    CHECA(b->vivo);
+    for (int i = 0; i < 90 && b->vivo; ++i) {
+        p.aplicar(1, "A1@" + std::to_string(static_cast<int>(b->x) + 10) + "," + std::to_string(static_cast<int>(b->y)));
+        p.passo();
+    }
+    CHECA(!b->vivo);
+}
+
+TESTE(b02_morteiro_bombardeia_o_ponto_fixo) {
+    Partida p = solo();
+    Pista& pi = p.pista(1);
+    pi.dinheiro = 1e6;
+    CHECA_IGUAL(p.aplicar(1, "Tmorteiro@700,300"), OK);
+    for (int k = 0; k < 2; ++k) CHECA_IGUAL(p.aplicar(1, "U1:2"), OK);  // mais preciso
+    // ponto fixo longe da trilha: o bloon atravessa a entrada sem levar nada
+    CHECA_IGUAL(p.aplicar(1, "A1@1000,650"), OK);
+    BloonP a = pi.criar_bloon("vermelho", 20);
+    for (int i = 0; i < 90; ++i) p.passo();
+    CHECA(a->vivo);
+    // toda bomba cai perto do ponto fixo, e nao no bloon
+    int bombas = 0;
+    for (int i = 0; i < 150; ++i) {
+        p.passo();
+        for (auto& pr : pi.projeteis) {
+            ++bombas;
+            CHECA(std::abs(pr->x - 1000) < 80 && std::abs(pr->y - 650) < 80);
+        }
+    }
+    CHECA(bombas > 0);
+    // ponto fixo em cima de um bloon parado na trilha: ele estoura
+    BloonP b = pi.criar_bloon("vermelho", 300);
+    b->atord_t = 60;
+    p.passo();
+    CHECA_IGUAL(p.aplicar(1, "A1@" + std::to_string(static_cast<int>(b->x)) + "," + std::to_string(static_cast<int>(b->y))), OK);
+    for (int i = 0; i < 300 && b->vivo; ++i) p.passo();
+    CHECA(!b->vivo);
+}
+
+TESTE(b03_tiro_critico_avisa_o_cliente) {
+    Partida p = solo();
+    Pista& pi = p.pista(1);
+    pi.dinheiro = 1e6;
+    CHECA_IGUAL(p.aplicar(1, "Tdardo@230,250"), OK);
+    for (int k = 0; k < 4; ++k) CHECA_IGUAL(p.aplicar(1, "U1:2"), OK);  // Sharp Shooter
+    Torre& t = *pi.torres.at(1);
+    auto conta = [&] {
+        int n = 0;
+        for (auto& e : pi.eventos) n += e.tipo == "crit";
+        return n;
+    };
+    BloonP b = pi.criar_bloon("ceramica", 100);
+    pi.eventos.clear();
+    pi.aplicar_dano(*b, 1, *t.ats[0], &t);
+    CHECA_IGUAL(conta(), 0);  // tiro comum nao mostra CRIT
+    AtaqueP c = t.ats[0];
+    for (int k = 0; k < 20 && !c->critico; ++k) c = pi.critico(t, 0, t.ats[0]);
+    CHECA(c->critico);
+    pi.aplicar_dano(*b, 1, *c, &t);
+    CHECA_IGUAL(conta(), 1);
+}
+
+TESTE(b29_bumerangue_troca_de_mao) {
+    // o mesmo arremesso curva para lados opostos conforme a mao
+    auto lado = [](int mao) {
+        Partida p = solo();
+        Pista& pi = p.pista(1);
+        pi.dinheiro = 1e6;
+        CHECA_IGUAL(p.aplicar(1, "Tbumerangue@300,240"), OK);
+        CHECA_IGUAL(p.aplicar(1, "O1:" + std::to_string(mao)), OK);
+        CHECA_IGUAL(p.aplicar(1, "O1:2"), ERRO_INVALIDO);
+        BloonP b = pi.criar_bloon("chumbo", 500);  // chumbo nao estoura: o bumerangue segue o arco
+        b->atord_t = 60;
+        p.passo();
+        const Torre& t = *pi.torres.at(1);
+        const double dx = b->x - t.x, dy = b->y - t.y;
+        for (int i = 0; i < 40; ++i) {
+            p.passo();
+            if (!pi.projeteis.empty()) {
+                const Projetil& pr = *pi.projeteis.front();
+                const double cruz = dx * (pr.y - t.y) - dy * (pr.x - t.x);
+                if (std::abs(cruz) > 500) return cruz > 0 ? 1 : -1;
+            }
+        }
+        return 0;
+    };
+    const int direita = lado(0), esquerda = lado(1);
+    CHECA(direita != 0);
+    CHECA_IGUAL(esquerda, -direita);
+    Partida p = solo();
+    p.pista(1).dinheiro = 1e6;
+    CHECA_IGUAL(p.aplicar(1, "Tdardo@300,240"), OK);
+    CHECA_IGUAL(p.aplicar(1, "O1:1"), ERRO_INVALIDO);  // so o Bumerangue tem mao
+}
+
+TESTE(b04_sandbox_dinheiro_vidas_e_comandos) {
+    Partida p("solo", "prado", 1, "sandbox");
+    Pista& pi = p.pista(1);
+    CHECA(p.sandbox);
+    CHECA_IGUAL(p.aplicar(1, "Tsuper@600,500"), OK);
+    for (int k = 0; k < 5; ++k) CHECA_IGUAL(p.aplicar(1, "U1:1"), OK);  // The Anti-Bloon sem juntar dinheiro
+    p.passo();
+    CHECA_IGUAL(pi.dinheiro, 9999999.0);
+    // envia bloons com propriedades e uma rodada inteira
+    CHECA_IGUAL(p.aplicar(1, "Xb:ceramica:3:cf"), OK);
+    CHECA_IGUAL(p.aplicar(1, "Xb:nao_existe:3"), ERRO_INVALIDO);
+    CHECA_IGUAL(p.aplicar(1, "Xb:vermelho:0"), ERRO_INVALIDO);
+    for (int i = 0; i < 30; ++i) p.passo();
+    CHECA(!pi.bloons.empty());
+    CHECA(pi.bloons.front()->camo && pi.bloons.front()->fort);
+    CHECA_IGUAL(p.aplicar(1, "Xl"), OK);
+    p.passo();
+    CHECA(pi.bloons.empty() && pi.fila.empty());
+    CHECA_IGUAL(p.aplicar(1, "Xr:40"), OK);
+    CHECA_IGUAL(p.rodada, 40);
+    CHECA(!pi.fila.empty());
+    // nada de derrota: mesmo vazando um BAD as vidas voltam
+    CHECA_IGUAL(p.aplicar(1, "Xt"), OK);
+    CHECA(pi.torres.empty());
+    for (int i = 0; i < 30 * 200 && !p.fim; ++i) p.passo();
+    CHECA(!p.fim);
+    CHECA_IGUAL(pi.vidas, 999999);
+    // habilidades recarregadas na hora
+    CHECA_IGUAL(p.aplicar(1, "Tsuper@600,500"), OK);
+    const int id = pi.torres.rbegin()->first;
+    for (int k = 0; k < 4; ++k) CHECA_IGUAL(p.aplicar(1, "U" + std::to_string(id) + ":1"), OK);
+    CHECA(pi.torres.at(id)->hab_rec[0] > 0);
+    CHECA_IGUAL(p.aplicar(1, "Xh"), OK);
+    CHECA_IGUAL(pi.torres.at(id)->hab_rec[0], 0.0);
+    // fora do Sandbox os comandos X nao existem
+    Partida n = solo();
+    CHECA_IGUAL(n.aplicar(1, "Xb:vermelho:5"), ERRO_INVALIDO);
+}
+
+TESTE(b05_as_rotas_e_rota_centralizada) {
+    Partida p("solo", "prado", 1, "sandbox");
+    Pista& pi = p.pista(1);
+    CHECA_IGUAL(p.aplicar(1, "Tas@600,360"), OK);
+    const Torre& t = *pi.torres.at(1);
+    // cada rota varre uma caixa diferente em volta da pista
+    auto caixa = [&](int rota) {
+        CHECA_IGUAL(p.aplicar(1, "O1:" + std::to_string(rota)), OK);
+        double minx = 1e9, maxx = -1e9, miny = 1e9, maxy = -1e9;
+        for (int i = 0; i < 30 * 12; ++i) {
+            p.passo();
+            if (i < 5) continue;
+            minx = std::min(minx, t.x), maxx = std::max(maxx, t.x), miny = std::min(miny, t.y), maxy = std::max(maxy, t.y);
+        }
+        return std::make_pair(maxx - minx, maxy - miny);
+    };
+    const auto circ = caixa(0), inf = caixa(1), oito = caixa(2);
+    CHECA(inf.first > circ.first * 1.4 && inf.second < circ.second);    // largo e baixo
+    CHECA(oito.second > circ.second * 1.4 && oito.first < circ.first);  // alto e estreito
+    // Rota Centralizada so depois do upgrade (caminho 3, tier 2)
+    CHECA_IGUAL(p.aplicar(1, "O1:3"), ERRO_BLOQUEADO);
+    CHECA_IGUAL(p.aplicar(1, "A1@200,200"), ERRO_INVALIDO);
+    for (int k = 0; k < 2; ++k) CHECA_IGUAL(p.aplicar(1, "U1:2"), OK);
+    CHECA_IGUAL(p.aplicar(1, "A1@200,200"), OK);
+    CHECA_IGUAL(t.rota, 3);
+    for (int i = 0; i < 60; ++i) p.passo();
+    CHECA(std::hypot(t.x - 200, t.y - 200) < 120);
+}
+
+TESTE(b06_heli_ponto_fixo_e_patrulha) {
+    Partida p("solo", "prado", 1, "sandbox");
+    Pista& pi = p.pista(1);
+    CHECA_IGUAL(p.aplicar(1, "Theli@600,360"), OK);
+    const Torre& t = *pi.torres.at(1);
+    // ponto mirado: voa ate la e fica, mesmo com bloon passando perto do heliponto
+    CHECA_IGUAL(p.aplicar(1, "A1@900,100"), OK);
+    CHECA_IGUAL(t.rota, 1);
+    pi.criar_bloon("vermelho", 900);
+    for (int i = 0; i < 30 * 4; ++i) p.passo();
+    CHECA(std::hypot(t.x - 900, t.y - 100) < 6);
+    // patrulha: vai e volta entre o heliponto e o ponto
+    CHECA_IGUAL(p.aplicar(1, "O1:2"), OK);
+    double perto_base = 1e9, perto_ponto = 1e9;
+    for (int i = 0; i < 30 * 10; ++i) {
+        p.passo();
+        perto_base = std::min(perto_base, std::hypot(t.x - 600, t.y - 360));
+        perto_ponto = std::min(perto_ponto, std::hypot(t.x - 900, t.y - 100));
+    }
+    CHECA(perto_base < 20 && perto_ponto < 20);
+    CHECA_IGUAL(p.aplicar(1, "O1:3"), ERRO_INVALIDO);
+    CHECA_IGUAL(p.aplicar(1, "O1:0"), OK);  // volta a procurar bloons sozinho
+}
+
+TESTE(b12_turbilhao_lanca_laminas_em_espiral) {
+    Partida p("solo", "prado", 1, "sandbox");
+    Pista& pi = p.pista(1);
+    CHECA_IGUAL(p.aplicar(1, "Ttachinha@600,360"), OK);
+    for (int k = 0; k < 4; ++k) CHECA_IGUAL(p.aplicar(1, "U1:1"), OK);  // Turbilhao de Laminas
+    CHECA_IGUAL(p.aplicar(1, "Xh"), OK);
+    CHECA_IGUAL(p.aplicar(1, "B1:0"), OK);
+    // sem bloon nenhum no mapa, as laminas saem assim mesmo e passam longe do alcance da torre
+    double longe = 0;
+    std::set<int> direcoes;
+    for (int i = 0; i < 30 * 3; ++i) {
+        p.passo();
+        for (auto& pr : pi.projeteis) {
+            longe = std::max(longe, std::hypot(pr->x - 600, pr->y - 360));
+            direcoes.insert(static_cast<int>(std::fmod(pr->ang + 720, 360) / 30));
+        }
+    }
+    CHECA(longe > 300);
+    CHECA(direcoes.size() >= 10);  // o giro cobre quase todos os setores de 30 graus
+    for (int i = 0; i < 30 * 6; ++i) p.passo();
+    CHECA(pi.projeteis.empty());  // acabou junto com a habilidade
+}
+
+TESTE(b14_lenda_da_noite_e_pocao_de_encolher) {
+    {
+        Partida p("solo", "prado", 1, "medio");
+        Pista& pi = p.pista(1);
+        pi.dinheiro = 1e7;
+        const int vidas = pi.vidas;
+        CHECA_IGUAL(p.aplicar(1, "Tsuper@960,330"), OK);  // sem ataque (abaixo): nao estoura nada
+        for (int k = 0; k < 5; ++k) CHECA_IGUAL(p.aplicar(1, "U1:2"), OK);
+        const double fim = p.mapa.caminhos[0].comprimento;
+        pi.torres.at(1)->st.ataques.clear();
+        pi.torres.at(1)->ats.clear();
+        pi.torres.at(1)->recargas.clear();
+        // os bloons que chegam ao fim com o buraco aberto somem sem tirar vida
+        for (int k = 0; k < 5; ++k) pi.criar_bloon("ceramica", fim - 20 - k * 30);
+        for (int i = 0; i < 30 * 4; ++i) p.passo();
+        CHECA_IGUAL(pi.vidas, vidas);
+        CHECA(pi.buraco_rec > 100);
+        // fechado e recarregando: o proximo vaza
+        for (int i = 0; i < 30 * 8; ++i) p.passo();
+        pi.criar_bloon("vermelho", fim - 20);
+        for (int i = 0; i < 30; ++i) p.passo();
+        CHECA_IGUAL(pi.vidas, vidas - 1);
+    }
+    {
+        Partida p("solo", "prado", 1, "sandbox");
+        Pista& pi = p.pista(1);
+        CHECA_IGUAL(p.aplicar(1, "Talquimista@300,240"), OK);
+        for (int k = 0; k < 5; ++k) CHECA_IGUAL(p.aplicar(1, "U1:2"), OK);
+        const Torre& t = *pi.torres.at(1);
+        const Ataque* encolhe = nullptr;
+        for (auto& a : t.ats)
+            if (a->encolhe) encolhe = a.get();
+        CHECA(encolhe != nullptr);
+        BloonP moab = pi.criar_bloon("moab", 300, -1, false, false, true);
+        BloonP bad = pi.criar_bloon("bad", 300);
+        pi.aplicar_dano(*moab, 0, *encolhe, nullptr);
+        pi.aplicar_dano(*bad, 0, *encolhe, nullptr);
+        CHECA_IGUAL(moab->tipo->nome, std::string("vermelho"));
+        CHECA_IGUAL(moab->vida, 1.0);
+        CHECA(!moab->fort);
+        CHECA_IGUAL(bad->tipo->nome, std::string("bad"));
+    }
+}
+
+TESTE(b09_bananas_caem_e_sao_coletadas) {
+    Partida p = solo();
+    Pista& pi = p.pista(1);
+    pi.dinheiro = 1e6;
+    CHECA_IGUAL(p.aplicar(1, "Tfazenda@750,270"), OK);
+    const double antes = pi.dinheiro;
+    pi.pagar_renda();
+    CHECA_IGUAL(pi.dinheiro, antes);  // nada entra sem coletar
+    CHECA_IGUAL(static_cast<int>(pi.coletaveis.size()), 4);
+    double soma = 0;
+    for (auto& c : pi.coletaveis) soma += c.valor;
+    CHECA_IGUAL(soma, 80.0);
+    const int id = pi.coletaveis.front().id;
+    CHECA_IGUAL(p.aplicar(1, "C" + std::to_string(id)), OK);
+    CHECA_IGUAL(pi.dinheiro, antes + 20);
+    CHECA_IGUAL(p.aplicar(1, "C" + std::to_string(id)), ERRO_INVALIDO);  // ja coletada
+    for (int i = 0; i < 30 * 16; ++i) p.passo();
+    CHECA(pi.coletaveis.empty());  // as outras 3 venceram em 15 s
+    CHECA_IGUAL(pi.dinheiro, antes + 20);
+    // Mercado (caminho 3, tier 3) deposita direto
+    for (int k = 0; k < 3; ++k) CHECA_IGUAL(p.aplicar(1, "U1:2"), OK);
+    const double a2 = pi.dinheiro;
+    pi.pagar_renda();
+    CHECA(pi.coletaveis.empty());
+    CHECA(pi.dinheiro > a2);
+}
+
+TESTE(b15_sniper_elite_alvo_e_caixa) {
+    Partida p("solo", "prado", 1, "sandbox");
+    Pista& pi = p.pista(1);
+    CHECA_IGUAL(p.aplicar(1, "Tsniper@750,270"), OK);
+    CHECA_IGUAL(p.aplicar(1, "M1:4"), ERRO_BLOQUEADO);  // so o Atirador de Elite tem o alvo Elite
+    for (int k = 0; k < 5; ++k) CHECA_IGUAL(p.aplicar(1, "U1:1"), OK);
+    CHECA_IGUAL(p.aplicar(1, "M1:4"), OK);
+    const Torre& t = *pi.torres.at(1);
+    const double fim = p.mapa.caminhos[0].comprimento;
+    // longe da saida: escolhe o mais forte, mesmo com um fraco mais adiantado
+    BloonP cer = pi.criar_bloon("ceramica", 100);
+    BloonP verm = pi.criar_bloon("vermelho", 300);
+    CHECA(pi.alvo(t, *t.ats[0], 9999) == cer.get());  // sem dar passo: a bala ricocheteia e mataria os dois
+    // o fraco passou de 75% da trilha: vira prioridade
+    verm->d = fim * 0.8;
+    CHECA(pi.alvo(t, *t.ats[0], 9999) == verm.get());
+    // a habilidade solta a caixa; o dinheiro so entra na coleta
+    CHECA_IGUAL(p.aplicar(1, "Xh"), OK);
+    CHECA_IGUAL(p.aplicar(1, "Xl"), OK);
+    const size_t antes = pi.coletaveis.size();
+    CHECA_IGUAL(p.aplicar(1, "B1:0"), OK);
+    CHECA_IGUAL(pi.coletaveis.size(), antes + 1);
+    CHECA_IGUAL(pi.coletaveis.back().visual, std::string("caixa"));
+    CHECA_IGUAL(p.aplicar(1, "C" + std::to_string(pi.coletaveis.back().id)), OK);
+}
+
+TESTE(b08_b10_sacrificios_do_templo_e_da_macacopolis) {
+    Partida p("solo", "prado", 1, "sandbox");
+    Pista& pi = p.pista(1);
+    // Templo do Sol: destroi os vizinhos e fica com o bonus
+    CHECA_IGUAL(p.aplicar(1, "Tsuper@750,270"), OK);
+    CHECA_IGUAL(p.aplicar(1, "Tdardo@700,310"), OK);
+    for (int k = 0; k < 5; ++k) CHECA_IGUAL(p.aplicar(1, "U2:0"), OK);  // Ultra-Juggernaut: mais de $15.000
+    CHECA_IGUAL(p.aplicar(1, "Tdardo@980,650"), OK);                    // longe: sobrevive
+    for (int k = 0; k < 3; ++k) CHECA_IGUAL(p.aplicar(1, "U1:0"), OK);
+    const Torre& templo = *pi.torres.at(1);
+    CHECA(!pi.aviso_sacrificio(templo, 0).empty());
+    CHECA(pi.aviso_sacrificio(templo, 1).empty());
+    CHECA_IGUAL(p.aplicar(1, "U1:0"), OK);
+    CHECA(!pi.torres.count(2));
+    CHECA(pi.torres.count(3));
+    CHECA(templo.sacrificio.dano >= 3);
+    p.passo();
+    CHECA(templo.buff.dano >= 3);
+    // Macacopolis: sem fazenda no alcance nao compra; com fazenda, sacrifica e rende por rodada
+    CHECA_IGUAL(p.aplicar(1, "Tvila@300,240"), OK);
+    const int vila = pi.torres.rbegin()->first;
+    const std::string up = "U" + std::to_string(vila) + ":2";
+    for (int k = 0; k < 4; ++k) CHECA_IGUAL(p.aplicar(1, up), OK);
+    CHECA(!pi.requisito_upgrade(*pi.torres.at(vila), 2).empty());
+    CHECA_IGUAL(p.aplicar(1, up), ERRO_BLOQUEADO);
+    CHECA_IGUAL(p.aplicar(1, "Tfazenda@300,180"), OK);
+    const int faz = pi.torres.rbegin()->first;
+    CHECA(pi.requisito_upgrade(*pi.torres.at(vila), 2).empty());
+    CHECA_IGUAL(p.aplicar(1, up), OK);
+    CHECA(!pi.torres.count(faz));
+    CHECA(pi.torres.at(vila)->renda_sacrificio > 100);
+}
+
+TESTE(b11_cemiterio_do_necromante) {
+    Partida p("solo", "prado", 1, "sandbox");
+    Pista& pi = p.pista(1);
+    CHECA_IGUAL(p.aplicar(1, "Tmago@300,240"), OK);
+    for (int k = 0; k < 4; ++k) CHECA_IGUAL(p.aplicar(1, "U1:2"), OK);  // Necromante
+    const Torre& t = *pi.torres.at(1);
+    // sem bloons estourados nao ha zumbis, por mais que passem bloons
+    for (int i = 0; i < 30 * 5; ++i) p.passo();
+    int zumbis = 0;
+    for (auto& s : pi.pilhas) zumbis += s->visual == "zumbi";
+    CHECA_IGUAL(zumbis, 0);
+    CHECA_IGUAL(t.cemiterio, 0.0);
+    // os estouros no alcance enchem o cemiterio, e os zumbis gastam dele
+    CHECA_IGUAL(p.aplicar(1, "Xb:vermelho:30"), OK);
+    double pico = 0;
+    bool teve_zumbi = false;
+    for (int i = 0; i < 30 * 20; ++i) {
+        p.passo();
+        pico = std::max(pico, t.cemiterio);
+        for (auto& s : pi.pilhas) teve_zumbi |= s->visual == "zumbi";
+    }
+    CHECA(pico >= 1);
+    CHECA(teve_zumbi);
+    CHECA(t.cemiterio < pico);
+}
+
+TESTE(b23_banco_rende_juros_e_saca) {
+    Partida p("solo", "prado", 1, "sandbox");
+    Pista& pi = p.pista(1);
+    CHECA_IGUAL(p.aplicar(1, "Tfazenda@750,270"), OK);
+    for (int k = 0; k < 3; ++k) CHECA_IGUAL(p.aplicar(1, "U1:1"), OK);
+    const Torre& t = *pi.torres.at(1);
+    CHECA_IGUAL(p.aplicar(1, "O1:0"), ERRO_BLOQUEADO);  // banco vazio
+    const double antes = pi.dinheiro;
+    pi.pagar_renda();
+    CHECA_IGUAL(pi.dinheiro, antes);  // a renda fica no banco
+    const double r1 = t.banco;
+    CHECA(r1 > 100);
+    pi.pagar_renda();
+    CHECA(t.banco > r1 * 2.1);  // renda nova mais 20% sobre tudo
+    const double guardado = std::floor(t.banco);
+    CHECA_IGUAL(p.aplicar(1, "O1:0"), OK);
+    CHECA_IGUAL(pi.dinheiro, antes + guardado);
+    CHECA_IGUAL(t.banco, 0.0);
+    // cheio, saca sozinho
+    for (int k = 0; k < 60; ++k) pi.pagar_renda();
+    CHECA(pi.dinheiro >= antes + guardado + 14000);
+}
+
+TESTE(b23_wall_street_e_mini_comanches) {
+    Partida p("solo", "prado", 1, "sandbox");
+    Pista& pi = p.pista(1);
+    CHECA_IGUAL(p.aplicar(1, "Tfazenda@750,270"), OK);
+    const int vidas = pi.vidas;
+    for (int k = 0; k < 5; ++k) CHECA_IGUAL(p.aplicar(1, "U1:2"), OK);
+    CHECA_IGUAL(pi.vidas, vidas + 15);
+    CHECA_IGUAL(p.aplicar(1, "Theli@300,240"), OK);
+    for (int k = 0; k < 4; ++k) CHECA_IGUAL(p.aplicar(1, "U2:2"), OK);
+    auto minis = [&] {
+        int n = 0;
+        for (auto& [id, t] : pi.torres) n += t->mae == 2;
+        return n;
+    };
+    for (int i = 0; i < 60; ++i) p.passo();
+    CHECA_IGUAL(minis(), 0);  // sem bloons avancando nao ha escolta
+    CHECA_IGUAL(p.aplicar(1, "Xb:ceramica:40"), OK);
+    int pico = 0;
+    for (int i = 0; i < 30 * 15; ++i) {
+        p.passo();
+        pico = std::max(pico, minis());
+    }
+    CHECA_IGUAL(pico, 3);
+    for (int i = 0; i < 30 * 25; ++i) p.passo();
+    CHECA_IGUAL(minis(), 0);  // temporarios
+    CHECA_IGUAL(p.aplicar(1, "U2:2"), OK);  // Comandante: permanentes
+    for (int i = 0; i < 30 * 40; ++i) p.passo();
+    CHECA_IGUAL(minis(), 3);
+    CHECA_IGUAL(p.aplicar(1, "V2"), OK);
+    for (int i = 0; i < 5; ++i) p.passo();
+    CHECA_IGUAL(minis(), 0);  // somem com o Heli
+}
+
+TESTE(b25_modo_de_restricao_por_categoria) {
+    Partida p("solo", "prado", 1, "sandbox", {{1, "quincy"}});
+    Pista& pi = p.pista(1);
+    pi.restricao = "militar";
+    CHECA_IGUAL(p.aplicar(1, "Tdardo@300,240"), ERRO_BLOQUEADO);
+    CHECA_IGUAL(p.aplicar(1, "Tmago@300,240"), ERRO_BLOQUEADO);
+    CHECA_IGUAL(p.aplicar(1, "Tsniper@300,240"), OK);
+    CHECA_IGUAL(p.aplicar(1, "Tquincy@340,200"), OK);  // o heroi entra em qualquer modo
+}
+
+TESTE(b20_sub_submerge_e_para_de_atirar) {
+    Partida p("solo", "lago", 1, "sandbox");
+    Pista& pi = p.pista(1);
+    CHECA_IGUAL(p.aplicar(1, "Tsubmarino@530,300"), OK);
+    CHECA_IGUAL(p.aplicar(1, "O1:1"), ERRO_INVALIDO);  // sem o upgrade nao submerge
+    for (int k = 0; k < 3; ++k) CHECA_IGUAL(p.aplicar(1, "U1:0"), OK);
+    CHECA_IGUAL(p.aplicar(1, "O1:1"), OK);
+    CHECA(pi.torres.at(1)->submerso);
+    CHECA_IGUAL(p.aplicar(1, "Xb:vermelho:20:c"), OK);
+    bool atirou = false;
+    for (int i = 0; i < 30 * 12; ++i) {
+        p.passo();
+        atirou |= !pi.projeteis.empty();
+    }
+    CHECA(!atirou);  // submerso nao dispara dardos
+    CHECA_IGUAL(p.aplicar(1, "O1:0"), OK);
+    CHECA_IGUAL(p.aplicar(1, "Xb:vermelho:20"), OK);
+    for (int i = 0; i < 30 * 12; ++i) {
+        p.passo();
+        atirou |= !pi.projeteis.empty();
+    }
+    CHECA(atirou);
+}
+
+TESTE(b19_segundo_braco_com_alvo_proprio) {
+    Partida p("solo", "prado", 1, "sandbox");
+    Pista& pi = p.pista(1);
+    CHECA_IGUAL(p.aplicar(1, "Tsuper@600,500"), OK);
+    CHECA_IGUAL(p.aplicar(1, "O1:1"), ERRO_INVALIDO);  // so com o Robo Macaco
+    for (int k = 0; k < 3; ++k) CHECA_IGUAL(p.aplicar(1, "U1:1"), OK);
+    CHECA_IGUAL(p.aplicar(1, "O1:1"), OK);  // braco 1 no Primeiro, braco 2 no Ultimo
+    CHECA_IGUAL(pi.torres.at(1)->modo2, 1);
+    CHECA_IGUAL(p.aplicar(1, "Xb:ceramica:25"), OK);
+    // com os bracos em alvos diferentes, os dois dardos de uma salva saem bem separados
+    double maior = 0;
+    for (int i = 0; i < 30 * 25; ++i) {
+        p.passo();
+        for (size_t a = 0; a < pi.projeteis.size(); ++a)
+            for (size_t b = a + 1; b < pi.projeteis.size(); ++b) {
+                const auto& pa = *pi.projeteis[a];
+                const auto& pb = *pi.projeteis[b];
+                const double cosang = (pa.vx * pb.vx + pa.vy * pb.vy) /
+                                      (std::hypot(pa.vx, pa.vy) * std::hypot(pb.vx, pb.vy) + 1e-9);
+                maior = std::max(maior, std::acos(std::clamp(cosang, -1.0, 1.0)) * 180.0 / 3.14159265);
+            }
+    }
+    CHECA(maior > 25);
+}
+
+TESTE(b22_overclock_na_torre_escolhida) {
+    Partida p("solo", "prado", 1, "sandbox");
+    Pista& pi = p.pista(1);
+    CHECA_IGUAL(p.aplicar(1, "Tengenheiro@300,240"), OK);
+    CHECA_IGUAL(p.aplicar(1, "Tdardo@340,200"), OK);   // perto
+    CHECA_IGUAL(p.aplicar(1, "Tbomba@490,520"), OK);   // longe
+    CHECA_IGUAL(p.aplicar(1, "A1@490,520"), ERRO_INVALIDO);  // sem o Overclock nao escolhe
+    for (int k = 0; k < 4; ++k) CHECA_IGUAL(p.aplicar(1, "U1:1"), OK);
+    CHECA_IGUAL(p.aplicar(1, "A1@900,60"), ERRO_INVALIDO);  // clique sem torre
+    CHECA_IGUAL(p.aplicar(1, "A1@492,518"), OK);
+    CHECA_IGUAL(pi.torres.at(1)->alvo_torre, 3);
+    CHECA_IGUAL(p.aplicar(1, "Xh"), OK);
+    CHECA_IGUAL(p.aplicar(1, "B1:0"), OK);
+    CHECA(pi.torres.at(3)->turbo < 1.0);
+    CHECA_IGUAL(pi.torres.at(2)->turbo, 1.0);  // so a escolhida
+    CHECA_IGUAL(pi.torres.at(3)->ultra, 0);
+    CHECA_IGUAL(p.aplicar(1, "U1:1"), OK);  // Ultraimpulso: carga permanente
+    CHECA_IGUAL(p.aplicar(1, "Xh"), OK);
+    CHECA_IGUAL(p.aplicar(1, "B1:1"), OK);
+    CHECA_IGUAL(pi.torres.at(3)->ultra, 1);
+    // vendida a escolhida, vai na torre que ataca mais perto
+    CHECA_IGUAL(p.aplicar(1, "V3"), OK);
+    CHECA_IGUAL(p.aplicar(1, "Xh"), OK);
+    CHECA_IGUAL(p.aplicar(1, "B1:0"), OK);
+    CHECA(pi.torres.at(2)->turbo < 1.0);
+}
+
+TESTE(b07_fa_clube_transforma_os_dardos) {
+    Partida p("solo", "prado", 1, "sandbox");
+    Pista& pi = p.pista(1);
+    CHECA_IGUAL(p.aplicar(1, "Tdardo@300,240"), OK);
+    for (int k = 0; k < 4; ++k) CHECA_IGUAL(p.aplicar(1, "U1:1"), OK);
+    CHECA_IGUAL(p.aplicar(1, "Tdardo@340,200"), OK);
+    CHECA_IGUAL(p.aplicar(1, "Tninja@260,200"), OK);
+    CHECA_IGUAL(p.aplicar(1, "Xh"), OK);
+    CHECA_IGUAL(p.aplicar(1, "B1:0"), OK);
+    CHECA_IGUAL(pi.torres.at(1)->disfarce, std::string("super"));
+    CHECA_IGUAL(pi.torres.at(2)->disfarce, std::string("super"));
+    CHECA(pi.torres.at(3)->disfarce.empty());  // so os Dardos
+    for (int i = 0; i < 30 * 16; ++i) p.passo();
+    CHECA(pi.torres.at(1)->disfarce.empty());  // volta ao normal depois de 15 s
+}
+
 TESTE(btd6_criticos_a_cada_n_tiros) {
     Partida p = solo();
     Pista& pi = p.pista(1);
@@ -487,7 +1052,54 @@ std::uint32_t jogar_batalha() {
 }
 }  // namespace
 
-TESTE(sim_determinismo_batalha) { CHECA_IGUAL(jogar_batalha(), jogar_batalha()); }
+TESTE(sim_determinismo_batalha) {
+    CHECA_IGUAL(jogar_batalha(), jogar_batalha());
+    // impresso para comparar compiladores/sistemas: o mesmo valor em MSVC, MinGW e Linux prova o lockstep entre eles
+    std::printf("    hash batalha=%08x\n", static_cast<unsigned>(jogar_batalha()));
+}
+
+namespace {
+// Coop: os comandos dos dois jogadores caem na mesma pista. A rodada e iniciada por quem apertar primeiro.
+std::uint32_t jogar_coop(int rodadas_ate) {
+    Partida p("coop", "prado", 5, "medio", {{1, "quincy"}, {2, "adora"}});
+    for (int i = 0; i < 30 * 40; ++i) {
+        if (i == 5) p.aplicar(1, "Tdardo@230,250");
+        if (i == 8) p.aplicar(2, "Tdardo@600,500");  // jogador 2 na mesma pista
+        if (i == 20) p.aplicar(2, "N");
+        if (i == 21) p.aplicar(1, "N");              // segunda tentativa na mesma rodada: recusada
+        if (i == 60) p.aplicar(2, "U1:0");           // o jogador 2 melhora a torre do jogador 1
+        if (i == 90) p.aplicar(1, "Tquincy@600,250");
+        if (i > 100 && i % 150 == 0) p.aplicar(i % 300 ? 1 : 2, "N");
+        p.passo();
+        if (p.rodada >= rodadas_ate && !p.em_rodada) break;
+    }
+    return p.hash();
+}
+}  // namespace
+
+TESTE(sim_coop_pista_unica_compartilhada) {
+    Partida p("coop", "prado", 1, "medio", {{1, "quincy"}, {2, "adora"}});
+    CHECA_IGUAL(p.pistas.size(), size_t(1));
+    CHECA(&p.pista(1) == &p.pista(2));  // o jogador 2 enxerga a mesma pista
+    CHECA_IGUAL(p.aplicar(1, "Tdardo@230,250"), OK);
+    CHECA_IGUAL(p.aplicar(2, "Tdardo@600,500"), OK);
+    CHECA_IGUAL(p.pista(1).torres.size(), size_t(2));
+    CHECA_IGUAL(p.pista(2).dinheiro, 650.0 - 400);          // caixa unico
+    CHECA_IGUAL(p.aplicar(2, "U1:0"), OK);                  // melhora a torre colocada pelo jogador 1
+    CHECA_IGUAL(p.aplicar(2, "Tadora@500,500"), ERRO_HEROI);  // so ha um heroi na pista: o do anfitriao
+    CHECA_IGUAL(p.aplicar(1, "Sr8"), ERRO_INVALIDO);        // envios so existem na batalha
+    CHECA(!p.em_rodada);
+    CHECA_IGUAL(p.aplicar(2, "N"), OK);
+    CHECA(p.em_rodada && p.rodada == 1);
+    CHECA_IGUAL(p.aplicar(1, "N"), ERRO_INVALIDO);          // ja em andamento
+}
+
+TESTE(sim_coop_determinismo_e_nao_afeta_batalha) {
+    CHECA_IGUAL(jogar_coop(2), jogar_coop(2));
+    // a batalha continua recusando N (so o solo e o coop iniciam rodada por comando)
+    Partida b("batalha", "prado", 1);
+    CHECA_IGUAL(b.aplicar(1, "N"), ERRO_INVALIDO);
+}
 
 TESTE(sim_envio_vai_para_o_oponente_e_aumenta_eco) {
     Partida p("batalha", "prado", 1);
@@ -524,6 +1136,8 @@ TESTE(sim_todas_as_torres_atacam_sem_travar) {
             pi.dinheiro = 1e7;
             const char* pos = t.agua ? "530,300" : "300,220";
             CHECA_IGUAL(p.aplicar(1, "T" + t.chave + "@" + pos), OK);
+            // a Macacopolis (Vila, caminho 3, tier 5) so compra com uma fazenda no alcance para sacrificar
+            if (t.chave == "vila" && principal == 2) CHECA_IGUAL(p.aplicar(1, "Tfazenda@300,170"), OK);
             for (int k = 0; k < 5; ++k) p.aplicar(1, "U1:" + std::to_string(principal));
             for (int k = 0; k < 2; ++k) p.aplicar(1, "U1:" + std::to_string((principal + 1) % 3));
             CHECA_IGUAL(pi.torre(1)->caminhos[principal], 5);
@@ -714,6 +1328,142 @@ TESTE(servidor_desconexao_da_vitoria_ao_oponente) {
     b.proxima(P::INICIO);
     a.fechar();
     CHECA_IGUAL(b.proxima(P::FIM_JOGO), std::string("0F2"));
+    b.fechar();
+    servidor.parar();
+}
+
+TESTE(rede_ips_locais_sem_loopback_nem_link_local) {
+    // B-01: o IP mostrado na sala de espera e o primeiro da lista; nao pode ser 127.x nem 169.254.x
+    for (const std::string& ip : rede::ips_locais()) {
+        CHECA(ip.rfind("127.", 0) != 0);
+        CHECA(ip.rfind("169.254.", 0) != 0);
+    }
+}
+
+TESTE(servidor_entrada_simultanea_recebe_inicio_nos_dois) {
+    // B-03: os dois conectam no mesmo instante; os dois precisam receber "0I"
+    std::atomic<int> sem_inicio{0};
+    for (int rodada = 0; rodada < 25; ++rodada) {
+        Servidor servidor("127.0.0.1", 0);
+        servidor.iniciar();
+        std::atomic<bool> largar{false};
+        auto jogador = [&] {
+            try {
+                Cliente c(servidor.porta());
+                while (!largar) std::this_thread::yield();
+                c.enviar(P::entrar("quincy", "prado"));
+                c.proxima(P::INICIO);
+                c.fechar();
+            } catch (const Falha&) {
+                ++sem_inicio;
+            }
+        };
+        std::thread a(jogador), b(jogador);
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        largar = true;
+        a.join();
+        b.join();
+        servidor.parar();
+    }
+    CHECA_IGUAL(sem_inicio.load(), 0);
+}
+
+TESTE(servidor_desistir_na_sala_de_espera_nao_encerra_a_sala) {
+    // B-04
+    Servidor servidor("127.0.0.1", 0);
+    servidor.iniciar();
+    Cliente a(servidor.porta());
+    a.enviar(P::entrar("quincy", "prado"));
+    CHECA_IGUAL(a.proxima(), std::string("0J1"));
+    a.enviar(P::desistir(1));
+    Cliente b(servidor.porta());
+    b.enviar(P::entrar("quincy", "prado"));
+    CHECA_IGUAL(b.proxima(), std::string("0J2"));  // a sala continua aberta e a partida comeca
+    CHECA(P::interpretar(b.proxima(P::INICIO)).comando == P::INICIO);
+    a.fechar();
+    b.fechar();
+    servidor.parar();
+}
+
+TESTE(protocolo_mira_opcao_e_coleta) {
+    // B-06: a simulacao ja aceitava A, O e C, mas a rede os rejeitava (Dartling, Bumerangue e bananas online)
+    for (const char* ok : {"1A12@300,200", "2O7:1", "1C345", "1C123456789"}) CHECA(P::interpretar(ok).cmd == std::string(ok).substr(1));
+    bool lancou = false;
+    for (const char* ruim : {"1A12@300", "1A@1,2", "1O7", "1O7:123", "1C", "1C1234567890", "1Cx"}) {
+        try {
+            P::interpretar(ruim);
+        } catch (const P::MensagemInvalida&) {
+            continue;
+        }
+        lancou = true;
+    }
+    CHECA(!lancou);
+    auto t = P::interpretar("0K9|1A12@300,200|2C345|1O7:1");
+    CHECA_IGUAL(t.comandos.size(), size_t(3));
+    // e a partida coop aplica de verdade o A e o C
+    Partida p("coop", "prado", 1, "medio", {{1, "quincy"}, {2, "quincy"}});
+    p.aplicar(1, "Tdardo@230,250");
+    CHECA_IGUAL(p.aplicar(2, "C999999"), ERRO_INVALIDO);  // id inexistente: recusado, mas e o comando que chega
+}
+
+TESTE(servidor_coop_dois_clientes_mesma_partida) {
+    Servidor servidor("127.0.0.1", 0, true);
+    servidor.iniciar();
+    CHECA(servidor.coop());
+    Cliente a(servidor.porta());
+    a.enviar(P::entrar("quincy", "lago"));
+    CHECA_IGUAL(a.proxima(), std::string("0J1"));
+    Cliente b(servidor.porta());
+    b.enviar(P::entrar("adora", "prado"));
+    CHECA_IGUAL(b.proxima(), std::string("0J2"));
+    const std::string ib = b.proxima(), ia = a.proxima();
+    CHECA_IGUAL(ia, ib);
+    auto inicio = P::interpretar(ia);
+    CHECA(inicio.coop && inicio.mapa == "lago");
+
+    // os dois mandam comandos (inclusive "N" para iniciar a rodada); os dois recebem a mesma ordem
+    a.enviar(P::torre(1, "dardo", 100, 100));
+    b.enviar(P::rodada(2));
+    std::vector<std::pair<int, std::string>> vistos_a, vistos_b;
+    while (vistos_a.size() < 2) {
+        auto m = P::interpretar(a.proxima());
+        vistos_a.insert(vistos_a.end(), m.comandos.begin(), m.comandos.end());
+    }
+    while (vistos_b.size() < 2) {
+        auto m = P::interpretar(b.proxima());
+        vistos_b.insert(vistos_b.end(), m.comandos.begin(), m.comandos.end());
+    }
+    CHECA(vistos_a == vistos_b);
+    auto ordenado = vistos_a;
+    std::sort(ordenado.begin(), ordenado.end());
+    CHECA((ordenado == std::vector<std::pair<int, std::string>>{{1, "Tdardo@100,100"}, {2, "N"}}));
+
+    // hashes iguais: nenhuma dessincronia; o servidor nao responde "0D"
+    a.enviar(P::hash_estado(1, 45, 777));
+    b.enviar(P::hash_estado(2, 45, 777));
+    a.enviar(P::envio(2, "r8"));  // origem trocada continua barrada
+    CHECA_IGUAL(a.proxima(P::ERRO), std::string("0X1M"));
+
+    // o parceiro sai no meio da partida: o outro recebe fim sem vencedor (0), nao "vitoria"
+    b.fechar();
+    CHECA_IGUAL(a.proxima(P::FIM_JOGO), std::string("0F0"));
+    a.fechar();
+    servidor.parar();
+}
+
+TESTE(servidor_coop_desistir_nao_da_vitoria_ao_parceiro) {
+    Servidor servidor("127.0.0.1", 0, true);
+    servidor.iniciar();
+    Cliente a(servidor.porta()), b(servidor.porta());
+    a.enviar(P::entrar("quincy", "prado"));
+    CHECA_IGUAL(a.proxima(), std::string("0J1"));
+    b.enviar(P::entrar("quincy", "prado"));
+    CHECA_IGUAL(b.proxima(), std::string("0J2"));
+    a.proxima(P::INICIO);
+    b.proxima(P::INICIO);
+    a.enviar(P::desistir(1));
+    CHECA_IGUAL(b.proxima(P::FIM_JOGO), std::string("0F0"));
+    a.fechar();
     b.fechar();
     servidor.parar();
 }

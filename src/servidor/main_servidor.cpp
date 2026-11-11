@@ -1,7 +1,7 @@
 // Servidor avulso do modo Batalha.
 //
 // Uso:
-//     bloons_servidor [porta]
+//     bloons_servidor [porta] [--coop]
 #include <chrono>
 #include <csignal>
 #include <cstdlib>
@@ -19,11 +19,16 @@ void ao_sinal(int) { parar = 1; }
 }  // namespace
 
 int main(int argc, char** argv) {
-    int porta = argc > 1 ? std::atoi(argv[1]) : bl::proto::PORTA_PADRAO;
+    int porta = bl::proto::PORTA_PADRAO;
+    bool coop = false;
+    for (int i = 1; i < argc; ++i) {
+        if (std::string(argv[i]) == "--coop") coop = true;
+        else porta = std::atoi(argv[i]);
+    }
     std::signal(SIGINT, ao_sinal);
     std::signal(SIGTERM, ao_sinal);
     try {
-        bl::Servidor servidor("0.0.0.0", porta);
+        bl::Servidor servidor("0.0.0.0", porta, coop);
         std::mutex lock_log;
         servidor.log = [&](const std::string& texto) {
             std::lock_guard<std::mutex> trava(lock_log);

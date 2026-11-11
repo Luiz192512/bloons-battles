@@ -2,7 +2,9 @@
 #pragma once
 
 #include <functional>
+#include <map>
 #include <memory>
+#include <set>
 #include <string>
 #include <utility>
 #include <vector>
@@ -12,6 +14,9 @@
 
 namespace bl {
 
+// --auto (so para teste): a partida em rede joga sozinha, para conferir dois clientes lado a lado
+inline bool g_auto_jogar = false;
+
 class CenaJogo : public Cena {
 public:
     CenaJogo(App& app, std::unique_ptr<Controlador> controle);
@@ -20,6 +25,8 @@ public:
     void desenhar() override;
     void sair() override;
     void selecionar(int torre_id) { selecionada_ = torre_id; }  // usado pela demo
+    void mostrar_painel_bloons() { painel_bloons_ = true; }     // usado pelo --sandbox
+    void pedir_upgrade(int caminho) { upar(caminho); }           // usado pelo --up (como apertar , . /)
     void abrir_pausa() { pausar(true); }
 
 private:
@@ -58,6 +65,10 @@ private:
     void vender();
     void pausar(bool v);
     void alternar_auto();
+    void alternar_mira(int id);
+    void proxima_rota(int id);
+    void proximo_modo_heli(int id);
+    int modo_heli(const Torre& t) const;
     void reiniciar();
     void desistir();
     void enviar(const Envio& env);
@@ -67,6 +78,7 @@ private:
     void previa(Vector2 mouse);
     void hud_topo();
     void painel_lateral(Vector2 mouse);
+    void painel_sandbox(Vector2 mouse);
     void dica(const Dica& d, float largura = 250);
     void painel_upgrade(const TorreP& t, Vector2 mouse);
     void linha_upgrade(const TorreP& t, int pth, float x, float y, float w, Vector2 mouse);
@@ -81,6 +93,7 @@ private:
     void mensagens();
     Rectangle sobreposicao(const std::string& titulo, Color cor);
     void tela_pausa();
+    void tela_sacrificio();
     void tela_fim();
 
     std::unique_ptr<Controlador> ctl_;
@@ -89,8 +102,22 @@ private:
     std::unique_ptr<RenderPista> render_op_;
     int selecionada_ = 0;
     std::string colocando_;
+    // Dartling: segue o cursor (comando A, no maximo 10 por segundo) ate o jogador travar a mira
+    std::set<int> mira_travada_;
+    std::map<int, int> modo_heli_;  // 0 automatico, 1 segue o mouse, 2 travado no lugar, 3 patrulha
+    int definindo_alvo_ = 0;
+    int confirma_up_ = -1;  // caminho do upgrade com sacrificio esperando o jogador confirmar
+    std::set<int> coleta_pedida_;  // bananas e caixas ja pedidas, para nao repetir o comando C
+    // Sandbox: painel de envio de bloons no lugar da loja (F2 ou o botao da grade alterna)
+    bool painel_bloons_ = false;
+    int sb_qtd_ = 10, sb_rodada_ = 1;
+    bool sb_camo_ = false, sb_regen_ = false, sb_fort_ = false;  // Morteiro esperando o clique no mapa que fixa o ponto de impacto
+    double mira_espera_ = 0;
+    Vector2 mira_enviada_{-1, -1};
     std::pair<std::string, double> msg_{"", 0}, banner_{"", 0};
     bool menu_pausa_ = false;
+    double auto_t_ = 0;
+    int auto_passo_ = 0;
     bool mostrar_log_;
     bool mostrar_op_ = true;
     bool op_grande_ = false;

@@ -9,7 +9,8 @@ namespace bl {
 
 namespace P = proto;
 
-Servidor::Servidor(const std::string& host, int porta) : sock_(rede::Socket::ouvir(host, porta)) {
+Servidor::Servidor(const std::string& host, int porta, bool coop) : sock_(rede::Socket::ouvir(host, porta)) {
+    sala.coop = coop;
     porta_ = sock_.porta_local();
     try {
         placar_ = ipc::PlacarCompartilhado::criar(porta_);
@@ -148,17 +149,21 @@ void Servidor::atender(ConexaoP con, std::string endereco) {
                 if (msg.comando != P::ENTRAR) continue;
                 const std::string heroi = achar_heroi(msg.heroi) ? msg.heroi : "quincy";
                 const std::string mapa = achar_mapa(msg.mapa) ? msg.mapa : "prado";
-                auto vaga = sala.reservar_vaga(heroi, mapa);
+                // reservar a vaga e registrar o socket e UMA operacao so, sob lock_clientes_ (ordem: clientes -> sala).
+                // Sem isso, o outro jogador podia iniciar a partida e transmitir o inicio entre as duas coisas,
+                // e este jogador nunca recebia o "0I".
+                std::optional<int> vaga;
+                {
+                    std::lock_guard<std::mutex> trava(lock_clientes_);
+                    vaga = sala.reservar_vaga(heroi, mapa);
+                    if (vaga) clientes_[*vaga] = con;
+                }
                 if (!vaga) {
                     con->sock.enviar_tudo(P::erro(0, P::ERRO_SALA_CHEIA));
                     sair = true;
                     break;
                 }
                 numero = *vaga;
-                {
-                    std::lock_guard<std::mutex> trava(lock_clientes_);
-                    clientes_[numero] = con;
-                }
                 publicar([&](ipc::Placar& pl) {
                     pl.jogador[numero].conectado = 1;
                     ipc::copiar_texto(pl.jogador[numero].heroi, sizeof pl.jogador[numero].heroi, heroi);
@@ -172,10 +177,11 @@ void Servidor::atender(ConexaoP con, std::string endereco) {
                     });
                     std::random_device rd;
                     long long seed = std::uniform_int_distribution<long long>(1, 999999)(rd);
-                    transmitir(P::inicio(seed, ini->mapa, ini->heroi1, ini->heroi2));
+                    transmitir(P::inicio(seed, ini->mapa, ini->heroi1, ini->heroi2, sala.coop));
                     std::lock_guard<std::mutex> trava(lock_threads_);
                     if (rodando_) t_relogio_ = std::thread(&Servidor::relogio, this);
-                    registrar("partida iniciada: mapa " + ini->mapa + ", " + ini->heroi1 + " x " + ini->heroi2);
+                    registrar(std::string("partida iniciada (") + (sala.coop ? "coop" : "batalha") + "): mapa " +
+                              ini->mapa + ", " + ini->heroi1 + (sala.coop ? " + " : " x ") + ini->heroi2);
                 }
                 continue;
             }
@@ -194,9 +200,9 @@ void Servidor::atender(ConexaoP con, std::string endereco) {
         if (estava_em_jogo && sala.encerrar()) {
             publicar([&](ipc::Placar& pl) {
                 pl.estado = ipc::FIM;
-                pl.vencedor = Sala::oponente(numero);
+                pl.vencedor = sala.vencedor_se_sair(numero);
             });
-            transmitir(P::fim_jogo(Sala::oponente(numero)));
+            transmitir(P::fim_jogo(sala.vencedor_se_sair(numero)));
         }
     }
     con->sock.fechar();
@@ -223,12 +229,13 @@ void Servidor::tratar(int numero, const P::Mensagem& msg) {
             transmitir(P::dessinc(msg.tick));
         }
     } else if (cmd == P::FIM_JOGO) {
-        if (sala.encerrar()) {
+        // desistir so vale durante a partida (na sala de espera nao ha o que desistir)
+        if (sala.em_jogo() && sala.encerrar()) {
             publicar([&](ipc::Placar& pl) {
                 pl.estado = ipc::FIM;
-                pl.vencedor = Sala::oponente(numero);
+                pl.vencedor = sala.vencedor_se_sair(numero);
             });
-            transmitir(P::fim_jogo(Sala::oponente(numero)));
+            transmitir(P::fim_jogo(sala.vencedor_se_sair(numero)));
         }
     }
 }

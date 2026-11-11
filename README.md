@@ -25,6 +25,11 @@ precisa instalar nada (nem o Visual C++ Redistributable).
   segunda, "Batalha: Entrar" com IP `127.0.0.1`.
 - **Batalha em dois PCs:** quem hospeda vê o próprio IP na sala de espera e o outro digita esse
   IP. Os dois precisam estar na mesma rede.
+- **Coop em LAN:** em "Batalha: Hospedar", clique em **Modo: Coop** antes de hospedar. O outro
+  jogador entra normalmente por "Batalha: Entrar" e o modo vem do anfitrião. Os dois defendem a
+  mesma pista, com vidas e dinheiro comuns; qualquer um coloca, melhora e vende qualquer torre, e
+  qualquer um inicia a rodada com Espaço. Só há um herói (o de quem hospeda). Não há velocidade 3x
+  nem rodada automática. Se o parceiro sai, a partida termina ("Parceiro saiu").
 
 ### Firewall do Windows (dois PCs)
 
@@ -43,7 +48,10 @@ está marcada como **Privada** nas configurações do Windows.
 | Clique no mapa (Shift mantém a torre selecionada) | colocar |
 | Clique na torre | abrir upgrades |
 | `,` `.` `/` | upgrade nos caminhos 1, 2 e 3 |
-| Tab | prioridade de alvo |
+| Tab | prioridade de alvo. Em algumas torres troca outra coisa: trava a mira da Dartling, pede o ponto do Morteiro, troca a rota do Ás e o modo de voo do Heli, saca o Banco |
+| Botão ao lado do alvo | Bumerangue: mão do arremesso. Sub com Submergir: Tona ou Fundo. Robô Macaco: alvo do segundo braço. Engenheiro com Overclock: torre que recebe a habilidade (clique nela) |
+| Cursor sobre a banana ou a caixa | coletar o dinheiro caído |
+| F2 | no Sandbox, alterna a loja e o painel de envio de bloons |
 | Backspace | vender |
 | 1 a 9 | habilidades |
 | Espaço | iniciar rodada / acelerar (solo) |
@@ -62,6 +70,11 @@ por código: os sprites em `src/cliente/sprites.cpp` (desenhados com a caneta de
 e habilidade em `src/cliente/anim.cpp`. O inventário do que foi aplicado está em
 [docs/design/inventario.md](docs/design/inventario.md), com capturas em `docs/design/capturas/`.
 
+As torres e os 18 heróis também têm modelo 3D (`assets/modelos/<chave>/<a>-<b>-<c>.glb`, gerados
+por script no Blender, ver [tools/blender/LEIAME.md](tools/blender/LEIAME.md)). O jogo desenha o
+modelo quando a pasta `assets/modelos` está ao lado do executável e cai no sprite 2D quando não
+está.
+
 Opções de linha de comando para conferir o visual:
 
 | Opção | O que faz |
@@ -69,7 +82,9 @@ Opções de linha de comando para conferir o visual:
 | `--vitrine [0-11]` | galeria de sprites; a página 9 toca as animações com as curvas de cada clipe e a 11 mostra a mira 3/4 |
 | `--fps` | mostra o FPS desde o início |
 | `--demo solo` / `--demo batalha` | partida local já montada, com torres, upgrades e bloons |
-| `--tela solo\|hospedar\|entrar\|entrar-erro\|lobby` | abre direto uma tela de menu |
+| `--tela solo\|macacos\|hospedar\|entrar\|entrar-erro\|lobby` | abre direto uma tela de menu |
+| `--sandbox [mapa] [heroi=chave] [comandos]` | partida Sandbox já com os comandos aplicados (ex.: `Tsuper@600,500 U1:1 Xb:ceramica:20`) |
+| `--sel id` / `--up caminho` / `--bloons` | seleciona a torre, abre a confirmação de upgrade ou o painel de bloons |
 | `--captura arquivo.png [s] [n] [intervalo]` | salva n capturas depois de s segundos e fecha |
 
 ## Compilar
@@ -124,13 +139,29 @@ publicam em memória compartilhada. Precisa rodar no mesmo PC de quem hospeda:
 ./build/bloons_monitor 5050
 ```
 
+## Requisitos do trabalho: onde cada um é cumprido
+
+| Requisito do enunciado | Onde está no projeto | Como conferir |
+|---|---|---|
+| **R1. Pelo menos 2 usuários, cada um em um processo distinto** | Cada jogador abre o próprio `BloonsBattles.exe`; o servidor roda dentro de quem hospeda ou separado (`bloons_servidor`). Modos Batalha 1v1 e Coop em LAN. | Abra o jogo duas vezes ([Como jogar](#como-jogar)). O teste `servidor_partida_completa` usa dois clientes TCP reais |
+| **R2. Comunicação por socket, sem biblioteca de rede de alto nível** | [src/rede/socket.cpp](src/rede/socket.cpp): `socket`, `bind`, `listen`, `accept`, `connect`, `send`, `recv` direto (Winsock2 no Windows, POSIX no Linux). Servidor em [src/servidor/servidor.cpp](src/servidor/servidor.cpp), cliente em [src/cliente/conexao.cpp](src/cliente/conexao.cpp) | Painel de mensagens trocadas na partida (tecla F1) |
+| **R3. Memória compartilhada com exclusão mútua** | **Entre threads:** classe `Sala` em [src/servidor/sala.hpp](src/servidor/sala.hpp) com `lock_sala_`, `lock_fila_` e `lock_hash_` (`std::mutex`). **Entre processos:** [src/ipc/memoria.cpp](src/ipc/memoria.cpp) (`CreateFileMapping` + `CreateMutex` no Windows, `shm_open` + `sem_open` no Linux) e o placar em [src/ipc/placar.cpp](src/ipc/placar.cpp), lido pelo `bloons_monitor` | `bloons_monitor 5050` com uma partida aberta. Testes `mutex_*` e `ipc_*`. Explicação completa em [docs/plano.md](docs/plano.md), seção 4 |
+| **R4. Ações por códigos nas mensagens; estado da "vez" nos dois processos** | Cada ação é um código na mensagem (`T` torre, `U` upgrade, `V` venda, `M` alvo, `B` habilidade, `S` envio, `N` rodada, `A` mira, `O` opção, `C` coleta). O estado da sala (`AGUARDANDO`, `EM_JOGO`, `FIM`) e o número do tick existem no servidor e nos dois clientes e só avançam pelas mensagens `0K...` (lockstep, 15 ticks/s). Hash do estado a cada 3 s detecta dessincronia | [docs/plano.md](docs/plano.md), seção 2. Testes `sim_determinismo_*` e `servidor_*` |
+| **R5. Notação própria de mensagens** | Uma linha ASCII `<origem><comando><argumentos>`, por exemplo `1Tdardo@230,250` e `0K451\|1Tdardo@230,250\|2Sr8`. Definida e validada em [src/comum/protocolo.hpp](src/comum/protocolo.hpp) e [protocolo.cpp](src/comum/protocolo.cpp) | Tabela completa em [docs/plano.md](docs/plano.md), seção 3. Testes `protocolo_*` |
+| **R6. Linguagem aceita** | C++17 (com raylib só para janela, desenho e som) | [CMakeLists.txt](CMakeLists.txt) |
+| **R7. A interface não pode consumir o tempo de R2 a R5** | Arte e sons gerados por código ([src/cliente/](src/cliente/)); rede, threads e memória compartilhada são módulos separados da interface ([src/rede](src/rede), [src/servidor](src/servidor), [src/ipc](src/ipc)) e têm testes próprios | `ctest` roda tudo sem abrir janela |
+| **R8. Jogo diferente do de outra dupla** | Tower defense inspirado no Bloons TD Battles 2, com 22 torres, 18 heróis, envio de bloons e modo Coop | Decisão do professor |
+| **R9. Entrega até 15/11/2026 23:59, vídeo de 1 min, código com e sem executável** | Roteiro do vídeo em [docs/plano.md](docs/plano.md) seção 5; zips gerados por `scripts\publicar_release.bat` ou `scripts/empacotar.sh` ([Entrega](#entrega)) | Release do GitHub com `BloonsBattles.exe`, `BloonsBattles_codigo.zip` e `BloonsBattles_com_executavel.zip` |
+
+Respostas do formulário ("Como e quais informações são trocadas entre os processos?" e "Como é feito o gerenciamento da exclusão mútua?"): [docs/plano.md](docs/plano.md), seção 6.
+
 ## Testes
 
 ```bash
 ctest --test-dir build --output-on-failure
 ```
 
-São 27 testes: protocolo, dados das torres, regras de upgrade, simulação e determinismo,
+São 65 testes: protocolo (inclusive o coop), dados das torres, regras de upgrade, simulação e determinismo,
 exclusão mútua com threads concorrentes, o servidor com clientes TCP reais e a memória
 compartilhada entre processos (inclusive abrindo o `bloons_monitor` como processo separado).
 

@@ -5,6 +5,7 @@
 #include <ctime>
 
 #include "cliente/arte.hpp"
+#include "cliente/modelos3d.hpp"
 #include "cliente/cena_jogo.hpp"
 #include "cliente/cenas_menu.hpp"
 #include "cliente/som.hpp"
@@ -68,9 +69,14 @@ App::App(const std::vector<std::string>& args) {
             // telas de menu para conferir o visual: solo, hospedar, entrar, entrar-erro, lobby
             const std::string t = args[i + 1];
             if (t == "solo") cena_ = std::make_unique<CenaSolo>(*this);
-            else if (t == "hospedar" || t == "lobby") cena_ = std::make_unique<CenaBatalha>(*this, true);
+            else if (t == "macacos") cena_ = std::make_unique<CenaMacacos>(*this);
+            else if (t == "hospedar" || t == "lobby" || t == "hospedar-coop" || t == "lobby-coop")
+                cena_ = std::make_unique<CenaBatalha>(*this, true);
             else if (t.rfind("entrar", 0) == 0) cena_ = std::make_unique<CenaBatalha>(*this, false);
             if (auto* b = dynamic_cast<CenaBatalha*>(cena_.get())) {
+                if (t.size() > 5 && t.compare(t.size() - 5, 5, "-coop") == 0) b->coop_teste(true);
+                if (t == "lobby-coop") b->conectar();
+                if (t == "entrar-auto") b->ip_teste("127.0.0.1", "5050"), b->conectar();
                 if (t == "entrar-erro") {
                     b->ip_teste("127.0.0.1", "1");
                     b->conectar();
@@ -78,6 +84,8 @@ App::App(const std::vector<std::string>& args) {
                 if (t == "lobby") b->conectar();
             }
             if (proxima_) cena_ = std::move(proxima_);
+        } else if (args[i] == "--auto") {
+            g_auto_jogar = true;
         } else if (args[i] == "--fps") {
             mostrar_fps_ = true;
         } else if (args[i] == "--pausa") {
@@ -85,6 +93,26 @@ App::App(const std::vector<std::string>& args) {
         } else if (args[i] == "--demo") {
             const bool batalha = i + 1 < args.size() && args[i + 1] == "batalha";
             cena_ = criar_demo(*this, batalha);
+        } else if (args[i] == "--sandbox") {
+            // Sandbox pronto para conferir o visual: os argumentos seguintes, ate o proximo "--", sao
+            // comandos da partida (ex.: Tsuper@600,500 U1:0 Xb:ceramica:20), o nome do mapa ou heroi=<chave>
+            std::string mapa = "prado", heroi = "quincy";
+            std::vector<std::string> cmds;
+            while (i + 1 < args.size() && args[i + 1].rfind("--", 0) != 0) {
+                const std::string& a = args[++i];
+                if (a.rfind("heroi=", 0) == 0) heroi = a.substr(6);
+                else if (a.find_first_of("@:") == std::string::npos && a.size() > 2) mapa = a;
+                else cmds.push_back(a);
+            }
+            auto ctl = std::make_unique<ControladorSolo>(mapa, "sandbox", heroi, 1);
+            for (auto& c : cmds) ctl->enviar(c);
+            cena_ = std::make_unique<CenaJogo>(*this, std::move(ctl));
+        } else if (args[i] == "--sel" && i + 1 < args.size()) {
+            if (auto* j = dynamic_cast<CenaJogo*>(cena_.get())) j->selecionar(static_cast<int>(num(i + 1, 0)));
+        } else if (args[i] == "--up" && i + 1 < args.size()) {
+            if (auto* j = dynamic_cast<CenaJogo*>(cena_.get())) j->pedir_upgrade(static_cast<int>(num(i + 1, 0)));
+        } else if (args[i] == "--bloons") {
+            if (auto* j = dynamic_cast<CenaJogo*>(cena_.get())) j->mostrar_painel_bloons();
         } else if (args[i] == "--captura" && i + 1 < args.size()) {
             captura_ = args[i + 1];
             captura_t_ = num(i + 2, 3);
@@ -99,6 +127,7 @@ App::~App() {
     cena_.reset();
     proxima_.reset();
     arte::liberar();
+    m3d::liberar();
     ui::liberar_fontes();
     som::liberar();
     CloseWindow();

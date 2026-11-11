@@ -33,6 +33,12 @@ public:
         std::string mapa, heroi1, heroi2;
     };
 
+    // Coop: os dois jogadores defendem a mesma pista. Definido na construcao do servidor, antes
+    // de qualquer thread existir, e so lido depois (nao precisa de mutex).
+    bool coop = false;
+    // Quem vence quando o jogador `saiu` abandona: no versus, o oponente; no coop, ninguem (0).
+    int vencedor_se_sair(int saiu) const { return coop ? 0 : oponente(saiu); }
+
     // ---------- sala
     // Numero do novo jogador, ou nada se a sala estiver cheia.
     // Secao critica: dois clientes conectando ao mesmo tempo nao podem receber o mesmo numero.

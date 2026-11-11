@@ -23,6 +23,21 @@ private:
     double dt_ = 0.016;
 };
 
+// Consulta dos 15 upgrades de cada torre, fora da partida
+class CenaMacacos : public Cena {
+public:
+    explicit CenaMacacos(App& app);
+    void evento(const ui::Evento& e) override;
+    void atualizar(double) override {}
+    void desenhar() override;
+
+private:
+    Rectangle rect_torre(size_t i) const { return {40 + (i % 4) * 66.0f, 100 + (i / 4) * 66.0f, 60, 60}; }
+    Rectangle rect_up(int p, int k) const { return {348 + k * 180.0f, 226 + p * 132.0f, 172, 124}; }
+    std::string torre_ = "dardo";
+    ui::Botao voltar_;
+};
+
 // Grade de selecao de heroi (comum ao solo e a batalha)
 class GradeHerois {
 public:
@@ -52,7 +67,9 @@ private:
         const float w = (1200.0f - (DIFICULDADES.size() - 1) * 8.0f) / DIFICULDADES.size();
         return {40 + i * (w + 8.0f), 368, w, 56};
     }
-    std::string mapa_ = "prado", dif_ = "medio";
+    // modos de restricao do BTD6, no cabecalho do passo 2 para nao apertar a linha das dificuldades
+    Rectangle rect_restricao(size_t i) const { return {688 + i * 138.0f, 338, 130, 24}; }
+    std::string mapa_ = "prado", dif_ = "medio", restricao_;
     GradeHerois herois_{40, 496, 9, 58};
     ui::Botao voltar_, jogar_;
 };
@@ -66,6 +83,7 @@ public:
 
     void conectar();
     void ip_teste(const std::string& ip, const std::string& porta) { ip_.valor = ip, porta_.valor = porta; }
+    void coop_teste(bool v) { coop_ = v; }  // --tela hospedar-coop
 
 private:
     Rectangle rect_mapa(size_t i) const { return {40 + i * 304.5f, 124, 286.5f, 172}; }
@@ -73,7 +91,8 @@ private:
     std::string mapa_ = "prado";
     GradeHerois herois_{40, 496, 9, 58};
     ui::CampoTexto ip_, porta_;
-    ui::Botao voltar_, ir_;
+    ui::Botao voltar_, ir_, modo_;
+    bool coop_ = false;  // so ao hospedar: quem hospeda escolhe Batalha (1v1) ou Coop
     std::string erro_;
 };
 

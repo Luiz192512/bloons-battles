@@ -19,6 +19,10 @@ class Controlador {
 public:
     virtual ~Controlador() = default;
     virtual bool online() const = 0;
+    // Tem um oponente (pista dele, envios de bloons, renda)? So o modo Batalha; o coop e online
+    // mas os dois jogadores defendem a mesma pista.
+    virtual bool vs() const { return online(); }
+    virtual bool ganhou() const { return vencedor() == meu; }
     virtual char enviar(const std::string& cmd) = 0;  // OK ou codigo de erro
     virtual void botao_play() {}
     virtual void atualizar(double dt) = 0;
@@ -42,7 +46,8 @@ public:
 
 class ControladorSolo : public Controlador {
 public:
-    ControladorSolo(const std::string& mapa, const std::string& dificuldade, const std::string& heroi, int seed);
+    ControladorSolo(const std::string& mapa, const std::string& dificuldade, const std::string& heroi, int seed,
+                    const std::string& restricao = "");
     bool online() const override { return false; }
     std::unique_ptr<ControladorSolo> reiniciar() const;
     char enviar(const std::string& cmd) override { return partida->aplicar(1, cmd); }
@@ -52,7 +57,7 @@ public:
     int vencedor() const override { return partida->vencedor; }
 
 private:
-    std::string mapa_, dificuldade_, heroi_;
+    std::string mapa_, dificuldade_, heroi_, restricao_;
     int seed_;
     double acc_ = 0;
 };
@@ -65,8 +70,13 @@ public:
 
     ControladorBatalha(std::shared_ptr<Conexao> conexao, int numero, long long seed, const std::string& mapa,
                        const std::map<int, std::string>& herois, std::shared_ptr<Servidor> servidor,
-                       std::vector<proto::Mensagem> pendentes, int porta = proto::PORTA_PADRAO);
+                       std::vector<proto::Mensagem> pendentes, int porta = proto::PORTA_PADRAO, bool coop = false);
     bool online() const override { return true; }
+    bool vs() const override { return !coop_; }
+    bool coop() const { return coop_; }
+    // coop: vencer e chegar ao fim das rodadas (vencedor 1); sair ou perder todas as vidas e derrota
+    bool ganhou() const override { return coop_ ? vencedor() == 1 : vencedor() == meu; }
+    void botao_play() override;
     // Validacao local antecipada, so para dar retorno imediato ao jogador.
     char checar(const std::string& cmd);
     char enviar(const std::string& cmd) override;
@@ -82,6 +92,7 @@ public:
 private:
     std::shared_ptr<Conexao> conexao_;
     std::shared_ptr<Servidor> servidor_;
+    bool coop_ = false;
     std::vector<proto::Mensagem> pendentes_;  // mensagens que chegaram junto com o inicio
     // Linha deste jogador no placar em memoria compartilhada (so existe se o servidor da sala
     // roda nesta mesma maquina).

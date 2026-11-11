@@ -17,13 +17,14 @@ std::string mensagem_erro(char erro) {
 
 // ---------------------------------------------------------------- solo
 ControladorSolo::ControladorSolo(const std::string& mapa, const std::string& dificuldade, const std::string& heroi,
-                                 int seed)
-    : mapa_(mapa), dificuldade_(dificuldade), heroi_(heroi), seed_(seed) {
+                                 int seed, const std::string& restricao)
+    : mapa_(mapa), dificuldade_(dificuldade), heroi_(heroi), restricao_(restricao), seed_(seed) {
     partida = std::make_unique<Partida>("solo", mapa, seed, dificuldade, std::map<int, std::string>{{1, heroi}});
+    partida->pista(1).restricao = restricao;
 }
 
 std::unique_ptr<ControladorSolo> ControladorSolo::reiniciar() const {
-    return std::make_unique<ControladorSolo>(mapa_, dificuldade_, heroi_, seed_);
+    return std::make_unique<ControladorSolo>(mapa_, dificuldade_, heroi_, seed_, restricao_);
 }
 
 void ControladorSolo::botao_play() {
@@ -46,10 +47,10 @@ void ControladorSolo::atualizar(double dt) {
 ControladorBatalha::ControladorBatalha(std::shared_ptr<Conexao> conexao, int numero, long long seed,
                                        const std::string& mapa, const std::map<int, std::string>& herois,
                                        std::shared_ptr<Servidor> servidor, std::vector<P::Mensagem> pendentes,
-                                       int porta)
-    : conexao_(std::move(conexao)), servidor_(std::move(servidor)), pendentes_(std::move(pendentes)) {
+                                       int porta, bool coop)
+    : conexao_(std::move(conexao)), servidor_(std::move(servidor)), coop_(coop), pendentes_(std::move(pendentes)) {
     meu = numero;
-    partida = std::make_unique<Partida>("batalha", mapa, static_cast<int>(seed), "medio", herois);
+    partida = std::make_unique<Partida>(coop ? "coop" : "batalha", mapa, static_cast<int>(seed), "medio", herois);
     if (meu == 1 || meu == 2) placar_ = ipc::PlacarCompartilhado::abrir(porta);
 }
 
@@ -109,6 +110,11 @@ char ControladorBatalha::checar(const std::string& cmd) {
     return OK;
 }
 
+// coop: qualquer um dos dois inicia a rodada; o comando passa pelo servidor e vale para os dois
+void ControladorBatalha::botao_play() {
+    if (coop_ && !partida->em_rodada && !terminou()) conexao_->comando("N");
+}
+
 char ControladorBatalha::enviar(const std::string& cmd) {
     if (terminou()) return ERRO_INVALIDO;
     if (char erro = checar(cmd)) return erro;
@@ -133,6 +139,7 @@ void ControladorBatalha::atualizar(double) {
             status = "Dessincronia detectada no tick " + std::to_string(msg.tick) + "!";
         } else if (msg.comando == P::FIM_JOGO) {
             fim_remoto = msg.vencedor;
+            if (coop_ && !partida->fim) status = "Seu parceiro saiu da partida.";
         }
     }
     if (!conexao_->ativo() && !terminou()) {

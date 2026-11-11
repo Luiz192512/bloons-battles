@@ -5,6 +5,7 @@
 #include <cstdio>
 
 #include "cliente/arte.hpp"
+#include "cliente/modelos3d.hpp"
 #include "cliente/som.hpp"
 
 namespace bl {
@@ -20,7 +21,9 @@ constexpr float CARD_W = 72, CARD_H = 60, PASSO_X = 76, PASSO_Y = 64;
 constexpr float GRADE_X = PAINEL_X + 8, GRADE_Y = 72;
 constexpr float ENVIO_H = 104;
 constexpr float UP_W = 384, UP_H = 320;
-const char* const NOMES_MODO[4] = {"Primeiro", "Último", "Perto", "Forte"};
+const char* const NOMES_MODO[5] = {"Primeiro", "Último", "Perto", "Forte", "Elite"};
+// quantos modos de alvo a torre tem: o Atirador de Elite ganha o quinto
+int modos_de_alvo(const Torre& t) { return t.chave == "sniper" && t.caminhos[1] >= 5 ? 5 : 4; }
 const Color MADEIRA_BLOQ = rgb(58, 42, 30);
 
 std::string numero_g(double v) {
@@ -80,7 +83,7 @@ CenaJogo::CenaJogo(App& a, std::unique_ptr<Controlador> controle)
     : Cena(a), ctl_(std::move(controle)), chave_mapa_(ctl_->partida->mapa.def.chave),
       render_(ctl_->pista(), chave_mapa_), mostrar_log_(false) {
     // o log de rede (F1) comeca fechado: ele tapava a trilha na Batalha
-    if (ctl_->online()) render_op_ = std::make_unique<RenderPista>(ctl_->oponente(), chave_mapa_, false);
+    if (ctl_->vs()) render_op_ = std::make_unique<RenderPista>(ctl_->oponente(), chave_mapa_, false);
     heroi_ = ctl_->pista().heroi_escolhido;
     std::vector<std::string> chaves;
     if (!heroi_.empty()) chaves.push_back(heroi_);
@@ -117,6 +120,19 @@ std::vector<CenaJogo::Hab> CenaJogo::hab_lista() {
 
 // ============================================================== eventos
 void CenaJogo::evento(const ui::Evento& e) {
+    if (confirma_up_ >= 0 && !ctl_->terminou() && !menu_pausa_) {
+        // dialogo do sacrificio aberto: so ele recebe o clique; Esc cancela e Enter confirma
+        if (e.tipo == ui::Evento::TECLA && e.tecla == KEY_ESCAPE) confirma_up_ = -1;
+        else if (e.tipo == ui::Evento::TECLA && e.tecla == KEY_ENTER) upar(confirma_up_);
+        else
+            for (auto& [b, acao] : botoes_menu_)
+                if (b.clicou(e)) {
+                    Acao a = acao;
+                    a();
+                    return;
+                }
+        return;
+    }
     if (ctl_->terminou() || menu_pausa_) {
         if (menu_pausa_ && e.tipo == ui::Evento::TECLA && e.tecla == KEY_ESCAPE) {
             pausar(false);
@@ -148,6 +164,7 @@ void CenaJogo::pausar(bool v) {
 void CenaJogo::tecla(int k) {
     if (k == KEY_ESCAPE) {
         if (!colocando_.empty() || selecionada_ || op_grande_) {
+            definindo_alvo_ = 0;
             colocando_.clear();
             selecionada_ = 0;
             op_grande_ = false;
@@ -160,13 +177,17 @@ void CenaJogo::tecla(int k) {
         mostrar_log_ = !mostrar_log_;
         return;
     }
+    if (k == KEY_F2 && ctl_->partida->sandbox) {
+        painel_bloons_ = !painel_bloons_;
+        return;
+    }
     if (k == KEY_F9) {
         // depuracao das animacoes: repete o clipe na torre selecionada (so visual)
         depura_ = depura_ ? 0 : (ui::shift() ? 2 : 1);
         depura_t_ = 0;
         return;
     }
-    if (k == KEY_O && ctl_->online()) {
+    if (k == KEY_O && ctl_->vs()) {
         op_grande_ = !op_grande_;
         return;
     }
@@ -183,8 +204,16 @@ void CenaJogo::tecla(int k) {
         return;
     }
     if (k == KEY_TAB && selecionada_) {
-        if (TorreP t = pista().torre(selecionada_))
-            comando("M" + std::to_string(t->id) + ":" + std::to_string((t->modo + 1) % 4));
+        if (TorreP t = pista().torre(selecionada_); t && t->chave == "dartling")
+            alternar_mira(t->id);
+        else if (t && t->chave == "morteiro")
+            definindo_alvo_ = definindo_alvo_ == t->id ? 0 : t->id;
+        else if (t && t->chave == "as")
+            proxima_rota(t->id);
+        else if (t && t->chave == "heli")
+            proximo_modo_heli(t->id);
+        else if (t)
+            comando("M" + std::to_string(t->id) + ":" + std::to_string((t->modo + 1) % modos_de_alvo(*t)));
         return;
     }
     if (k >= KEY_ONE && k <= KEY_NINE) {
@@ -235,16 +264,17 @@ void CenaJogo::clique(Vector2 pos) {
         op_grande_ = false;
         return;
     }
-    if (ctl_->online() && mostrar_op_ && ui::dentro(ui::inflar(rect_mini_, 6, 50), pos) && colocando_.empty()) {
+    if (ctl_->vs() && mostrar_op_ && ui::dentro(ui::inflar(rect_mini_, 6, 50), pos) && colocando_.empty()) {
         op_grande_ = true;
         return;
     }
     if (pos.x >= PAINEL_X) {
-        if (ui::dentro(botao_play_, pos) && !ctl_->online()) {
+        if (ui::dentro(botao_play_, pos) && !ctl_->vs()) {
             ctl_->botao_play();
             som::tocar("rodada");
             return;
         }
+        if (ctl_->partida->sandbox && painel_bloons_) return;  // a loja esta escondida
         for (auto& [chave, r] : cards_) {
             if (ui::dentro(r, pos)) {
                 escolher(chave);
@@ -254,6 +284,16 @@ void CenaJogo::clique(Vector2 pos) {
         return;
     }
     const int x = static_cast<int>(pos.x), y = static_cast<int>(pos.y);
+    if (definindo_alvo_) {
+        const bool ok = comando("A" + std::to_string(definindo_alvo_) + "@" + std::to_string(x) + "," + std::to_string(y));
+        // no Heli o clique marca a outra ponta da patrulha
+        if (TorreP t = pista().torre(definindo_alvo_); ok && t && t->chave == "heli") {
+            comando("O" + std::to_string(t->id) + ":2");
+            modo_heli_[t->id] = 3;
+        }
+        definindo_alvo_ = 0;
+        return;
+    }
     if (!colocando_.empty()) {
         const std::string chave = colocando_;
         if (comando("T" + chave + "@" + std::to_string(x) + "," + std::to_string(y)))
@@ -264,6 +304,9 @@ void CenaJogo::clique(Vector2 pos) {
     double md = 1e9;
     for (auto& [id, t] : pista().torres) {
         double d = (t->x - x) * (t->x - x) + (t->y - y) * (t->y - y);
+        // o As e o Heli tambem se selecionam pela base no chao, que fica parada
+        if (t->dfn->mov != Mov::FIXO && !t->temporaria)
+            d = std::min(d, (t->cx - x) * (t->cx - x) + (t->cy - y) * (t->cy - y));
         if (d < (t->dfn->raio + 10) * (t->dfn->raio + 10) && d < md) melhor = t.get(), md = d;
     }
     selecionada_ = melhor ? melhor->id : 0;
@@ -276,6 +319,16 @@ void CenaJogo::upar(int p) {
         aviso("Caminho bloqueado ou no máximo.");
         return;
     }
+    if (const std::string req = pista().requisito_upgrade(*t, p); !req.empty()) {
+        aviso(req + ".");
+        return;
+    }
+    // upgrade que destroi torres vizinhas: pede confirmacao antes de mandar o comando
+    if (!pista().aviso_sacrificio(*t, p).empty() && confirma_up_ != p && pista().dinheiro >= *pista().custo_upgrade(*t, p)) {
+        confirma_up_ = p;
+        return;
+    }
+    confirma_up_ = -1;
     comando("U" + std::to_string(t->id) + ":" + std::to_string(p));
 }
 
@@ -283,6 +336,55 @@ void CenaJogo::vender() {
     TorreP t = pista().torre(selecionada_);
     if (!t || t->temporaria) return;
     if (comando("V" + std::to_string(t->id))) selecionada_ = 0;
+}
+
+void CenaJogo::alternar_mira(int id) {
+    if (!mira_travada_.erase(id)) mira_travada_.insert(id);
+    mira_enviada_ = {-1, -1};  // ao destravar, manda o cursor de novo mesmo parado
+}
+
+// As: circulo, infinito, oito e, com o upgrade, a rota em volta de um ponto escolhido no mapa
+void CenaJogo::proxima_rota(int id) {
+    TorreP t = pista().torre(id);
+    if (!t) return;
+    if (definindo_alvo_ == id) {  // desistiu de escolher o centro: volta ao circulo
+        definindo_alvo_ = 0;
+        comando("O" + std::to_string(id) + ":0");
+        return;
+    }
+    const int n = t->caminhos[2] >= 2 ? 4 : 3;
+    const int prox = (t->rota + 1) % n;
+    if (prox == 3) definindo_alvo_ = id;  // o clique no mapa manda o comando A, que ja liga a rota 3
+    else comando("O" + std::to_string(id) + ":" + std::to_string(prox));
+}
+
+// Modo de voo mostrado no painel. A simulacao so sabe "procura bloons", "vai ao ponto" e "patrulha";
+// seguir o mouse e travado sao o mesmo "vai ao ponto", com ou sem o cliente mandando o cursor.
+int CenaJogo::modo_heli(const Torre& t) const {
+    if (t.rota == 0) return 0;
+    if (t.rota == 2) return 3;
+    const auto it = modo_heli_.find(t.id);
+    return it != modo_heli_.end() && it->second == 1 ? 1 : 2;
+}
+
+void CenaJogo::proximo_modo_heli(int id) {
+    if (definindo_alvo_ == id) {  // desistiu da patrulha: volta ao automatico
+        definindo_alvo_ = 0;
+        modo_heli_[id] = 0;
+        comando("O" + std::to_string(id) + ":0");
+        return;
+    }
+    TorreP t = pista().torre(id);
+    if (!t) return;
+    const int prox = (modo_heli(*t) + 1) % 4;
+    if (prox == 3) {
+        definindo_alvo_ = id;  // o modo so muda quando o ponto for escolhido
+        return;
+    }
+    modo_heli_[id] = prox;
+    // 1 segue o cursor (os comandos A saem do atualizar); 2 trava onde esta, sem mandar mais nada
+    if (prox != 2) comando("O" + std::to_string(id) + ":" + std::to_string(prox));
+    mira_enviada_ = {-1, -1};
 }
 
 void CenaJogo::alternar_auto() { ctl_->partida->automatico = !ctl_->partida->automatico; }
@@ -305,13 +407,49 @@ void CenaJogo::enviar(const Envio& env) {
 
 // ============================================================== atualizar
 void CenaJogo::atualizar(double dt) {
+    if (g_auto_jogar && ctl_->online() && !ctl_->terminou()) {
+        // roteiro de teste: cada jogador coloca um dardo, melhora o do outro e inicia a rodada
+        auto_t_ += dt;
+        const bool eu1 = ctl_->meu == 1;
+        if (auto_passo_ == 0 && auto_t_ > 2) ctl_->enviar(eu1 ? "Tdardo@230,250" : "Tdardo@600,500"), auto_passo_ = 1;
+        if (auto_passo_ == 1 && auto_t_ > 5) ctl_->enviar(eu1 ? "U2:0" : "U1:0"), auto_passo_ = 2;
+        if (auto_passo_ == 2 && auto_t_ > 7) ctl_->botao_play(), auto_passo_ = 3;
+    }
+    // cursor para as Dartlings em modo Normal; a simulacao so conhece o ponto que chega por comando
+    mira_espera_ -= dt;
+    const Vector2 cur = ui::mouse();
+    if (mira_espera_ <= 0 && !menu_pausa_ && !ctl_->terminou() && cur.x >= 0 && cur.x < PAINEL_X && cur.y >= 0 &&
+        cur.y <= ALTURA_MAPA && (std::fabs(cur.x - mira_enviada_.x) > 6 || std::fabs(cur.y - mira_enviada_.y) > 6)) {
+        bool enviou = false;
+        for (auto& [id, t] : pista().torres) {
+            const bool dartling = t->chave == "dartling" && !mira_travada_.count(id);
+            const auto mh = modo_heli_.find(id);
+            const bool heli = t->chave == "heli" && mh != modo_heli_.end() && mh->second == 1;
+            if (!dartling && !heli) continue;
+            ctl_->enviar("A" + std::to_string(id) + "@" + std::to_string(static_cast<int>(cur.x)) + "," +
+                         std::to_string(static_cast<int>(cur.y)));
+            enviou = true;
+        }
+        if (enviou) mira_espera_ = 0.1, mira_enviada_ = cur;
+    }
+    // passar o cursor por cima coleta bananas e caixas (Coleta Facil, caminho 3 da Fazenda, alarga o raio)
+    if (!pista().coletaveis.empty() && cur.x < PAINEL_X) {
+        double raio = 34;
+        for (auto& [id, t] : pista().torres)
+            if (t->chave == "fazenda" && t->caminhos[2] >= 1) raio = 85;
+        for (const Coletavel& c : pista().coletaveis)
+            if (std::hypot(c.x - cur.x, c.y - cur.y) <= raio && coleta_pedida_.insert(c.id).second)
+                ctl_->enviar("C" + std::to_string(c.id));
+    } else if (pista().coletaveis.empty()) {
+        coleta_pedida_.clear();
+    }
     ctl_->atualizar(dt);
     render_.consumir_eventos();
     render_.atualizar(dt);
     for (const Evento& av : render_.avisos) {
         if (av.tipo == "fim_rodada") {
             const int r = static_cast<int>(av.v);
-            if (ctl_->online()) {
+            if (ctl_->vs()) {
                 banner_ = {"Rodada " + std::to_string(r), 1.6};
                 som::tocar("rodada");
             } else {
@@ -368,9 +506,32 @@ void CenaJogo::desenhar() {
     TorreP sel = selecionada_ ? pista().torre(selecionada_) : nullptr;
     render_.desenhar(selecionada_);
     if (sel) circulo_alcance(static_cast<float>(sel->x), static_cast<float>(sel->y), sel->alcance(), true);
+    if (TorreP alvo = sel && sel->escolhe_torre() ? pista().torre(sel->alvo_torre) : nullptr) {
+        // torre que vai receber o Overclock: anel laranja e uma linha ate o Engenheiro
+        const Vector2 a{static_cast<float>(sel->x), static_cast<float>(sel->y)}, b{static_cast<float>(alvo->x), static_cast<float>(alvo->y)};
+        DrawLineEx(a, b, 5, ui::TINTA);
+        DrawLineEx(a, b, 2.5f, rgb(255, 170, 40));
+        DrawRing(b, 28, 33, 0, 360, 48, ui::TINTA);
+        DrawRing(b, 29, 32, 0, 360, 48, rgb(255, 170, 40));
+    }
+    if (sel && (sel->chave == "morteiro" ? sel->tem_mira
+                : sel->chave == "heli"   ? sel->rota == 2
+                                         : sel->chave == "as" && sel->rota == 3) ||
+        (sel && definindo_alvo_ == sel->id)) {
+        // marca do ponto de impacto: no ponto fixo, ou seguindo o cursor enquanto o jogador escolhe
+        const bool esc = definindo_alvo_ == sel->id && mouse.x < PAINEL_X;
+        const Vector2 c = esc ? mouse : Vector2{static_cast<float>(sel->mx), static_cast<float>(sel->my)};
+        const Color cor = esc ? ui::AMARELO : ui::VERMELHO;
+        DrawRing(c, 20, 24, 0, 360, 48, ui::TINTA);
+        DrawRing(c, 21, 23, 0, 360, 48, cor);
+        DrawLineEx({c.x - 30, c.y}, {c.x - 12, c.y}, 4, cor);
+        DrawLineEx({c.x + 12, c.y}, {c.x + 30, c.y}, 4, cor);
+        DrawLineEx({c.x, c.y - 30}, {c.x, c.y - 12}, 4, cor);
+        DrawLineEx({c.x, c.y + 12}, {c.x, c.y + 30}, 4, cor);
+    }
     if (!colocando_.empty() && mouse.x < PAINEL_X) previa(mouse);
     hud_topo();
-    if (ctl_->online()) {
+    if (ctl_->vs()) {
         painel_envios(mouse);
         if (mostrar_op_) mini_oponente();
     }
@@ -386,6 +547,7 @@ void CenaJogo::desenhar() {
                   ui::AMARELO, 2, Ancora::CENTER);
     if (ctl_->terminou()) tela_fim();
     else if (menu_pausa_) tela_pausa();
+    else if (confirma_up_ >= 0) tela_sacrificio();
 }
 
 void CenaJogo::circulo_alcance(float x, float y, double r, bool valido) {
@@ -424,10 +586,86 @@ void CenaJogo::previa(Vector2 mouse) {
 }
 
 // ---------------------------------------------------------------- HUD
+// Sandbox: envia qualquer bloon ou rodada e limpa a pista (comandos X da Partida)
+void CenaJogo::painel_sandbox(Vector2 mouse) {
+    const float x0 = PAINEL_X + 8, w = 224;
+    auto botao = [&](Rectangle r, const std::string& txt, Color face, Color lab, int tam, Acao acao, bool ligado = false) {
+        const bool sobre = ui::dentro(r, mouse);
+        bloco(ui::mover(r, 0, sobre ? -1.0f : 0), ligado ? ui::VERDE : sobre ? ui::clarear(face, 0.15f) : face,
+              ligado ? ui::VERDE_ESCURO : lab, 9, 2);
+        ui::texto(txt, r.x + r.width / 2, r.y + r.height / 2 - 2, tam, ui::BRANCO, 2, Ancora::CENTER);
+        botoes_up_.push_back({r, std::move(acao)});
+        return sobre;
+    };
+    // quantidade
+    static const int QTDS[] = {1, 5, 10, 20, 50, 100};
+    auto passo_qtd = [this](int d) {
+        int i = 0;
+        while (i < 5 && QTDS[i] < sb_qtd_) ++i;
+        sb_qtd_ = QTDS[std::clamp(i + d, 0, 5)];
+    };
+    float y = GRADE_Y;
+    ui::texto("QUANTIDADE", x0 + 4, y + 15, 10, ui::BEGE, 0, Ancora::MIDLEFT);
+    botao({x0 + 96, y, 34, 30}, "-", ui::AZUL, ui::AZUL_ESCURO, 16, [passo_qtd] { passo_qtd(-1); });
+    ui::texto(std::to_string(sb_qtd_), x0 + 160, y + 14, 17, ui::BRANCO, 3, Ancora::CENTER);
+    botao({x0 + w - 34, y, 34, 30}, "+", ui::AZUL, ui::AZUL_ESCURO, 16, [passo_qtd] { passo_qtd(1); });
+    // propriedades
+    y += 36;
+    const char* nomes[3] = {"Camo", "Regen", "Fort"};
+    bool* flags[3] = {&sb_camo_, &sb_regen_, &sb_fort_};
+    for (int i = 0; i < 3; ++i) {
+        bool* f = flags[i];
+        botao({x0 + i * 76.0f, y, 72, 30}, nomes[i], ui::CINZA, ui::CINZA_ESCURO, 11, [f] { *f = !*f; }, *f);
+    }
+    // grade com todos os bloons e dirigiveis
+    y += 38;
+    const auto& tipos = bloons();
+    for (size_t i = 0; i < tipos.size(); ++i) {
+        const TipoBloon& tb = tipos[i];
+        const Rectangle r{x0 + (i % 4) * 56.5f, y + (i / 4) * 52.0f, 54, 49};
+        const bool sobre = ui::dentro(r, mouse);
+        ui::ret(ui::mover(r, 0, sobre ? 4.0f : 2.0f), rgb(22, 20, 26, 128), 9);
+        ui::ret(r, ui::TINTA, 9);
+        ui::ret(ui::inflar(r, -4, -4), sobre ? rgb(255, 246, 218) : ui::BEGE, 6);
+        const bool fort = sb_fort_ && tb.vida_fortificado > 0;
+        if (tb.moab) {
+            arte::dirigivel(tb, fort, 0, r.x + r.width / 2, r.y + r.height / 2, 0, 42 / arte::tamanho_dirigivel(tb).x);
+        } else {
+            arte::bloon(tb, sb_camo_, sb_regen_, fort, 0, r.x + r.width / 2, r.y + r.height / 2,
+                        15.0f / arte::raio_bloon_px(tb));
+        }
+        const std::string nome = tb.nome;
+        botoes_up_.push_back({r, [this, nome] {
+                                  comando("Xb:" + nome + ":" + std::to_string(sb_qtd_) + ":" +
+                                          (sb_camo_ ? "c" : "") + (sb_regen_ ? "r" : "") + (sb_fort_ ? "f" : ""));
+                              }});
+        if (sobre) dicas_.push_back({mouse, tb.rotulo, "Envia " + std::to_string(sb_qtd_) + " pela entrada."});
+    }
+    // rodada inteira
+    y += static_cast<float>((tipos.size() + 3) / 4) * 52.0f + 6;
+    ui::texto("RODADA", x0 + 4, y + 15, 10, ui::BEGE, 0, Ancora::MIDLEFT);
+    botao({x0 + 58, y, 30, 30}, "-", ui::AZUL, ui::AZUL_ESCURO, 16,
+          [this] { sb_rodada_ = std::max(1, sb_rodada_ - (ui::shift() ? 10 : 1)); });
+    ui::texto(std::to_string(sb_rodada_), x0 + 108, y + 14, 16, ui::BRANCO, 3, Ancora::CENTER);
+    botao({x0 + 128, y, 30, 30}, "+", ui::AZUL, ui::AZUL_ESCURO, 16,
+          [this] { sb_rodada_ = std::min(200, sb_rodada_ + (ui::shift() ? 10 : 1)); });
+    if (botao({x0 + 164, y, 60, 30}, "Enviar", ui::VERDE, ui::VERDE_ESCURO, 11,
+              [this] { comando("Xr:" + std::to_string(sb_rodada_)); }))
+        dicas_.push_back({mouse, "Enviar rodada", "Manda a rodada inteira. Shift nos botões pula de 10 em 10."});
+    // limpeza e recarga (a ultima celula da direita fica para o botao Torres/Bloons)
+    y += 36;
+    botao({x0, y, 108, 28}, "Limpar bloons", ui::VERMELHO, ui::VERMELHO_ESCURO, 10, [this] { comando("Xl"); });
+    botao({x0 + 116, y, 108, 28}, "Limpar torres", ui::VERMELHO, ui::VERMELHO_ESCURO, 10, [this] {
+        if (comando("Xt")) selecionada_ = 0;
+    });
+    y += 32;
+    botao({x0, y, 140, 28}, "Recarregar habilidades", ui::AZUL, ui::AZUL_ESCURO, 9, [this] { comando("Xh"); });
+}
+
 void CenaJogo::hud_topo() {
     Pista& p = pista();
     const std::string vidas = ui::formatar(std::max(0, p.vidas)), din = "$" + ui::formatar(p.dinheiro);
-    const bool on = ctl_->online();
+    const bool on = ctl_->vs();
     const std::string eco = "+" + ui::formatar(p.eco);
     float w = 10 + 30 + 6 + ui::medir(vidas, 23).x + 18 + 30 + 6 + ui::medir(din, 23).x + 18;
     if (on) w += 28 + 6 + ui::medir(eco, 20).x + 8 + 62;
@@ -459,12 +697,12 @@ void CenaJogo::painel_lateral(Vector2 mouse) {
     ui::placa(pr, ui::MADEIRA_ESCURA, 12);
     arte::icone("rodada", pr.x + 12, pr.y + 12, 32);
     ui::texto("RODADA", pr.x + 50, pr.y + 13, 9, ui::BEGE, 0);
-    const std::string rod = ctl_->online() ? std::to_string(std::max(1, p.rodada))
-                   : ctl_->partida->em_freeplay ? std::to_string(std::max(1, p.rodada))
+    const std::string rod = ctl_->vs() ? std::to_string(std::max(1, p.rodada))
+                   : (ctl_->partida->em_freeplay || p.sandbox) ? std::to_string(std::max(1, p.rodada))
                                                 : std::to_string(std::max(1, p.rodada)) + "/" + std::to_string(p.ultima_rodada);
     ui::texto(rod, pr.x + 48, pr.y + 36, 23, ui::BRANCO, 4, Ancora::MIDLEFT);
     const float dx = pr.x + pr.width - 12;
-    if (ctl_->online()) {
+    if (ctl_->vs()) {
         const double falta = p.tempo_para_rodada();
         ui::texto("próxima em " + std::to_string(static_cast<int>(std::ceil(falta))) + " s", dx, pr.y + 18, 12,
                   ui::BEGE, 0, Ancora::MIDRIGHT, ui::Peso::TEXTO);
@@ -479,15 +717,32 @@ void CenaJogo::painel_lateral(Vector2 mouse) {
         ui::texto(nome, rp.x + rp.width / 2, rp.y + 9, 10, ui::BRANCO, 0, Ancora::CENTER);
     }
     Pista& pista_ = pista();
-    for (auto& [chave, r0] : cards_) {
+    if (p.sandbox) {
+        // ultima celula da grade (vazia na loja): alterna entre a loja e o painel de bloons
+        const Rectangle rt{GRADE_X + 2 * PASSO_X - 4, GRADE_Y + 7 * PASSO_Y, CARD_W, CARD_H};
+        const bool sobre = ui::dentro(rt, mouse);
+        bloco(ui::mover(rt, 0, sobre ? -2.0f : 0), sobre ? ui::clarear(ui::AZUL, 0.15f) : ui::AZUL, ui::AZUL_ESCURO, 10,
+              sobre ? 5.0f : 3.0f);
+        ui::tecla_centro("F2", rt.x + rt.width / 2, rt.y + 18 - (sobre ? 2 : 0), 8);
+        ui::texto(painel_bloons_ ? "Torres" : "Bloons", rt.x + rt.width / 2, rt.y + 40 - (sobre ? 2 : 0), 11, ui::BRANCO, 2,
+                  Ancora::CENTER);
+        botoes_up_.push_back({rt, [this] { painel_bloons_ = !painel_bloons_; }});
+        if (sobre) dicas_.push_back({mouse, "Sandbox", "Alterna entre a loja de torres e o painel de envio de bloons."});
+    }
+    if (p.sandbox && painel_bloons_) painel_sandbox(mouse);
+    else for (auto& [chave, r0] : cards_) {
         const DefTorre& dfn = definicao(chave);
         const int custo = pista_.custo(dfn.custo);
         const bool em_jogo = dfn.heroi && pista_.tem_heroi;
-        const bool pode = pista_.dinheiro >= custo && !em_jogo;
+        const bool proibida = !pista_.permitida(dfn);  // modo de restricao por categoria
+        const bool pode = pista_.dinheiro >= custo && !em_jogo && !proibida;
         const bool sobre = ui::dentro(r0, mouse);
         const bool colocando = colocando_ == chave;
         const Rectangle r = sobre && !colocando ? ui::mover(r0, 0, -2) : r0;
-        Color face = pode ? ui::BEGE : ui::BEGE_APAGADO;
+        // fundo do cartao puxado para a cor da categoria (Primaria azul, Militar verde, Magica roxa, Suporte laranja)
+        const Color cat = cor_categoria(dfn), base_face = pode ? ui::BEGE : ui::BEGE_APAGADO;
+        auto mistura = [&](unsigned char a, unsigned char b) { return static_cast<unsigned char>(a * 0.62f + b * 0.38f); };
+        Color face{mistura(base_face.r, cat.r), mistura(base_face.g, cat.g), mistura(base_face.b, cat.b), 255};
         if (em_jogo) face = rgb(247, 215, 116);
         if (sobre && pode) face = rgb(255, 246, 218);
         if (colocando) face = rgb(200, 240, 168);
@@ -497,20 +752,23 @@ void CenaJogo::painel_lateral(Vector2 mouse) {
         ui::ret(f, face, 7);
         DrawRectangleRec({f.x + 2, f.y, f.width - 4, 3}, cor_categoria(dfn));  // faixa de categoria
         const unsigned char alfa = em_jogo ? 140 : pode ? 255 : 115;
-        arte::torre_icone(chave, {}, r.x + r.width / 2, r.y + 23, 40, alfa);
+        if (!m3d::retrato_em(chave, {f.x, f.y + 3, f.width, r.height - 30}, alfa) &&
+            !m3d::torre(chave, {0, 0, 0}, r.x + r.width / 2, r.y + 33, 24, 90, anim::TipoMira::FIXA, alfa))
+            arte::torre_icone(chave, {}, r.x + r.width / 2, r.y + 23, 40, alfa);
         // rodape do preco
         const Rectangle rod_r{f.x, r.y + r.height - 20, f.width, 17.5f};
         const Color fundo = em_jogo ? ui::VERDE_ESCURO : pode ? ui::MADEIRA_ESCURA : ui::VERMELHO_ESCURO;
         DrawRectangleRec({f.x, rod_r.y - 2, f.width, 2}, ui::TINTA);
         ui::ret(rod_r, fundo, 5);
         DrawRectangleRec({rod_r.x, rod_r.y, rod_r.width, 6}, fundo);
-        ui::texto(em_jogo ? "EM JOGO" : "$" + ui::formatar(custo), r.x + r.width / 2, rod_r.y + 8, em_jogo ? 9 : 11,
+        ui::texto(em_jogo ? "EM JOGO" : proibida ? "PROIBIDA" : "$" + ui::formatar(custo), r.x + r.width / 2, rod_r.y + 8,
+                  em_jogo || proibida ? 9 : 11,
                   em_jogo ? rgb(233, 255, 217) : pode ? ui::DINHEIRO : ui::PRECO_RUIM, 0, Ancora::CENTER);
         const std::string tecla = dfn.heroi ? "U" : std::string(1, static_cast<char>(std::toupper(dfn.tecla[0])));
         ui::tecla(tecla, r.x + 4, r.y + 5, 9);
         if (sobre) dicas_.push_back({mouse, dfn.nome, dfn.heroi ? dfn.titulo : dfn.desc});
     }
-    if (ctl_->online()) {
+    if (ctl_->vs()) {
         const float y = ui::ALTURA - 124.0f;
         const Rectangle re{PAINEL_X + 8, y, 224, 52};
         ui::placa(re, ui::ECO_ESCURO, 12);
@@ -558,6 +816,15 @@ void CenaJogo::painel_lateral(Vector2 mouse) {
         for (float dx : {-16.0f, 4.0f}) triangulo({c.x + dx, c.y - 16}, {c.x + dx, c.y + 14}, {c.x + dx + 18, c.y - 1});
     }
     ui::tecla_centro("Espaço", c.x, r.y + r.height + 4, 8);
+    // coop: rodada automática e velocidade mudariam a simulação só neste PC (o lockstep não aceita)
+    if (ctl_->online()) {
+        ui::texto("COOP", PAINEL_X + 114, ui::ALTURA - 100.0f, 14, ui::AMARELO, 3, Ancora::MIDLEFT);
+        ui::texto(p.em_rodada ? "em rodada" : "pronto: Espaço", PAINEL_X + 114, ui::ALTURA - 76.0f, 12,
+                  ui::BEGE, 0, Ancora::MIDLEFT, ui::Peso::TEXTO);
+        if (sobre_play && !p.em_rodada)
+            dicas_.push_back({mouse, "Iniciar rodada", "Começa a próxima rodada para os dois jogadores."});
+        return;
+    }
     const Rectangle ra{PAINEL_X + 118, ui::ALTURA - 104.0f, 104, 34};
     ui::ret(ra, ui::TINTA, 17);
     ui::ret(ui::inflar(ra, -6, -6), ui::MADEIRA_ESCURA, 12);
@@ -613,11 +880,24 @@ void CenaJogo::cabecalho_upgrade(const Torre& t, float x, float y, float w) {
     const Vector2 c{x + 27, y + 27};
     DrawCircleV(c, 27, ui::TINTA);
     DrawCircleV(c, 24, ui::PAINEL_VERDE_ESC);
-    arte::torre_icone(t.chave, arte::visual(t), c.x, c.y + 2, 48);
+    // retrato: o modelo 3D de frente, na combinacao de upgrades da torre
+    if (!m3d::torre(t.chave, t.caminhos, c.x, c.y + 13, 30, 90, anim::TipoMira::FIXA))
+        arte::torre_icone(t.chave, arte::visual(t), c.x, c.y + 2, 48);
     const std::string& nome = t.dfn->nome;
     const int tam = nome.size() < 18 ? 18 : 15;
     ui::texto(caber(nome, tam, w - 150), x + 66, y + 16, tam, ui::BRANCO, 4, Ancora::MIDLEFT);
-    ui::texto("Estouros: " + ui::formatar(t.pops), x + 66, y + 40, 14, ui::TINTA, 0, Ancora::MIDLEFT, ui::Peso::TEXTO);
+    std::string linha = "Estouros: " + ui::formatar(t.pops);
+    if (t.necromante) linha += "  ·  Cemitério: " + ui::formatar(std::floor(t.cemiterio));
+    if (t.renda_sacrificio > 0) linha += "  ·  +$" + ui::formatar(std::floor(t.renda_sacrificio)) + "/rodada";
+    ui::texto(linha, x + 66, y + 40, 14, ui::TINTA, 0, Ancora::MIDLEFT, ui::Peso::TEXTO);
+    if (t.detecta_camo()) {
+        // selo de camo: olho no canto do retrato, so quando a torre enxerga bloons camuflados
+        const Vector2 s{c.x + 20, c.y + 20};
+        DrawCircleV(s, 11, ui::TINTA);
+        DrawCircleV(s, 8.5f, ui::VERDE_ESCURO);
+        DrawEllipse(static_cast<int>(s.x), static_cast<int>(s.y), 6, 3.5f, ui::BEGE);
+        DrawCircleV(s, 2.2f, ui::TINTA);
+    }
     std::string tag;
     if (t.dfn->heroi) tag = "Nv " + std::to_string(t.nivel);
     else tag = std::to_string(t.caminhos[0]) + "-" + std::to_string(t.caminhos[1]) + "-" + std::to_string(t.caminhos[2]);
@@ -631,7 +911,11 @@ void CenaJogo::cabecalho_upgrade(const Torre& t, float x, float y, float w) {
 void CenaJogo::rodape_upgrade(const Torre& t, float x, float y, float w, Vector2 mouse) {
     // prioridade de alvo com seta e atalho Tab
     const float wv = t.temporaria ? 0.0f : 150.0f;
-    const Rectangle ra{x, y, w - wv - (wv ? 8 : 0), 44};
+    const bool sub = t.pode_submergir();
+    const bool robo = t.dois_bracos(), eng = t.escolhe_torre();
+    // espaco do botao de mao (ou de submergir, ou do alvo do segundo braco)
+    const float wm = t.chave == "bumerangue" || sub || robo || eng ? 52.0f : 0.0f;
+    const Rectangle ra{x, y, w - wv - (wv ? 8 : 0) - wm, 44};
     ui::ret(ra, ui::TINTA, 12);
     ui::ret(ui::inflar(ra, -6, -6), rgb(36, 82, 24), 9);
     ui::ret({ra.x + 3, ra.y + 3, ra.width - 6, ra.height - 10}, ui::PAINEL_VERDE_ESC, 9);
@@ -639,14 +923,99 @@ void CenaJogo::rodape_upgrade(const Torre& t, float x, float y, float w, Vector2
     const Rectangle kt = ui::tecla("Tab", ra.x + ra.width - 42, ra.y + 13, 9);
     seta({kt.x - 14, ra.y + 22}, 10, true, rgb(155, 230, 110));
     const float cx = (ra.x + 28 + kt.x - 24) / 2;
-    ui::texto("ALVO", cx, ra.y + 12, 10, rgb(207, 239, 191), 0, Ancora::CENTER, ui::Peso::TEXTO);
-    ui::texto(NOMES_MODO[t.modo], cx, ra.y + 28, 13, ui::BRANCO, 3, Ancora::CENTER);
     const int id = t.id;
-    botoes_up_.push_back({ra, [this, id] {
-                              if (TorreP tt = pista().torre(id))
-                                  comando("M" + std::to_string(id) + ":" + std::to_string((tt->modo + 1) % 4));
-                          }});
-    if (ui::dentro(ra, mouse)) dicas_.push_back({mouse, "Prioridade de alvo", "Clique ou Tab para trocar."});
+    if (t.chave == "dartling") {
+        // a Dartling nao escolhe bloon: aponta para o cursor (Normal) ou fica onde o jogador travou
+        const bool travada = mira_travada_.count(id) > 0;
+        ui::texto("MIRA", cx, ra.y + 12, 10, rgb(207, 239, 191), 0, Ancora::CENTER, ui::Peso::TEXTO);
+        ui::texto(travada ? "Travada" : "No cursor", cx, ra.y + 28, 13, ui::BRANCO, 3, Ancora::CENTER);
+        botoes_up_.push_back({ra, [this, id] { alternar_mira(id); }});
+        if (ui::dentro(ra, mouse))
+            dicas_.push_back({mouse, "Mira da Dartling", "Segue o cursor. Clique ou Tab para travar onde está."});
+    } else if (t.chave == "heli") {
+        // o Heli escolhe como voa: sozinho atras dos bloons, atras do cursor, parado ou em patrulha
+        const int m = modo_heli(t);
+        const bool esperando = definindo_alvo_ == id;
+        const char* nomes[4] = {t.st.persegue ? "Perseguir" : "Automático", "Seguir o mouse", "Travado", "Patrulha"};
+        ui::texto("VOO", cx, ra.y + 12, 10, rgb(207, 239, 191), 0, Ancora::CENTER, ui::Peso::TEXTO);
+        ui::texto(esperando ? "Clique no mapa" : nomes[m], cx, ra.y + 28, 13, esperando ? ui::AMARELO : ui::BRANCO, 3,
+                  Ancora::CENTER);
+        botoes_up_.push_back({ra, [this, id] { proximo_modo_heli(id); }});
+        if (ui::dentro(ra, mouse))
+            dicas_.push_back({mouse, "Modo de voo", "Clique ou Tab para trocar. A patrulha pede um clique no mapa."});
+    } else if (t.chave == "as") {
+        // o As nao escolhe bloon: o jogador escolhe a rota do voo
+        static const char* ROTAS[4] = {"Círculo", "Infinito", "Oito", "Centralizada"};
+        const bool esperando = definindo_alvo_ == id;
+        ui::texto("ROTA", cx, ra.y + 12, 10, rgb(207, 239, 191), 0, Ancora::CENTER, ui::Peso::TEXTO);
+        ui::texto(esperando ? "Clique no mapa" : ROTAS[t.rota], cx, ra.y + 28, 13, esperando ? ui::AMARELO : ui::BRANCO, 3,
+                  Ancora::CENTER);
+        botoes_up_.push_back({ra, [this, id] { proxima_rota(id); }});
+        if (ui::dentro(ra, mouse))
+            dicas_.push_back({mouse, "Rota do voo", "Clique ou Tab para trocar. A Rota Centralizada pede o upgrade e um clique no mapa."});
+    } else if (pista().teto_banco(t) > 0) {
+        // o Banco nao mira: mostra o saldo e saca com um clique
+        ui::texto("BANCO", cx, ra.y + 12, 10, rgb(207, 239, 191), 0, Ancora::CENTER, ui::Peso::TEXTO);
+        ui::texto("Sacar $" + ui::formatar(std::floor(t.banco)), cx, ra.y + 28, 13, t.banco >= 1 ? ui::DINHEIRO : ui::BRANCO, 3,
+                  Ancora::CENTER);
+        botoes_up_.push_back({ra, [this, id] { comando("O" + std::to_string(id) + ":0"); }});
+        if (ui::dentro(ra, mouse))
+            dicas_.push_back({mouse, "Banco Macaco",
+                              "Guarda a renda e rende 20% por rodada, até $" + ui::formatar(pista().teto_banco(t)) +
+                                  ". Clique ou Tab para sacar."});
+    } else if (t.chave == "morteiro") {
+        // o Morteiro bombardeia um ponto fixo, escolhido com um clique no mapa
+        const bool esperando = definindo_alvo_ == id;
+        ui::texto("ALVO", cx, ra.y + 12, 10, rgb(207, 239, 191), 0, Ancora::CENTER, ui::Peso::TEXTO);
+        ui::texto(esperando ? "Clique no mapa" : t.tem_mira ? "Ponto fixo" : "Definir alvo", cx, ra.y + 28, 13,
+                  esperando ? ui::AMARELO : ui::BRANCO, 3, Ancora::CENTER);
+        botoes_up_.push_back({ra, [this, id] { definindo_alvo_ = definindo_alvo_ == id ? 0 : id; }});
+        if (ui::dentro(ra, mouse))
+            dicas_.push_back({mouse, "Alvo do Morteiro", "Clique aqui (ou Tab) e depois no mapa para fixar onde as bombas caem."});
+    } else {
+        ui::texto("ALVO", cx, ra.y + 12, 10, rgb(207, 239, 191), 0, Ancora::CENTER, ui::Peso::TEXTO);
+        ui::texto(NOMES_MODO[t.modo], cx, ra.y + 28, 13, ui::BRANCO, 3, Ancora::CENTER);
+        botoes_up_.push_back({ra, [this, id] {
+                                  if (TorreP tt = pista().torre(id))
+                                      comando("M" + std::to_string(id) + ":" +
+                                              std::to_string((tt->modo + 1) % modos_de_alvo(*tt)));
+                              }});
+        if (ui::dentro(ra, mouse)) dicas_.push_back({mouse, "Prioridade de alvo", "Clique ou Tab para trocar."});
+    }
+    if (wm > 0) {
+        // mao do arremesso: inverte o lado do arco do bumerangue
+        const Rectangle rm{ra.x + ra.width + 8, y, 44, 44};
+        ui::ret(rm, ui::TINTA, 12);
+        ui::ret(ui::inflar(rm, -6, -6), rgb(36, 82, 24), 9);
+        ui::ret({rm.x + 3, rm.y + 3, rm.width - 6, rm.height - 10}, ui::PAINEL_VERDE_ESC, 9);
+        if (eng) {
+            // Overclock: escolhe no mapa a torre que recebe o impulso
+            const bool esperando = definindo_alvo_ == id;
+            ui::texto("TORRE", rm.x + 22, rm.y + 12, 9, rgb(207, 239, 191), 0, Ancora::CENTER, ui::Peso::TEXTO);
+            ui::texto(esperando ? "Clique" : pista().torre(t.alvo_torre) ? "Fixa" : "Auto", rm.x + 22, rm.y + 28, 11,
+                      esperando ? ui::AMARELO : ui::BRANCO, 3, Ancora::CENTER);
+            botoes_up_.push_back({rm, [this, id] { definindo_alvo_ = definindo_alvo_ == id ? 0 : id; }});
+            if (ui::dentro(rm, mouse))
+                dicas_.push_back({mouse, "Torre do Overclock", "Clique aqui e depois na torre que vai receber a habilidade."});
+        }
+        static const char* CURTOS[4] = {"Prim", "Últ", "Perto", "Forte"};
+        if (!eng) {
+        ui::texto(robo ? "ALVO 2" : sub ? "SUB" : "MÃO", rm.x + 22, rm.y + 12, robo ? 9 : 10, rgb(207, 239, 191), 0,
+                  Ancora::CENTER, ui::Peso::TEXTO);
+        ui::texto(robo ? CURTOS[t.modo2 & 3] : sub ? (t.submerso ? "Fundo" : "Tona") : t.mao ? "Esq" : "Dir", rm.x + 22,
+                  rm.y + 28, robo ? 11 : 13, sub && t.submerso ? rgb(120, 255, 140) : ui::BRANCO, 3, Ancora::CENTER);
+        const int mao = robo ? (t.modo2 + 1) % 4 : (sub ? t.submerso : t.mao != 0) ? 0 : 1;
+        botoes_up_.push_back({rm, [this, id, mao] { comando("O" + std::to_string(id) + ":" + std::to_string(mao)); }});
+        if (ui::dentro(rm, mouse)) {
+            if (robo)
+                dicas_.push_back({mouse, "Alvo do segundo braço", "Cada braço do robô escolhe o bloon pela sua prioridade."});
+            else if (sub)
+                dicas_.push_back({mouse, "Submergir", "Submerso, o Sub para de atirar e o radar tira o camo dos bloons no alcance."});
+            else
+                dicas_.push_back({mouse, "Mão do arremesso", "Troca o lado para onde o bumerangue faz a curva."});
+        }
+        }
+    }
     if (t.temporaria) return;
     // vender em vermelho (convencao de sair/vender)
     const Rectangle rv{x + w - wv, y, wv, 44};
@@ -666,7 +1035,7 @@ void CenaJogo::painel_upgrade(const TorreP& tp, Vector2 mouse) {
     const Torre& t = *tp;
     // torre na metade esquerda -> painel a direita (e vice-versa); na Batalha fica abaixo do mini mapa
     const float x = t.x > LARGURA_MAPA / 2.0 ? 12.0f : LARGURA_MAPA - UP_W - 12;
-    const float y = ctl_->online() ? 240.0f : 80.0f;
+    const float y = ctl_->vs() ? 240.0f : 80.0f;
     const Rectangle r{x, y, UP_W, UP_H};
     ui::ret(ui::mover(r, 0, 6), rgb(22, 20, 26, 115), 18);
     ui::ret(r, ui::TINTA, 18);
@@ -680,8 +1049,9 @@ void CenaJogo::painel_upgrade(const TorreP& tp, Vector2 mouse) {
     if (t.dfn->heroi) {
         painel_heroi(t, px, yy, pw);
     } else if (t.temporaria) {
-        ui::texto("Temporária: " + std::to_string(static_cast<int>(t.temporaria)) + " s", px + pw / 2, yy + 70, 18,
-                  ui::BRANCO, 3, Ancora::CENTER);
+        ui::texto(t.temporaria > 1e8 ? std::string("Escolta do Comandante")
+                                     : "Temporária: " + std::to_string(static_cast<int>(t.temporaria)) + " s",
+                  px + pw / 2, yy + 70, 18, ui::BRANCO, 3, Ancora::CENTER);
     } else {
         for (int pth = 0; pth < 3; ++pth) linha_upgrade(tp, pth, px + pth * 120.0f, yy, 112, mouse);
     }
@@ -729,6 +1099,18 @@ void CenaJogo::linha_upgrade(const TorreP& tp, int pth, float x, float y, float 
         nome_card("Caminho fechado", rgb(216, 216, 222), card.y + 72);
         ui::texto(tier > 0 ? "limite de tier" : "2 caminhos já em uso", cc.x, card.y + 112, 11, rgb(199, 205, 214), 0,
                   Ancora::CENTER, ui::Peso::TEXTO);
+        return;
+    }
+    if (const std::string req = p.requisito_upgrade(t, pth); !req.empty()) {
+        // upgrade condicional: cinza, com o nome, o cadeado e o que falta
+        bloco(card, ui::CINZA, ui::CINZA_ESCURO, 12, 4, false);
+        arte::icone("cadeado", cc.x - 13, card.y + 10, 26);
+        nome_card(up.nome, rgb(236, 236, 240), card.y + 52);
+        const auto ls = ui::quebrar(req, 11, w - 12, ui::Peso::TEXTO);
+        for (size_t i = 0; i < ls.size() && i < 3; ++i)
+            ui::texto(ls[i], cc.x, card.y + 84 + i * 14.0f, 11, ui::AMARELO, 0, Ancora::CENTER, ui::Peso::TEXTO);
+        botoes_up_.push_back({card, [this, pth] { upar(pth); }});
+        if (ui::dentro(card, mouse)) dicas_.push_back({mouse, up.nome, up.desc + " " + req + "."});
         return;
     }
     const bool pode = p.dinheiro >= *custo;
@@ -785,7 +1167,7 @@ void CenaJogo::painel_heroi(const Torre& t, float x, float y, float w) {
 void CenaJogo::habilidades(Vector2 mouse) {
     auto habs = hab_lista();
     if (habs.empty()) return;
-    const float topo = ctl_->online() ? 540.0f : 640.0f;
+    const float topo = ctl_->vs() ? 540.0f : 640.0f;
     const double agora = ui::tempo();
     for (size_t i = 0; i < habs.size(); ++i) {
         const Hab& hb = habs[i];
@@ -971,6 +1353,31 @@ Rectangle CenaJogo::sobreposicao(const std::string& titulo, Color cor) {
     return r;
 }
 
+void CenaJogo::tela_sacrificio() {
+    TorreP t = selecionada_ ? pista().torre(selecionada_) : nullptr;
+    const std::string txt = t ? pista().aviso_sacrificio(*t, confirma_up_) : "";
+    if (txt.empty()) {
+        confirma_up_ = -1;
+        return;
+    }
+    DrawRectangle(0, 0, ui::LARGURA, ui::ALTURA, rgb(22, 20, 26, 150));
+    const Rectangle r{ui::LARGURA / 2.0f - 290, ui::ALTURA / 2.0f - 140, 580, 280};
+    ui::painel_menu(r, 24);
+    ui::texto("SACRIFÍCIO", r.x + r.width / 2, r.y + 46, 34, ui::AMARELO, 6, Ancora::CENTER, ui::Peso::LOGO);
+    const auto linhas = ui::quebrar(txt, 17, r.width - 70, ui::Peso::TEXTO);
+    for (size_t i = 0; i < linhas.size() && i < 4; ++i)
+        ui::texto(linhas[i], r.x + r.width / 2, r.y + 100 + i * 24.0f, 17, ui::BRANCO, 0, Ancora::CENTER, ui::Peso::TEXTO);
+    ui::Botao nao{{r.x + 50, r.y + r.height - 78, 220, 54}, "Cancelar", ui::AMARELO, 20};
+    ui::Botao sim{{r.x + r.width - 270, r.y + r.height - 78, 220, 54}, "Sacrificar", ui::VERDE, 20};
+    nao.atalho = "Esc";
+    sim.atalho = "Enter";
+    nao.desenhar();
+    sim.desenhar();
+    botoes_menu_.push_back({nao, [this] { confirma_up_ = -1; }});
+    const int p = confirma_up_;
+    botoes_menu_.push_back({sim, [this, p] { upar(p); }});
+}
+
 void CenaJogo::tela_pausa() {
     const Rectangle r = sobreposicao("PAUSADO", ui::BRANCO);
     std::vector<std::tuple<std::string, Acao, Color>> opcoes;
@@ -994,9 +1401,10 @@ void CenaJogo::tela_pausa() {
 
 void CenaJogo::tela_fim() {
     const int v = ctl_->vencedor();
-    const bool ganhou = v == ctl_->meu;
+    const bool ganhou = ctl_->ganhou();
     std::string titulo;
     if (!ctl_->online()) titulo = ganhou ? "VITÓRIA!" : "FIM DE JOGO";
+    else if (!ctl_->vs()) titulo = ganhou ? "VITÓRIA!" : ctl_->partida->fim ? "DERROTA" : "PARCEIRO SAIU";
     else titulo = ganhou ? "VITÓRIA!" : v == 0 ? "EMPATE" : "DERROTA";
     const Rectangle r = sobreposicao(titulo, ganhou ? ui::AMARELO : rgb(255, 110, 100));
     Pista& p = pista();

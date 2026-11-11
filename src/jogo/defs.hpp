@@ -129,6 +129,7 @@ struct Dificuldade {
     double mult_dinheiro = 1.0;     // Half Cash: 0,5; Deflation: 0 (so a venda devolve dinheiro)
     bool sem_venda = false;         // CHIMPS
     bool so_estouro_e_rodada = false;  // CHIMPS: sem fazendas, bancos, heroi de renda nem habilidade de dinheiro
+    bool sandbox = false;           // dinheiro e vidas infinitos, sem fim, com os comandos X (so no solo)
 };
 
 struct Envio {

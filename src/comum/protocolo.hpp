@@ -14,6 +14,7 @@
 //     1M12:3            modo de alvo da torre 12 (0 primeiro, 1 ultimo, 2 perto, 3 forte)
 //     1B12:0            usar a habilidade 0 da torre 12
 //     2Sr8              jogador 2 envia "8 Vermelhos" ao oponente
+//     1N                coop: iniciar a proxima rodada
 //     1H450,123456      hash do estado da simulacao no tick 450 (deteccao de dessincronia)
 //     1F                desistir
 //     1P                heartbeat
@@ -21,6 +22,7 @@
 // Servidor -> clientes
 //     0J1                           voce e o jogador 1
 //     0I8231,prado,quincy,adora     inicio: semente, mapa, heroi do J1, heroi do J2
+//     0I8231,prado,quincy,adora,coop  idem, partida cooperativa (uma pista so, dos dois)
 //     0K451|1Tdardo@230,250|2Sr8    tick 451 com os comandos a aplicar, na ordem
 //     0D450                         estados divergiram no tick 450
 //     0F2                           fim de jogo, jogador 2 venceu
@@ -63,6 +65,10 @@ constexpr char VENDA = 'V';
 constexpr char MODO = 'M';
 constexpr char HABILIDADE = 'B';
 constexpr char ENVIO = 'S';
+constexpr char MIRA = 'A';    // 1A12@300,200: ponto de mira da torre 12 (Dartling, Helicoptero, Ace)
+constexpr char OPCAO = 'O';   // 1O12:1: opcao da torre 12 (mao do Bumerangue, rota do Heli, ...)
+constexpr char COLETA = 'C';  // 1C345: coletar a banana/caixa de id 345
+constexpr char RODADA = 'N';  // coop: iniciar a proxima rodada (qualquer um dos dois)
 bool eh_comando_jogo(char c);
 
 // Codigos de erro de 0X<jogador><codigo>
@@ -80,6 +86,7 @@ struct Mensagem {
     char comando = 0;
     int jogador = 0;               // J (servidor), X
     std::string heroi, mapa;       // J (cliente), I
+    bool coop = false;             // I: partida cooperativa (os dois jogadores na mesma pista)
     long long seed = 0;            // I
     std::string herois[3];         // I: herois[1], herois[2]
     long tick = 0;                 // K, H, D
@@ -96,7 +103,8 @@ bool comando_valido(const std::string& cmd);
 // ---------- montagem
 std::string entrar(const std::string& heroi, const std::string& mapa, int jogador = 1);
 std::string boas_vindas(int jogador);
-std::string inicio(long long seed, const std::string& mapa, const std::string& heroi1, const std::string& heroi2);
+std::string inicio(long long seed, const std::string& mapa, const std::string& heroi1, const std::string& heroi2,
+                   bool coop = false);
 std::string tick(long numero, const std::vector<std::string>& comandos);
 std::string comando(int jogador, const std::string& cmd);
 std::string torre(int jogador, const std::string& chave, int x, int y);
@@ -105,6 +113,7 @@ std::string venda(int jogador, int id_torre);
 std::string modo(int jogador, int id_torre, int m);
 std::string habilidade(int jogador, int id_torre, int idx);
 std::string envio(int jogador, const std::string& chave);
+std::string rodada(int jogador);
 std::string hash_estado(int jogador, long numero_tick, std::uint32_t valor);
 std::string dessinc(long numero_tick);
 std::string desistir(int jogador);

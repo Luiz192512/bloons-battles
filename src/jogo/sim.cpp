@@ -41,6 +41,8 @@ const Ataque& ataque_dot() {
     return at;
 }
 
+bool ataca(const Torre& t);
+
 }  // namespace
 
 // ================================================================ Rng
@@ -216,6 +218,17 @@ bool Pista::aplicar_dano(Bloon& b, double dano, const Ataque& at, Torre* torre, 
         return true;
     }
     if (b.cong_t > 0 && dtype == DT_AFIADO) return true;
+    if (at.critico) evento({"crit", b.x, b.y});
+    if (at.encolhe) {
+        // vira um bloon vermelho comum, sem filhos nem propriedades; o B.A.D. e imune
+        if (tp.nome == "bad" || tp.nome == "vermelho") return tp.nome != "bad";
+        b.tipo = &tipo_bloon("vermelho");
+        b.regen_orig = b.tipo;
+        b.vida = b.vida_max = 1;
+        b.fort = b.regen = false;
+        evento({"flash", b.x, b.y});
+        return true;
+    }
     if (at.fragiliza) b.frag = std::max(b.frag, at.fragiliza);
     // efeitos
     if (at.congela && (tp.congela || (tp.moab && at.moab_congela)))
@@ -259,6 +272,10 @@ void Pista::estourar(Bloon& b, double excesso, DType dtype, Torre* torre, Projet
     const double base = freeplay && b.tipo->nome == "ceramica" ? SUPER_CERAMICA_DINHEIRO : 1.0;
     receber((base + ouro) * mult_renda);
     pops_total += 1;
+    // cemiterio do Necromante: 500 bloons, ou 3.000 no Principe das Trevas (caminho 3, tier 5)
+    for (auto& n : necromantes)
+        if (quad(b.x - n->x) + quad(b.y - n->y) <= quad(n->alcance()))
+            n->cemiterio = std::min(n->caminhos[2] >= 5 ? 3000.0 : 500.0, n->cemiterio + 1);
     if (xp_por_estouro) xp(1.0);
     evento({"pop", b.x, b.y, 0, 0, 0, b.tipo->nome});
     const TipoBloon& tp = *b.tipo;
@@ -305,6 +322,7 @@ char Pista::colocar_torre(const std::string& chave, double x, double y) {
     if (!achar_torre(chave) && !heroi) return ERRO_INVALIDO;
     if (heroi && (tem_heroi || chave != heroi_escolhido)) return ERRO_HEROI;
     const DefTorre& dfn = definicao(chave);
+    if (!permitida(dfn)) return ERRO_BLOQUEADO;
     if (!posicao_valida(dfn, x, y)) return ERRO_POSICAO;
     int c = custo(dfn.custo, x, y);
     if (dinheiro < c) return ERRO_DINHEIRO;
@@ -346,14 +364,16 @@ char Pista::upar(int tid, int p) {
     TorreP t = torre(tid);
     if (!t || t->temporaria || p < 0 || p > 2) return ERRO_INVALIDO;
     auto c = custo_upgrade(*t, p);
-    if (!c) return ERRO_BLOQUEADO;
+    if (!c || !requisito_upgrade(*t, p).empty()) return ERRO_BLOQUEADO;
     if (dinheiro < *c) return ERRO_DINHEIRO;
     dinheiro -= *c;
     t->investido += *c;
+    if (!aviso_sacrificio(*t, p).empty()) sacrificar(*t, p);
     t->caminhos[p] += 1;
     t->recalcular();
     preparar_trilha(*t);
     buff_t = 0.0;
+    if (t->chave == "fazenda" && p == 2 && t->caminhos[2] == 5) vidas += 15;  // Wall Street
     evento({"upgrade", t->x, t->y});
     return OK;
 }
@@ -372,9 +392,156 @@ char Pista::vender(int tid) {
 
 char Pista::mudar_modo(int tid, int m) {
     TorreP t = torre(tid);
-    if (!t || m < 0 || m >= 4) return ERRO_INVALIDO;
+    if (!t || m < 0 || m > 4) return ERRO_INVALIDO;
+    // modo 4 (Elite) so existe no Atirador de Elite (Sniper, caminho 2, tier 5)
+    if (m == 4 && !(t->chave == "sniper" && t->caminhos[1] >= 5)) return ERRO_BLOQUEADO;
     t->modo = m;
     return OK;
+}
+
+char Pista::mirar(int tid, double x, double y) {
+    TorreP t = torre(tid);
+    if (!t) return ERRO_INVALIDO;
+    // o As so escolhe o centro da rota depois do upgrade Rota Centralizada (caminho 3, tier 2)
+    if (t->escolhe_torre()) {
+        // o clique escolhe a torre que vai receber o Overclock: a mais proxima do ponto
+        Torre* melhor = nullptr;
+        for (auto& [id, o] : torres) {
+            if (o.get() == t.get() || o->temporaria) continue;
+            const double d2 = quad(o->x - x) + quad(o->y - y);
+            if (d2 <= quad(o->dfn->raio + 30.0) && (!melhor || d2 < quad(melhor->x - x) + quad(melhor->y - y))) melhor = o.get();
+        }
+        if (!melhor) return ERRO_INVALIDO;
+        t->alvo_torre = melhor->id;
+        return OK;
+    }
+    const bool as_centrado = t->chave == "as" && t->caminhos[2] >= 2;
+    if (!(t->chave == "dartling" || t->chave == "morteiro" || t->chave == "heli" || as_centrado)) return ERRO_INVALIDO;
+    if (!(x >= 0 && x <= LARGURA_MAPA && y >= 0 && y <= ALTURA_MAPA)) return ERRO_INVALIDO;
+    if (as_centrado) t->rota = 3;
+    if (t->chave == "heli" && t->rota == 0) t->rota = 1;
+    t->mx = x;
+    t->my = y;
+    t->tem_mira = true;
+    return OK;
+}
+
+char Pista::opcao(int tid, int valor) {
+    TorreP t = torre(tid);
+    if (!t || valor < 0) return ERRO_INVALIDO;
+    if (t->chave == "bumerangue" && valor <= 1) {
+        t->mao = valor;
+        return OK;
+    }
+    if (t->chave == "heli" && valor <= 2) {
+        // sem ponto escolhido, fica onde esta
+        if (valor && !t->tem_mira) t->mx = t->x, t->my = t->y, t->tem_mira = true;
+        t->rota = valor;
+        t->patrulha_volta = false;
+        return OK;
+    }
+    if (t->dois_bracos() && valor <= 3) {
+        t->modo2 = valor;
+        return OK;
+    }
+    if (t->pode_submergir() && valor <= 1) {
+        t->submerso = valor == 1;
+        return OK;
+    }
+    if (t->chave == "fazenda" && valor == 0 && teto_banco(*t) > 0) {
+        // saque do banco: tudo o que esta guardado vai para o caixa
+        if (t->banco < 1) return ERRO_BLOQUEADO;
+        const double v = std::floor(t->banco);
+        t->banco = 0;
+        receber(v);
+        evento({"dinheiro", t->x, t->y, v});
+        return OK;
+    }
+    if (t->chave == "as" && valor <= 3) {
+        if (valor == 3 && t->caminhos[2] < 2) return ERRO_BLOQUEADO;
+        if (valor == 3 && !t->tem_mira) t->mx = t->cx, t->my = t->cy, t->tem_mira = true;
+        t->rota = valor;
+        return OK;
+    }
+    return ERRO_INVALIDO;
+}
+
+double Pista::teto_banco(const Torre& t) const {
+    if (t.chave != "fazenda" || t.caminhos[1] < 3) return 0;
+    return t.caminhos[1] >= 5 ? 30000 : t.caminhos[1] == 4 ? 18000 : 14000;
+}
+
+void Pista::soltar(double x, double y, double valor, double vida, const std::string& visual) {
+    x = std::clamp(x, 20.0, static_cast<double>(LARGURA_MAPA) - 20.0);
+    y = std::clamp(y, 20.0, static_cast<double>(ALTURA_MAPA) - 20.0);
+    coletaveis.push_back({nid(), x, y, valor, vida, visual});
+}
+
+char Pista::coletar(int cid) {
+    for (size_t i = 0; i < coletaveis.size(); ++i) {
+        if (coletaveis[i].id != cid) continue;
+        const Coletavel c = coletaveis[i];
+        coletaveis.erase(coletaveis.begin() + static_cast<long>(i));
+        const double antes = dinheiro;
+        receber(c.valor);
+        evento({"dinheiro", c.x, c.y, std::floor(dinheiro - antes)});
+        return OK;
+    }
+    return ERRO_INVALIDO;
+}
+
+std::string Pista::requisito_upgrade(const Torre& t, int p) const {
+    // Macacopolis (Vila, caminho 3, tier 5) precisa de uma Fazenda de Bananas no alcance para sacrificar
+    if (t.chave == "vila" && p == 2 && t.caminhos[2] == 4) {
+        const double r2 = quad(t.alcance());
+        for (auto& [id, f] : torres)
+            if (f->chave == "fazenda" && quad(f->x - t.x) + quad(f->y - t.y) <= r2) return "";
+        return "Requer Fazenda de Bananas no alcance";
+    }
+    return "";
+}
+
+std::string Pista::aviso_sacrificio(const Torre& t, int p) const {
+    if (t.chave == "super" && p == 0 && t.caminhos[0] == 3)
+        return "O Templo exige sacrifício. Todas as torres no alcance serão destruídas e fortalecem o Templo.";
+    if (t.chave == "super" && p == 0 && t.caminhos[0] == 4)
+        return "Invocar o Verdadeiro Deus Sol? As torres no alcance serão sacrificadas de novo.";
+    if (t.chave == "vila" && p == 2 && t.caminhos[2] == 4)
+        return "As Fazendas de Bananas no alcance serão sacrificadas e viram renda da Macacópolis.";
+    return "";
+}
+
+// Destroi as torres vizinhas e guarda o bonus. Aproximacao do BTD6: la o Templo tem faixas de valor por
+// categoria (ate 3 categorias); aqui cada categoria da um tipo de bonus, proporcional ao valor sacrificado.
+void Pista::sacrificar(Torre& t, int p) {
+    (void)p;
+    const bool so_fazendas = t.chave == "vila";
+    const double r2 = quad(t.alcance());
+    std::map<std::string, double> total;
+    std::vector<int> ids;
+    for (auto& [id, f] : torres) {
+        if (f.get() == &t || f->dfn->heroi || f->temporaria) continue;
+        if (so_fazendas && f->chave != "fazenda") continue;
+        if (quad(f->x - t.x) + quad(f->y - t.y) > r2) continue;
+        total[f->dfn->categoria] += f->investido;
+        ids.push_back(id);
+    }
+    for (int id : ids) {
+        evento({"venda", torres[id]->x, torres[id]->y});
+        torres.erase(id);
+    }
+    if (so_fazendas) {
+        double soma = 0;
+        for (auto& [cat, v] : total) soma += v;
+        t.renda_sacrificio += soma * 0.15;  // por rodada
+        return;
+    }
+    Buffs& b = t.sacrificio;
+    b.vazio = false;
+    b.dano += std::min(5.0, std::floor(total["primaria"] / 5000.0));
+    b.pierce += std::min(20.0, std::floor(total["militar"] / 2500.0));
+    b.vel_pct += std::min(0.5, total["magica"] / 50000.0);
+    b.alcance_pct += std::min(0.3, total["suporte"] / 50000.0);
 }
 
 char Pista::usar_habilidade(int tid, int idx) {
@@ -402,6 +569,41 @@ void Pista::executar_habilidade(const TorreP& tp, const J& h) {
     if (tipo == "turbo") {
         t.turbo = h["valor"].get<double>();
         t.turbo_t = h["dur"].get<double>();
+        if (h.contains("disfarce")) {
+            t.disfarce = h["disfarce"].get<std::string>();
+            t.disfarce_t = t.turbo_t;
+        }
+    } else if (tipo == "espiral") {
+        // laminas do ataque principal, sem limite de alcance, saindo em bracos que giram
+        if (!t.ats.empty()) {
+            auto a = std::make_shared<Ataque>(*t.ats[0]);
+            a->tipo = TipoAtaque::PROJETIL;
+            a->dist = 2200;
+            a->vel = 620;
+            a->busca = false;
+            a->pierce = h.value("pierce", 12.0);
+            a->visual = "lamina";
+            a->critico = false;
+            t.espiral_at = a;
+            t.espiral_t = h["dur"].get<double>();
+            t.espiral_bracos = static_cast<int>(h.value("n", 2.0));
+            t.espiral_prox = 0.0;
+        }
+    } else if (tipo == "turbo_alvo") {
+        // Overclock: uma torre so, a escolhida pelo jogador ou, sem escolha, a que ataca mais perto
+        Torre* o = nullptr;
+        if (auto it = torres.find(t.alvo_torre); it != torres.end()) o = it->second.get();
+        if (!o) {
+            for (auto& [id, c] : torres) {
+                if (c.get() == &t || c->temporaria || !ataca(*c)) continue;
+                if (!o || quad(c->x - t.x) + quad(c->y - t.y) < quad(o->x - t.x) + quad(o->y - t.y)) o = c.get();
+            }
+        }
+        if (!o) o = &t;
+        o->turbo = std::min(o->turbo, h["valor"].get<double>());
+        o->turbo_t = std::max(o->turbo_t, h["dur"].get<double>());
+        if (h.value("ultra", false)) o->ultra = std::min(10, o->ultra + 1);
+        evento({"upgrade", o->x, o->y});
     } else if (tipo == "turbo_area") {
         std::set<std::string> filtro;
         std::stringstream ss(h.value("filtro", std::string()));
@@ -422,6 +624,10 @@ void Pista::executar_habilidade(const TorreP& tp, const J& h) {
             alvos.resize(std::min(alvos.size(), static_cast<size_t>(h["n"].get<int>())));
         }
         for (Torre* o : alvos) {
+            if (h.contains("disfarce")) {
+                o->disfarce = h["disfarce"].get<std::string>();
+                o->disfarce_t = h["dur"].get<double>();
+            }
             if (h.contains("valor")) {
                 o->turbo = std::min(o->turbo, h["valor"].get<double>());
                 o->turbo_t = std::max(o->turbo_t, h["dur"].get<double>());
@@ -484,9 +690,15 @@ void Pista::executar_habilidade(const TorreP& tp, const J& h) {
         evento({"flash", 0, 0, 0, 0, 0, "", {180, 230, 255}});
     } else if (tipo == "dinheiro") {
         // CHIMPS nao deixa gerar dinheiro por habilidade; Half Cash e Deflation multiplicam
-        const double v = so_estouro_e_rodada ? 0.0 : h["valor"].get<double>() * mult_dinheiro;
-        dinheiro += v;
-        evento({"dinheiro", t.x, t.y, v});
+        if (h.value("caixa", false)) {
+            // caixa de suprimentos: cai ao lado da torre e paga quando o jogador coleta
+            if (!so_estouro_e_rodada)
+                soltar(t.x + rng.uniform(-60, 60), t.y + rng.uniform(30, 60), h["valor"].get<double>(), 60.0, "caixa");
+        } else {
+            const double v = so_estouro_e_rodada ? 0.0 : h["valor"].get<double>() * mult_dinheiro;
+            dinheiro += v;
+            evento({"dinheiro", t.x, t.y, v});
+        }
     } else if (tipo == "emprestimo") {
         const double v = so_estouro_e_rodada ? 0.0 : h["valor"].get<double>() * mult_dinheiro;
         dinheiro += v;
@@ -560,6 +772,39 @@ void Pista::invocar(const Torre& t, const std::string& base, double dur, const J
     evento({"invocar", x, y});
 }
 
+// Defesa Comanche: quando um bloon passa de 25% da trilha, 3 mini-helicopteros escoltam o Heli por
+// 20 s (e so voltam 45 s depois). No Comandante Comanche os 3 sao permanentes.
+void Pista::comanches(Torre& t) {
+    if (t.comanche_t > 0) t.comanche_t -= DT;
+    int vivos = 0;
+    for (auto& [id, o] : torres) vivos += o->mae == t.id;
+    const bool fixos = t.caminhos[2] >= 5;
+    if (vivos >= 3) return;
+    if (!fixos) {
+        if (vivos > 0 || t.comanche_t > 0) return;
+        bool avancou = false;
+        for (auto& b : bloons)
+            if (b->vivo && b->d >= mapa.caminhos[b->cam].comprimento * 0.25) {
+                avancou = true;
+                break;
+            }
+        if (!avancou) return;
+        t.comanche_t = 45.0;
+    }
+    for (int k = vivos; k < 3; ++k) {
+        const double ang = 2 * PI * k / 3;
+        auto s = std::make_shared<Torre>(prox_torre, "heli", dono, t.x + std::cos(ang) * 46, t.y + std::sin(ang) * 46, 0,
+                                         fixos ? 1e9 : 20.0);
+        prox_torre += 1;
+        s->mae = t.id;
+        s->caminhos = {0, 0, 2};
+        s->recalcular();
+        preparar_trilha(*s);
+        torres[s->id] = s;
+        evento({"invocar", s->x, s->y});
+    }
+}
+
 // ---------------------------------------------------------------- passo
 void Pista::passo() {
     tempo += DT;
@@ -576,6 +821,9 @@ void Pista::passo() {
     for (auto& t : lista) passo_torre(t);
     passo_projeteis();
     passo_pilhas();
+    for (Coletavel& c : coletaveis) c.vida -= DT;
+    coletaveis.erase(std::remove_if(coletaveis.begin(), coletaveis.end(), [](const Coletavel& c) { return c.vida <= 0; }),
+                     coletaveis.end());
     mover_bloons();
     bloons.erase(std::remove_if(bloons.begin(), bloons.end(), [](const BloonP& b) { return !b->vivo; }),
                  bloons.end());
@@ -636,6 +884,13 @@ bool ataca(const Torre& t) {
 }  // namespace
 
 void Pista::recalcular_buffs() {
+    necromantes.clear();
+    for (auto& [id, t] : torres) {
+        t->necromante = false;
+        for (const Ataque& at : t->st.ataques)
+            if (at.tipo == TipoAtaque::PILHA && at.visual == "zumbi") t->necromante = true;
+        if (t->necromante) necromantes.push_back(t);
+    }
     // por torre alvo: fonte (chave da torre + indice do ataque) -> buffs recebidos dessa fonte.
     // Fontes iguais nao acumulam no BTD6 (duas Vilas nao dao 2x Jungle Drums): fica o melhor de cada
     // campo. Excecoes com "acumula" > 1: Shinobi Tactics (20) e Poplust (5).
@@ -671,6 +926,7 @@ void Pista::recalcular_buffs() {
             }
         }
         for (auto& [tipo, p] : t->pocoes) t->buff.mesclar(p.b);
+        if (!t->sacrificio.vazio) t->buff.mesclar(t->sacrificio);
     }
 }
 
@@ -730,19 +986,50 @@ Bloon* Pista::alvo(const Torre& t, const Ataque& at, double alcance) const {
         if (modo == 0) k = b->d;
         else if (modo == 1) k = -b->d;
         else if (modo == 2) k = -dist2;
-        else k = b->tipo->rank * 100000.0 + b->d;
+        else if (modo == 4) {
+            // Elite: o mais forte, mas quem ja passou de 75% da trilha vem antes de todos
+            const bool urgente = b->d > mapa.caminhos[b->cam].comprimento * 0.75;
+            k = (urgente ? 1e12 + b->d * 1e3 : 0.0) + b->tipo->rank * 100000.0 + b->d;
+        } else k = b->tipo->rank * 100000.0 + b->d;
         if (!melhor || k > chave_melhor) chave_melhor = k, melhor = b;
     }
     return melhor;
 }
 
+Posicao Pista::mira_antecipada(const Torre& t, const Ataque& at, const Bloon& b) const {
+    Posicao m{b.x, b.y, b.ang};
+    if (at.vel <= 0 || b.cong_t > 0 || b.atord_t > 0) return m;
+    // mesma conta de mover_bloons, em px/s
+    double v = VELOCIDADE_BASE * mult_vel * b.tipo->velocidade * (lentidao_global_t > 0 ? lentidao_global_f : 1.0);
+    if (b.lento_t > 0) v *= b.lento_f;
+    if (b.cola_t > 0) v *= b.cola_f;
+    const Caminho& cam = mapa.caminhos[b.cam];
+    // o tempo de voo depende do ponto mirado, que depende do tempo de voo: 3 voltas bastam
+    for (int k = 0; k < 3; ++k) {
+        const double tempo = std::hypot(m.x - t.x, m.y - t.y) / at.vel;
+        m = cam.posicao(std::min(b.d + v * tempo, cam.comprimento));
+    }
+    return m;
+}
+
 void Pista::mover_torre(Torre& t) {
     if (t.dfn->mov == Mov::ORBITA) {
         t.orbita += DT * 1.3;
-        const double raio = 110.0;
-        t.x = t.cx + std::cos(t.orbita) * raio;
-        t.y = t.cy + std::sin(t.orbita) * raio * 0.75;
-        t.ang = graus(t.orbita) + 90;
+        const double raio = 110.0, o = t.orbita;
+        const double ax = t.x, ay = t.y;
+        if (t.rota == 1) {  // infinito: um 8 deitado
+            t.x = t.cx + std::cos(o) * raio * 1.7;
+            t.y = t.cy + std::sin(2 * o) * raio * 0.55;
+        } else if (t.rota == 2) {  // oito: um 8 em pe
+            t.x = t.cx + std::sin(2 * o) * raio * 0.55;
+            t.y = t.cy + std::cos(o) * raio * 1.3;
+        } else {  // circulo, em volta da pista ou do ponto escolhido
+            const bool centrado = t.rota == 3 && t.tem_mira;
+            t.x = (centrado ? t.mx : t.cx) + std::cos(o) * raio;
+            t.y = (centrado ? t.my : t.cy) + std::sin(o) * raio * 0.75;
+        }
+        // o nariz aponta para onde o aviao anda
+        if (t.x != ax || t.y != ay) t.ang = graus(std::atan2(t.y - ay, t.x - ax));
     } else if (t.dfn->mov == Mov::HELI) {
         const double limite = t.st.persegue ? 9999 : 260;
         Bloon* melhor = nullptr;
@@ -753,9 +1040,17 @@ void Pista::mover_torre(Torre& t) {
                     if (!melhor || b->d > melhor->d) melhor = b;
         }
         double ax = melhor ? melhor->x : t.cx, ay = melhor ? melhor->y : t.cy;
+        double chegada = 30;
+        if (t.rota && t.tem_mira) {
+            // modos do jogador: ir ate o ponto mirado, ou patrulhar entre ele e o heliponto
+            chegada = 4;
+            ax = t.rota == 2 && t.patrulha_volta ? t.cx : t.mx;
+            ay = t.rota == 2 && t.patrulha_volta ? t.cy : t.my;
+            if (t.rota == 2 && std::hypot(ax - t.x, ay - t.y) <= 12) t.patrulha_volta = !t.patrulha_volta;
+        }
         double dx = ax - t.x, dy = ay - t.y;
         double dist = std::hypot(dx, dy);
-        if (dist > 30) {
+        if (dist > chegada) {
             double v = 260.0 * DT;
             t.x += dx / dist * std::min(v, dist);
             t.y += dy / dist * std::min(v, dist);
@@ -767,15 +1062,31 @@ void Pista::passo_torre(const TorreP& tp) {
     Torre& t = *tp;
     if (t.temporaria) {
         t.temporaria -= DT;
-        if (t.temporaria <= 0) {
+        // a escolta some junto com o Heli que a chamou
+        if (t.temporaria <= 0 || (t.mae && !torres.count(t.mae))) {
             torres.erase(t.id);
             return;
         }
     }
+    if (t.chave == "heli" && t.caminhos[2] >= 4 && !t.temporaria) comanches(t);
     if (t.dfn->mov != Mov::FIXO) mover_torre(t);
     if (t.turbo_t > 0) {
         t.turbo_t -= DT;
         if (t.turbo_t <= 0) t.turbo = 1.0;
+    }
+    if (t.disfarce_t > 0) {
+        t.disfarce_t -= DT;
+        if (t.disfarce_t <= 0) t.disfarce.clear();
+    }
+    if (t.espiral_t > 0 && t.espiral_at) {
+        t.espiral_t -= DT;
+        t.espiral_prox -= DT;
+        if (t.espiral_prox <= 0) {
+            t.espiral_prox = 0.066;
+            for (int k = 0; k < t.espiral_bracos; ++k)
+                disparar(tp, t.espiral_at, t.espiral_ang + k * 360.0 / t.espiral_bracos);
+            t.espiral_ang += 17.0;
+        }
     }
     for (double& r : t.hab_rec)
         if (r > 0) r -= DT;
@@ -789,7 +1100,7 @@ void Pista::passo_torre(const TorreP& tp) {
             ++it;
         }
     }
-    const double mult_cad = t.turbo * std::max(0.1, t.buff.mult_cad());
+    const double mult_cad = t.turbo * (1.0 - 0.04 * t.ultra) * std::max(0.1, t.buff.mult_cad());
     const double alcance = t.alcance();
     const std::vector<AtaqueP> ats = t.ats;  // o heroi pode subir de nivel no meio do laco
     const std::vector<double> antes = t.recargas;
@@ -797,6 +1108,8 @@ void Pista::passo_torre(const TorreP& tp) {
         const AtaqueP& atp = ats[i];
         const Ataque& at = *atp;
         const TipoAtaque tipo = at.tipo;
+        // Submergir e Apoiar: submerso, o Sub so usa os pulsos (radar e reator); na tona, so as armas
+        if (t.pode_submergir() && (tipo == TipoAtaque::AURA) != t.submerso) continue;
         if (tipo == TipoAtaque::BUFF && at.pocao) {
             t.recargas[i] -= DT;
             if (t.recargas[i] <= 0 && jogar_pocao(tp, at)) t.recargas[i] = std::max(0.02, at.cad * mult_cad);
@@ -820,8 +1133,15 @@ void Pista::passo_torre(const TorreP& tp) {
                     Posicao pos = mapa.caminhos[ci].posicao(d);
                     double x = pos.x + rng.uniform(-10, 10);
                     double y = pos.y + rng.uniform(-10, 10);
-                    pilhas.push_back(std::unique_ptr<Pilha>(new Pilha{
-                        x, y, at.pilha_pierce + t.buff.pierce, atp, tp, at.pilha_vida, {}, true, at.visual}));
+                    double pierce = at.pilha_pierce + t.buff.pierce;
+                    if (at.visual == "zumbi") {
+                        // o zumbi sai do cemiterio: sem bloons guardados, nao ha o que reviver
+                        if (t.cemiterio < 1) continue;
+                        pierce = std::min(pierce, std::floor(t.cemiterio));
+                        t.cemiterio -= pierce;
+                    }
+                    pilhas.push_back(
+                        std::unique_ptr<Pilha>(new Pilha{x, y, pierce, atp, tp, at.pilha_vida, {}, true, at.visual}));
                     t.recargas[i] = cad;
                 }
             }
@@ -860,21 +1180,34 @@ void Pista::passo_torre(const TorreP& tp) {
             }
             continue;
         }
-        Bloon* a = alvo(t, at, alcance);
-        if (!a) continue;
+        // torre com ponto escolhido pelo jogador: a Dartling atira na direcao do cursor e o Morteiro
+        // bombardeia o ponto fixo, haja ou nao bloon ali
+        const bool no_ponto =
+            t.tem_mira &&
+            ((t.chave == "dartling" && (tipo == TipoAtaque::PROJETIL || tipo == TipoAtaque::HITSCAN) && !at.busca) ||
+             (t.chave == "morteiro" && tipo == TipoAtaque::MORTEIRO));
+        Bloon* a = no_ponto ? nullptr : alvo(t, at, alcance);
+        if (no_ponto ? bloons.empty() : !a) continue;
         t.recargas[i] = cad;
         const AtaqueP atc = critico(t, i, atp);
-        const double ang = graus(std::atan2(a->y - t.y, a->x - t.x));
+        // projetil reto mira onde o bloon vai estar; teleguiado, bumerangue e o resto miram o bloon
+        const bool antecipa = !no_ponto && tipo == TipoAtaque::PROJETIL && !at.busca && !at.boom;
+        const Posicao mira = no_ponto   ? Posicao{t.mx, t.my, 0}
+                             : antecipa ? mira_antecipada(t, *atc, *a)
+                                        : Posicao{a->x, a->y, 0};
+        const double ang = graus(std::atan2(mira.y - t.y, mira.x - t.x));
         if (i == 0 && t.dfn->mov == Mov::FIXO) t.ang = ang;
-        if (tipo == TipoAtaque::HITSCAN) {
+        if (no_ponto && tipo == TipoAtaque::HITSCAN) {
+            raio_em_linha(t, *ataque_efetivo(t, atc), t.mx, t.my);
+        } else if (tipo == TipoAtaque::HITSCAN) {
             hitscan(tp, atc, *a);
         } else if (tipo == TipoAtaque::CADEIA) {
             cadeia(tp, atc, *a);
         } else if (tipo == TipoAtaque::MORTEIRO) {
             for (int k = 0; k < static_cast<int>(at.n); ++k) {
                 const double im = at.impreciso;
-                double x = a->x + rng.uniform(-im, im);
-                double y = a->y + rng.uniform(-im, im);
+                double x = mira.x + rng.uniform(-im, im);
+                double y = mira.y + rng.uniform(-im, im);
                 auto p = std::make_unique<Projetil>(nid(), x, y, 0, atc, tp);
                 p->vx = p->vy = 0.0;
                 p->fusivel = 0.7;
@@ -884,8 +1217,21 @@ void Pista::passo_torre(const TorreP& tp) {
         } else {
             const int n = static_cast<int>(at.n);
             const double spread = at.spread;
-            if (n <= 1) {
+            Bloon* a2 = nullptr;
+            if (n == 2 && a && t.dois_bracos() && tipo == TipoAtaque::PROJETIL && t.modo2 != t.modo) {
+                // o segundo braco procura o alvo pela prioridade dele
+                const int m = t.modo;
+                t.modo = t.modo2;
+                a2 = alvo(t, at, alcance);
+                t.modo = m;
+            }
+            if (a2 && a2 != a) {
+                const Posicao m2 = antecipa ? mira_antecipada(t, *atc, *a2) : Posicao{a2->x, a2->y, 0};
                 disparar(tp, atc, ang, a);
+                disparar(tp, atc, graus(std::atan2(m2.y - t.y, m2.x - t.x)), a2);
+            } else if (n <= 1) {
+                // um projetil so com espalhamento (Dartling): desvio sorteado dentro do leque
+                disparar(tp, atc, spread > 0 ? ang + rng.uniform(-spread / 2, spread / 2) : ang, a);
             } else if (spread >= 360) {
                 for (int k = 0; k < n; ++k) disparar(tp, atc, ang + k * 360.0 / n, a);
             } else {
@@ -918,6 +1264,7 @@ AtaqueP Pista::critico(Torre& t, size_t i, const AtaqueP& at) {
     falta = sortear();
     auto c = std::make_shared<Ataque>(*at);
     c->dano = at->crit_dano > 0 ? at->crit_dano : at->dano + at->crit_mais;
+    c->critico = true;
     return c;
 }
 
@@ -965,30 +1312,36 @@ void Pista::aura(const TorreP& tp, const AtaqueP& at0, double raio) {
     if (acertou && at.visual != "nenhum") evento({"aura", t.x, t.y, raio, 0, 0, at.visual});
 }
 
+// raio que sai da torre na direcao de (ax, ay) e atravessa o mapa, ferindo o que estiver na linha
+void Pista::raio_em_linha(Torre& t, const Ataque& at, double ax, double ay) {
+    double dx = ax - t.x, dy = ay - t.y;
+    double L = std::hypot(dx, dy);
+    if (L == 0) L = 1.0, dx = 1.0;
+    const double ux = dx / L, uy = dy / L;
+    evento({"raio", t.x, t.y, 0, t.x + ux * 1600, t.y + uy * 1600, at.visual});
+    std::vector<std::pair<double, BloonP>> atingidos;
+    for (auto& b : bloons) {
+        if (!b->vivo) continue;
+        double px = b->x - t.x, py = b->y - t.y;
+        double proj = px * ux + py * uy;
+        if (proj < 0) continue;
+        if (std::abs(px * uy - py * ux) <= 18 + b->tipo->raio * 0.5) atingidos.push_back({proj, b});
+    }
+    std::stable_sort(atingidos.begin(), atingidos.end(),
+                     [](const auto& a, const auto& b) { return a.first < b.first; });
+    const size_t n = std::min(atingidos.size(), static_cast<size_t>(std::max(0.0, at.pierce)));
+    for (size_t i = 0; i < n; ++i) aplicar_dano(*atingidos[i].second, at.dano, at, &t);
+}
+
 void Pista::hitscan(const TorreP& tp, const AtaqueP& at0, Bloon& alvo_) {
     Torre& t = *tp;
     AtaqueP atp = ataque_efetivo(t, at0);
     const Ataque& at = *atp;
-    evento({"raio", t.x, t.y, 0, alvo_.x, alvo_.y, at.visual});
     if (at.linha) {
-        double dx = alvo_.x - t.x, dy = alvo_.y - t.y;
-        double L = std::hypot(dx, dy);
-        if (L == 0) L = 1.0;
-        double ux = dx / L, uy = dy / L;
-        std::vector<std::pair<double, BloonP>> atingidos;
-        for (auto& b : bloons) {
-            if (!b->vivo) continue;
-            double px = b->x - t.x, py = b->y - t.y;
-            double proj = px * ux + py * uy;
-            if (proj < 0) continue;
-            if (std::abs(px * uy - py * ux) <= 18 + b->tipo->raio * 0.5) atingidos.push_back({proj, b});
-        }
-        std::stable_sort(atingidos.begin(), atingidos.end(),
-                         [](const auto& a, const auto& b) { return a.first < b.first; });
-        const size_t n = std::min(atingidos.size(), static_cast<size_t>(std::max(0.0, at.pierce)));
-        for (size_t i = 0; i < n; ++i) aplicar_dano(*atingidos[i].second, at.dano, at, &t);
+        raio_em_linha(t, at, alvo_.x, alvo_.y);
         return;
     }
+    evento({"raio", t.x, t.y, 0, alvo_.x, alvo_.y, at.visual});
     const double x = alvo_.x, y = alvo_.y;
     aplicar_dano(alvo_, at.dano, at, &t);
     if (at.splash) explosao(x, y, at.splash, at.sdano, at.spierce, at, &t, at.sdtype);
@@ -1038,7 +1391,8 @@ Bloon* Pista::mais_proximo(double x, double y, double r, const std::unordered_se
 
 void Pista::explosao(double x, double y, double raio, double dano, double pierce, const Ataque& at, Torre* torre,
                      DType dtype) {
-    evento({"explosao", x, y, raio, 0, 0, at.visual});
+    // o Esmaga Bloon (atordoa dirigiveis) avisa a tela para desenhar o clarao
+    evento({"explosao", x, y, raio, 0, 0, at.moab_atordoa && at.atordoa ? "esmaga" : at.visual});
     if (!dtype) dtype = DT_EXPLOSAO;
     if (torre && torre->buff.dtype_normal) dtype = DT_NORMAL;
     int n = static_cast<int>(pierce);
@@ -1130,8 +1484,8 @@ void Pista::mover_bumerangue(Projetil& p) {
         if (p.dist <= p.at->dist * 0.5) {
             p.voltando = true;
         } else {
-            // curva suave para a direita
-            double ang = std::atan2(p.vy, p.vx) + 2.2 * DT;
+            // curva suave para o lado da mao que arremessou
+            double ang = std::atan2(p.vy, p.vx) + (p.torre->mao ? -2.2 : 2.2) * DT;
             p.vx = std::cos(ang) * p.vel;
             p.vy = std::sin(ang) * p.vel;
         }
@@ -1244,6 +1598,8 @@ void Pista::passo_pilhas() {
 
 // ---------------------------------------------------------------- movimento dos bloons
 void Pista::mover_bloons() {
+    if (buraco_t > 0) buraco_t -= DT;
+    if (buraco_rec > 0) buraco_rec -= DT;
     const double base = VELOCIDADE_BASE * DT * mult_vel;
     const double glob = lentidao_global_t > 0 ? lentidao_global_f : 1.0;
     // bloons filhos criados por dano continuo entram no fim da lista e andam neste passo
@@ -1283,6 +1639,20 @@ void Pista::mover_bloons() {
         const Caminho& cam = mapa.caminhos[b.cam];
         if (b.d >= cam.comprimento) {
             b.vivo = false;
+            // Lenda da Noite: o primeiro bloon que ia vazar abre o buraco negro, que engole tudo por 8 s
+            if (buraco_t <= 0 && buraco_rec <= 0) {
+                for (auto& [id, t] : torres)
+                    if (t->st.buraco_negro) {
+                        buraco_t = 8.0;
+                        buraco_rec = 120.0;
+                        evento({"habilidade", t->x, t->y, 0, 0, 0, "Buraco Negro"});
+                        break;
+                    }
+            }
+            if (buraco_t > 0) {
+                evento({"flash", b.x, b.y});
+                continue;
+            }
             int perda = rbe_restante(b);
             vidas -= perda;
             vazou += perda;
@@ -1329,10 +1699,36 @@ void Pista::receber(double v) {
 void Pista::pagar_renda() {
     if (so_estouro_e_rodada) return;  // CHIMPS: fazendas, bancos e renda de heroi nao pagam
     for (auto& [id, t] : torres) {
+        if (t->renda_sacrificio > 0) {
+            receber(t->renda_sacrificio);
+            evento({"dinheiro", t->x, t->y, std::floor(t->renda_sacrificio)});
+        }
         for (const Ataque& at : t->st.ataques) {
             if (at.tipo == TipoAtaque::RENDA && at.valor) {
-                receber(at.valor);
-                evento({"dinheiro", t->x, t->y, std::floor(at.valor)});
+                // Fazenda de bananas: a renda cai no chao em 4 cachos e o jogador coleta. Banco (caminho 2,
+                // tier 3) e Mercado (caminho 3, tier 3) depositam direto, como as outras rendas.
+                const bool cai = t->chave == "fazenda" && t->caminhos[1] < 3 && t->caminhos[2] < 3;
+                if (const double teto = teto_banco(*t); teto > 0) {
+                    // Banco: a renda da rodada entra no saldo, que rende 20% de juros. Cheio, ele se
+                    // saca sozinho (no jogo real o dinheiro a mais se perderia).
+                    t->banco = (t->banco + at.valor) * 1.20;
+                    if (t->banco >= teto) {
+                        receber(teto);
+                        evento({"dinheiro", t->x, t->y, teto});
+                        t->banco = 0;
+                    }
+                    continue;
+                }
+                if (!cai) {
+                    receber(at.valor);
+                    evento({"dinheiro", t->x, t->y, std::floor(at.valor)});
+                    continue;
+                }
+                const double vida = t->caminhos[1] >= 1 ? 30.0 : 15.0;  // Bananas Duradouras
+                for (int k = 0; k < 4; ++k) {
+                    const double a = rng.uniform(0, 2 * PI), r = rng.uniform(38, 70);
+                    soltar(t->x + std::cos(a) * r, t->y + std::sin(a) * r, at.valor / 4, vida, "banana");
+                }
             }
         }
     }
@@ -1342,8 +1738,9 @@ std::uint32_t Pista::hash() const {
     double soma_d = 0;
     for (auto& b : bloons) soma_d += b->d;
     char buf[256];
-    std::snprintf(buf, sizeof buf, "(%lld, %d, %zu, %zu, %lld, %d, %zu)", static_cast<long long>(dinheiro), vidas,
-                  bloons.size(), torres.size(), static_cast<long long>(soma_d), pops_total, projeteis.size());
+    std::snprintf(buf, sizeof buf, "(%lld, %d, %zu, %zu, %lld, %d, %zu, %zu)", static_cast<long long>(dinheiro), vidas,
+                  bloons.size(), torres.size(), static_cast<long long>(soma_d), pops_total, projeteis.size(),
+                  coletaveis.size());
     return crc32(buf);
 }
 
@@ -1351,11 +1748,12 @@ std::uint32_t Pista::hash() const {
 Partida::Partida(const std::string& modo_, const std::string& chave_mapa, int seed_, const std::string& dif,
                  const std::map<int, std::string>& herois)
     : modo(modo_), mapa(bl::mapa(chave_mapa)), seed(seed_) {
-    if (modo == "solo") {
+    if (modo == "solo" || modo == "coop") {
         const Dificuldade* d = achar_dificuldade(dif);
         if (!d) throw std::out_of_range("dificuldade desconhecida: " + dif);
         dificuldade = dif;
         ultima_rodada = d->ultima_rodada;
+        sandbox = d->sandbox;
         rodada = d->primeira_rodada - 1;
         pistas[1] = std::make_unique<Pista>(1, mapa, seed, d->vidas, d->dinheiro_inicial, d->mult_custo);
         Pista& p = *pistas[1];
@@ -1378,7 +1776,8 @@ Partida::Partida(const std::string& modo_, const std::string& chave_mapa, int se
 }
 
 char Partida::aplicar(int jogador, const std::string& cmd) {
-    auto it = pistas.find(jogador);
+    // coop: os dois jogadores agem na mesma pista (a 1)
+    auto it = pistas.find(modo == "coop" ? 1 : jogador);
     if (it == pistas.end() || fim || cmd.empty()) return ERRO_INVALIDO;
     Pista& pista = *it->second;
     const char c = cmd[0];
@@ -1403,9 +1802,21 @@ char Partida::aplicar(int jogador, const std::string& cmd) {
         } else if (c == 'M') {
             auto [tid, m] = dividir(':');
             erro = pista.mudar_modo(std::stoi(tid), std::stoi(m));
+        } else if (c == 'A') {
+            auto [tid, xy] = dividir('@');
+            size_t k = xy.find(',');
+            if (k == std::string::npos) throw std::invalid_argument("comando");
+            erro = pista.mirar(std::stoi(tid), std::stoi(xy.substr(0, k)), std::stoi(xy.substr(k + 1)));
+        } else if (c == 'O') {
+            auto [tid, v] = dividir(':');
+            erro = pista.opcao(std::stoi(tid), std::stoi(v));
+        } else if (c == 'C') {
+            erro = pista.coletar(std::stoi(corpo));
         } else if (c == 'B') {
             auto [tid, i] = dividir(':');
             erro = pista.usar_habilidade(std::stoi(tid), std::stoi(i));
+        } else if (c == 'X') {
+            erro = comando_sandbox(corpo);
         } else if (c == 'S') {
             erro = enviar(jogador, corpo);
         } else if (c == 'N') {
@@ -1436,6 +1847,61 @@ char Partida::enviar(int jogador, const std::string& chave) {
     return OK;
 }
 
+char Partida::comando_sandbox(const std::string& corpo) {
+    if (!sandbox || corpo.empty()) return ERRO_INVALIDO;
+    Pista& p = *pistas[1];
+    std::vector<std::string> partes;
+    for (size_t ini = 0;;) {
+        const size_t k = corpo.find(':', ini);
+        partes.push_back(corpo.substr(ini, k == std::string::npos ? k : k - ini));
+        if (k == std::string::npos) break;
+        ini = k + 1;
+    }
+    const std::string& op = partes[0];
+    if (op == "b" && partes.size() >= 3) {
+        const TipoBloon* tp = achar_bloon(partes[1]);
+        const int qtd = std::stoi(partes[2]);
+        if (!tp || qtd < 1 || qtd > 200) return ERRO_INVALIDO;
+        const std::string mods = partes.size() > 3 ? partes[3] : "";
+        const bool camo = mods.find('c') != std::string::npos, regen = mods.find('r') != std::string::npos,
+                   fort = mods.find('f') != std::string::npos;
+        // dirigiveis saem mais espacados para nao empilhar na entrada
+        const double espaco = tp->moab ? 0.8 : 0.15;
+        for (int k = 0; k < qtd; ++k) p.agendar(tp->nome, 0.1 + k * espaco, camo, regen, fort);
+        return OK;
+    }
+    if (op == "r" && partes.size() == 2) {
+        const int r = std::stoi(partes[1]);
+        if (r < 1 || r > 1000) return ERRO_INVALIDO;
+        rodada = r;
+        p.mult_renda = mult_renda_da_rodada(rodada);
+        p.mult_vida = mult_vida_moab(rodada);
+        p.mult_vel = mult_velocidade(rodada) * p.mult_vel_dificuldade;
+        p.freeplay = rodada > 80;
+        for (auto& [t, g] : agenda_da_rodada(rodada)) p.agendar(g.tipo, t, g.camo, g.regen, g.fort);
+        return OK;
+    }
+    if (op == "l") {
+        p.fila.clear();
+        for (auto& b : p.bloons) b->vivo = false;
+        return OK;
+    }
+    if (op == "t") {
+        p.projeteis.clear();
+        p.pilhas.clear();
+        p.torres.clear();
+        p.tem_heroi = false;
+        p.buff_t = 0.0;
+        return OK;
+    }
+    if (op == "h") {
+        for (auto& [id, t] : p.torres)
+            for (double& r : t->hab_rec) r = 0.0;
+        return OK;
+    }
+    return ERRO_INVALIDO;
+}
+
 bool Partida::continuar_freeplay() {
     if (modo != "solo" || !fim || vencedor != 1) return false;
     fim = false;
@@ -1446,7 +1912,7 @@ bool Partida::continuar_freeplay() {
 }
 
 char Partida::iniciar_rodada() {
-    if (modo != "solo" || em_rodada || fim) return ERRO_INVALIDO;
+    if ((modo != "solo" && modo != "coop") || em_rodada || fim) return ERRO_INVALIDO;
     rodada += 1;
     em_rodada = true;
     Pista& p = *pistas[1];
@@ -1463,12 +1929,17 @@ void Partida::passo() {
     tick += 1;
     tempo += DT;
     for (auto& [j, p] : pistas) p->passo();
-    if (modo == "solo") passo_solo();
-    else passo_batalha();
+    if (modo == "batalha") passo_batalha();
+    else passo_solo();  // solo e coop
 }
 
 void Partida::passo_solo() {
     Pista& p = *pistas[1];
+    if (sandbox) {
+        // nada acaba no Sandbox: repoe o que foi gasto ou perdido a cada passo
+        p.vidas = 999999;
+        p.dinheiro = 9999999;
+    }
     if (p.vidas <= 0) {
         fim = true;
         vencedor = 0;

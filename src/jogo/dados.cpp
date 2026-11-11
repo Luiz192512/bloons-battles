@@ -53,8 +53,8 @@ static DefTorre t_dardo() {
             U("Tiros Rápidos", 100, "Atira mais rápido.", {{"cad", 0.85}}),
             U("Tiros Muito Rápidos", 190, "Atira ainda mais rápido.", {{"cad", 0.788}}),
             U("Tiro Triplo", 450, "Atira 3 dardos por vez, mais rápido.", {{"n", 2}, {"spread", 30}, {"cad", 0.75}}),
-            U("Fã-Clube Super Macaco", 7200, "Atira 2x mais rápido. Habilidade: até 10 dardos viram Super Macacos por 15 s.", {{"cad", 0.5}, {"hab", H("Fã-Clube Super Macaco", "turbo_area", 50, {{"dur", 15}, {"valor", 0.19}, {"filtro", "dardo"}})}}),
-            U("Fã-Clube Macaco Plasma", 45000, "Habilidade: até 20 dardos viram Macacos Plasma por 15 s.", {{"dano", 1}, {"pierce", 3}, {"dtype", "normal"}, {"hab", H("Fã-Clube Macaco Plasma", "turbo_area", 50, {{"dur", 15}, {"valor", 0.095}, {"filtro", "dardo"}})}}),
+            U("Fã-Clube Super Macaco", 7200, "Atira 2x mais rápido. Habilidade: até 10 dardos viram Super Macacos por 15 s.", {{"cad", 0.5}, {"hab", H("Fã-Clube Super Macaco", "turbo_area", 50, {{"dur", 15}, {"valor", 0.19}, {"filtro", "dardo"}, {"n", 10}, {"disfarce", "super"}})}}),
+            U("Fã-Clube Macaco Plasma", 45000, "Habilidade: até 20 dardos viram Macacos Plasma por 15 s.", {{"dano", 1}, {"pierce", 3}, {"dtype", "normal"}, {"hab", H("Fã-Clube Macaco Plasma", "turbo_area", 50, {{"dur", 15}, {"valor", 0.095}, {"filtro", "dardo"}, {"n", 20}, {"disfarce", "plasma"}})}}),
         },
         {
             U("Dardos de Longo Alcance", 90, "+8 de alcance.", {{"alcance", 32}, {"dist", 60}}),
@@ -146,8 +146,8 @@ static DefTorre t_tachinha() {
             U("Tachinhas de Longo Alcance", 100, "+17% de alcance.", {{"alcance", 16}, {"dist", 20}, {"vel", 1.17}}),
             U("Tachinhas de Super Alcance", 225, "+17% de alcance e pierce 4.", {{"alcance", 16}, {"dist", 15}, {"pierce", 3}}),
             U("Atirador de Lâminas", 550, "Lâminas: pierce 8 e alcance 46.", {{"pierce", 4}, {"alcance", 60}, {"raio_proj", 4}, {"visual", "lamina"}}),
-            U("Turbilhão de Lâminas", 2700, "Lâminas com 2 de dano. Habilidade: redemoinho de lâminas.", {{"dano", 1}, {"hab", H("Turbilhão", "turbo", 20, {{"dur", 3}, {"valor", 0.05}})}}),
-            U("Super Turbilhão", 15000, "5 de dano, +5 em cerâmica, estoura tudo. Habilidade de 9 s.", {{"dano", 3}, {"cer", 5}, {"dtype", "normal"}, {"hab", H("Super Turbilhão", "turbo", 20, {{"dur", 9}, {"valor", 0.04}})}}),
+            U("Turbilhão de Lâminas", 2700, "Lâminas com 2 de dano. Habilidade: 2 braços de lâminas em espiral pelo mapa por 3 s.", {{"dano", 1}, {"hab", H("Turbilhão", "espiral", 20, {{"dur", 3}, {"n", 2}, {"pierce", 12}})}}),
+            U("Super Turbilhão", 15000, "5 de dano, +5 em cerâmica, estoura tudo. Habilidade: 4 braços de lâminas por 9 s.", {{"dano", 3}, {"cer", 5}, {"dtype", "normal"}, {"hab", H("Super Turbilhão", "espiral", 20, {{"dur", 9}, {"n", 4}, {"pierce", 500}})}}),
         },
         {
             U("Mais Tachinhas", 150, "10 tachinhas.", {{"n", 2}}),
@@ -239,8 +239,8 @@ static DefTorre t_sniper() {
             U("Óculos de Visão Noturna", 250, "Detecta camo.", {{"camo", true}}),
             U("Tiro de Estilhaços", 450, "5 estilhaços por tiro.", {{"frag", {{"n", 5}, {"dano", 1}, {"pierce", 2}, {"dtype", "afiado"}, {"visual", "fragmento"}}}}),
             U("Bala Ricochete", 2100, "A bala quica 2 vezes.", {{"quica", 2}}),
-            U("Lançamento de Suprimentos", 7600, "Quica 4 vezes. Habilidade: caixa de $1.100.", {{"quica", 2}, {"dtype", "normal"}, {"frag", {{"n", 5}, {"dano", 1}, {"pierce", 5}, {"dtype", "afiado"}, {"visual", "fragmento"}}}, {"hab", H("Suprimentos", "dinheiro", 60, {{"valor", 1100}})}}),
-            U("Atirador de Elite", 12000, "Muito mais rápido; os outros Snipers do mapa atacam 33% mais rápido. Habilidade: caixa de $3.000.", {{"cad", 0.4}, {"buffs", {{"cad", 0.75}, {"escopo", "sniper"}, {"global_", true}, {"sem_si", true}}}, {"hab", H("Suprimentos de Elite", "dinheiro", 90, {{"valor", 3000}})}}),
+            U("Lançamento de Suprimentos", 7600, "Quica 4 vezes. Habilidade: caixa de $1.100.", {{"quica", 2}, {"dtype", "normal"}, {"frag", {{"n", 5}, {"dano", 1}, {"pierce", 5}, {"dtype", "afiado"}, {"visual", "fragmento"}}}, {"hab", H("Suprimentos", "dinheiro", 60, {{"valor", 1100}, {"caixa", true}})}}),
+            U("Atirador de Elite", 12000, "Muito mais rápido; os outros Snipers do mapa atacam 33% mais rápido. Libera o alvo Elite. Habilidade: caixa de $3.000.", {{"cad", 0.4}, {"buffs", {{"cad", 0.75}, {"escopo", "sniper"}, {"global_", true}, {"sem_si", true}}}, {"hab", H("Suprimentos de Elite", "dinheiro", 90, {{"valor", 3000}, {"caixa", true}})}}),
         },
         {
             U("Disparo Rápido", 450, "", {{"cad", 0.7}}),
@@ -263,8 +263,8 @@ static DefTorre t_submarino() {
         {
             U("Alcance Maior", 130, "+10 de alcance.", {{"alcance", 40}}),
             U("Inteligência Avançada", 500, "Ataca qualquer bloon no mapa.", {{"global_", true}}),
-            U("Submergir e Apoiar", 700, "Submerso: pulso que remove camo.", {{"camo", true}, {"novo", A("aura", {{"cad", 1.35}, {"dano", 0}, {"pierce", 999}, {"retira_camo", true}, {"dtype", "normal"}, {"visual", "nenhum"}})}}),
-            U("Reator de Bloontônio", 2400, "Pulso radioativo de 1 de dano (pierce 50) a cada 0,28 s.", {{"novo", A("aura", {{"cad", 0.28}, {"dano", 1}, {"pierce", 50}, {"dtype", "energia"}, {"visual", "radiacao"}})}}),
+            U("Submergir e Apoiar", 700, "Botão Submergir: submerso, para de atirar e o radar remove o camo dos bloons no alcance.", {{"camo", true}, {"novo", A("aura", {{"cad", 1.35}, {"dano", 0}, {"pierce", 999}, {"retira_camo", true}, {"dtype", "normal"}, {"visual", "nenhum"}})}}),
+            U("Reator de Bloontônio", 2400, "Submerso: pulso radioativo de 1 de dano (pierce 50) a cada 0,28 s.", {{"novo", A("aura", {{"cad", 0.28}, {"dano", 1}, {"pierce", 50}, {"dtype", "energia"}, {"visual", "radiacao"}})}}),
             U("Energizador", 28000, "Dardos com 5 de dano.", {{"dano", 3}}),
         },
         {
@@ -372,15 +372,15 @@ static DefTorre t_heli() {
             U("Jatos Maiores", 300, "Voa mais rápido.", J::object()),
             U("IFR", 600, "Detecta camo.", {{"camo", true}}),
             U("Corrente Descendente", 3500, "Joga bloons de volta para a entrada.", {{"novo", A("aura", {{"cad", 0.18}, {"dano", 0}, {"pierce", 2}, {"empurra", 150}, {"raio_aura", 80}, {"visual", "vento"}})}}),
-            U("Chinook de Apoio", 9500, "Dardos com 2 de dano. Habilidade: caixa de dinheiro.", {{"dano", 1}, {"raio_proj", 3}, {"hab", H("Entrega", "dinheiro", 60, {{"valor", 1000}})}}),
+            U("Chinook de Apoio", 9500, "Dardos com 2 de dano. Habilidade: caixa de dinheiro.", {{"dano", 1}, {"raio_proj", 3}, {"hab", H("Entrega", "dinheiro", 60, {{"valor", 1000}, {"caixa", true}})}}),
             U("Operações Especiais", 30000, "Habilidade: fuzileiro de elite.", {{"hab", H("Fuzileiro", "invocar", 60, {{"dur", 20}, {"base", "sniper"}, {"nivel", J::array({4, 0, 3})}})}}),
         },
         {
             U("Dardos Rápidos", 250, "+30% de alcance.", {{"alcance", 50}, {"vel", 1.3}}),
             U("Disparo Rápido", 350, "Todos os ataques 25% mais rápidos.", {{"a", "todos"}, {"cad", 0.8}}),
             U("Empurrão de M.O.A.B.", 3400, "Empurra dirigíveis e dispara mísseis.", J::array({{{"novo", A("aura", {{"cad", 0.5}, {"dano", 0}, {"pierce", 1}, {"lento", J::array({0.5, 0.5})}, {"moab_lento", true}, {"raio_aura", 90}, {"visual", "nenhum"}})}}, {{"novo", A("projetil", {{"cad", 3.0}, {"dano", 2}, {"cer", 2}, {"moab", 5}, {"pierce", 10}, {"vel", 900}, {"dist", 900}, {"busca", true}, {"visual", "missil"}})}}})),
-            U("Defesa Comanche", 8500, "Dardos com 2 de dano.", {{"dano", 1}}),
-            U("Comandante Comanche", 35000, "Dardos com 4 de dano.", {{"dano", 2}}),
+            U("Defesa Comanche", 8500, "Dardos com 2 de dano. Quando os bloons avançam, 3 mini-Comanches escoltam por 20 s.", {{"dano", 1}}),
+            U("Comandante Comanche", 35000, "Dardos com 4 de dano e 3 mini-Comanches permanentes.", {{"dano", 2}}),
         },
     };
     t.categoria = "militar";
@@ -432,7 +432,7 @@ static DefTorre t_dartling() {
             U("Choque Laser", 900, "Choque: 1 de dano extra depois de 1 s.", {{"queima", J::array({1, 1})}}),
             U("Canhão Laser", 3000, "Laser: 2 de dano, pierce 6, +2 em M.O.A.B.", {{"dtype", "energia"}, {"dano", 1}, {"pierce", 5}, {"moab", 2}, {"visual", "laser"}}),
             U("Acelerador de Plasma", 11750, "Raio contínuo: pierce 50, +10 em M.O.A.B.", {{"subst", A("hitscan", {{"cad", 0.2}, {"dano", 2}, {"pierce", 50}, {"moab", 10}, {"dtype", "normal"}, {"global_", true}, {"visual", "raio_plasma"}, {"linha", true}, {"queima", J::array({1, 5})}})}}),
-            U("Raio da Perdição", 75000, "Raio de 30 de dano, pierce 999.", {{"dano", 28}, {"pierce", 949}, {"queima", J::array({20, 30})}}),
+            U("Raio da Perdição", 75000, "Raio contínuo de 30 de dano, pierce 999, que atravessa o mapa.", {{"dano", 28}, {"pierce", 949}, {"queima", J::array({20, 30})}, {"visual", "raio_perdicao"}}),
         },
         {
             U("Mira Avançada", 250, "Detecta camo.", {{"camo", true}}),
@@ -477,8 +477,8 @@ static DefTorre t_mago() {
             U("Magia Intensa", 300, "+5 pierce e projéteis 2x mais rápidos.", {{"pierce", 5}, {"vel", 2.0}}),
             U("Sentido Macaco", 300, "+10 de alcance e detecta camo.", {{"alcance", 40}, {"camo", true}}),
             U("Cintilar", 1500, "Remove camo em volta.", {{"alcance", 40}, {"novo", A("aura", {{"cad", 2.0}, {"dano", 0}, {"pierce", 500}, {"retira_camo", true}, {"raio_aura", 300}, {"dtype", "normal"}, {"visual", "nenhum"}})}}),
-            U("Necromante", 2800, "Bloons mortos voltam como aliados.", {{"novo", A("pilha", {{"cad", 2.0}, {"dano", 2}, {"pilha_pierce", 8}, {"pilha_vida", 6}, {"dtype", "normal"}, {"visual", "zumbi"}})}}),
-            U("Príncipe das Trevas", 26500, "4x mais rápido e mais alcance; zumbis mais fortes.", J::array({{{"cad", 0.25}, {"alcance", 80}}, {{"a", "zumbi"}, {"dano", 3}}})),
+            U("Necromante", 2800, "Os bloons estourados no alcance vão para o cemitério (até 500) e voltam como zumbis.", {{"novo", A("pilha", {{"cad", 2.0}, {"dano", 2}, {"pilha_pierce", 8}, {"pilha_vida", 6}, {"dtype", "normal"}, {"visual", "zumbi"}})}}),
+            U("Príncipe das Trevas", 26500, "4x mais rápido e mais alcance; zumbis mais fortes e cemitério de 3.000.", J::array({{{"cad", 0.25}, {"alcance", 80}}, {{"a", "zumbi"}, {"dano", 3}}})),
         },
     };
     t.categoria = "magica";
@@ -495,13 +495,13 @@ static DefTorre t_super() {
             U("Rajadas Laser", 2000, "Laser: +1 pierce.", {{"dtype", "energia"}, {"pierce", 1}, {"raio_proj", 3}, {"visual", "laser"}}),
             U("Rajadas de Plasma", 2500, "Plasma: 50% mais rápido e estoura chumbo.", {{"dtype", "normal"}, {"cad", 0.667}, {"raio_proj", 1}, {"visual", "plasma"}}),
             U("Avatar do Sol", 20000, "3 raios de sol por tiro, +4 pierce.", {{"n", 2}, {"spread", 30}, {"pierce", 4}, {"vel", 2.0}, {"visual", "sol"}}),
-            U("Templo do Sol", 100000, "Raio de sol único: 5 de dano, pierce 20.", {{"n", -2}, {"spread", 0}, {"dano", 4}, {"pierce", 14}, {"cad", 1.67}, {"alcance", 60}}),
-            U("Verdadeiro Deus Sol", 500000, "Raio de 15 de dano.", {{"dano", 10}}),
+            U("Templo do Sol", 100000, "Raio de sol único: 5 de dano, pierce 20. Sacrifica as torres no alcance e ganha bônus por categoria.", {{"n", -2}, {"spread", 0}, {"dano", 4}, {"pierce", 14}, {"cad", 1.67}, {"alcance", 60}}),
+            U("Verdadeiro Deus Sol", 500000, "Raio de 15 de dano. Sacrifica de novo as torres no alcance.", {{"dano", 10}}),
         },
         {
             U("Super Alcance", 1500, "+10 de alcance e +1 pierce.", {{"alcance", 40}, {"pierce", 1}}),
             U("Alcance Épico", 1900, "+12 de alcance, +2 pierce.", {{"alcance", 48}, {"pierce", 2}, {"vel", 1.4}}),
-            U("Robô Macaco", 7500, "Atira com os 2 braços; crítico de +9 de dano a cada 15 a 20 tiros.", {{"n", 1}, {"spread", 12}, {"pierce", 1}, {"crit_cada", 15}, {"crit_max", 20}, {"crit_mais", 9}}),
+            U("Robô Macaco", 7500, "Atira com os 2 braços, cada um com a sua prioridade de alvo; crítico de +9 de dano a cada 15 a 20 tiros.", {{"n", 1}, {"spread", 12}, {"pierce", 1}, {"crit_cada", 15}, {"crit_max", 20}, {"crit_mais", 9}}),
             U("Terror Tecnológico", 25000, "Habilidade: aniquilação (2.600 de dano).", {{"pierce", 2}, {"hab", H("Aniquilação", "dano_global", 45, {{"valor", 2600}})}}),
             U("O Anti-Bloon", 70000, "5 de dano, pierce 12. Habilidade de 10.400.", {{"dano", 4}, {"pierce", 5}, {"alcance", 40}, {"hab", H("Erradicação", "dano_global", 30, {{"valor", 10400}})}}),
         },
@@ -510,7 +510,7 @@ static DefTorre t_super() {
             U("Ultravisão", 1200, "Detecta camo.", {{"camo", true}, {"alcance", 12}}),
             U("Cavaleiro das Trevas", 5600, "Lâminas: pierce 4, +2 em M.O.A.B.", {{"moab", 2}, {"pierce", 3}, {"raio_proj", 2}, {"visual", "escuro"}}),
             U("Campeão das Trevas", 55555, "2x mais rápido, 2 de dano, estoura tudo.", {{"alcance", 16}, {"cad", 0.5}, {"dano", 1}, {"moab", 1}, {"dtype", "normal"}}),
-            U("Lenda da Noite", 165650, "Buraco negro que evita vazamentos por 8 s.", J::object()),
+            U("Lenda da Noite", 165650, "Quando um bloon vai vazar, abre um buraco negro na saída que engole tudo por 8 s (recarga de 120 s).", {{"buraco_negro", true}}),
         },
     };
     t.categoria = "magica";
@@ -568,15 +568,15 @@ static DefTorre t_alquimista() {
             U("Ácido Forte", 250, "Ácido mais rápido.", {{"queima", J::array({0.667, 4.5})}}),
             U("Poções Perecíveis", 475, "+4 de dano em M.O.A.B.", {{"moab", 4}}),
             U("Mistura Instável", 2800, "Poção instável que explode dirigíveis.", {{"novo", A("projetil", {{"cad", 6.0}, {"dano", 20}, {"pierce", 3}, {"vel", 700}, {"dist", 400}, {"busca", true}, {"so_moab", true}, {"alvo", "forte"}, {"dtype", "normal"}, {"visual", "pocao"}})}}),
-            U("Tônico Transformador", 4200, "Habilidade: vira monstro por 20 s.", {{"hab", H("Transformação", "turbo", 60, {{"dur", 20}, {"valor", 0.2}})}}),
-            U("Transformação Total", 45000, "", {{"hab", H("Transformação Total", "turbo_area", 40, {{"dur", 20}, {"valor", 0.3}})}}),
+            U("Tônico Transformador", 4200, "Habilidade: vira monstro por 20 s.", {{"hab", H("Transformação", "turbo", 60, {{"dur", 20}, {"valor", 0.2}, {"disfarce", "monstro"}})}}),
+            U("Transformação Total", 45000, "Habilidade: ele e as 5 torres mais próximas viram monstros por 20 s.", {{"hab", H("Transformação Total", "turbo_area", 40, {{"dur", 20}, {"valor", 0.3}, {"n", 6}, {"disfarce", "monstro"}})}}),
         },
         {
             U("Arremesso Rápido", 650, "Todos os ataques 25% mais rápidos.", {{"a", "todos"}, {"cad", 0.8}}),
             U("Poça de Ácido", 450, "Poças na trilha.", {{"novo", A("pilha", {{"cad", 3.0}, {"dano", 1}, {"pilha_pierce", 10}, {"pilha_vida", 8}, {"dtype", "normal"}, {"visual", "acido"}})}}),
             U("Chumbo em Ouro", 1000, "$50 extra por chumbo estourado.", {{"ouro_chumbo", 50}}),
             U("Borracha em Ouro", 2750, "Bloons dão o dobro de dinheiro ao estourar.", {{"ouro", 1.0}}),
-            U("Mestre Alquimista", 40000, "Poção que encolhe bloons em vermelhos.", J::object()),
+            U("Mestre Alquimista", 40000, "A cada 10 s, poção que encolhe bloons e dirigíveis (menos o B.A.D.) em vermelhos.", {{"novo", A("projetil", {{"cad", 10.0}, {"dano", 0}, {"pierce", 1}, {"vel", 600}, {"dist", 320}, {"dtype", "normal"}, {"splash", 60}, {"sdano", 0}, {"spierce", 20}, {"sdtype", "normal"}, {"encolhe", true}, {"alvo", "forte"}, {"visual", "pocao"}})}}),
         },
     };
     t.categoria = "magica";
@@ -629,18 +629,18 @@ static DefTorre t_fazenda() {
             U("Central de Bananas", 115000, "5 caixas de $1.200 ($7.000 por rodada).", {{"valor", 5500}}),
         },
         {
-            U("Bananas Duradouras", 300, "Bananas duram 30 s.", J::object()),
+            U("Bananas Duradouras", 300, "As bananas ficam 30 s no chão (em vez de 15 s).", J::object()),
             U("Bananas Valiosas", 800, "Bananas valem 25% mais.", {{"valor_x", 1.25}}),
-            U("Banco Macaco", 3650, "Banco: guarda o dinheiro e rende 15% de juros.", {{"valor_x", 1.15}}),
-            U("Empréstimo do FMI", 7200, "Habilidade: empréstimo de $9.000 (paga depois com metade da renda).", {{"hab", H("Empréstimo", "emprestimo", 85, {{"valor", 9000}})}}),
-            U("Macaconomia", 100000, "Habilidade: $9.000 sem dívida.", {{"hab", H("Macaconomia", "dinheiro", 60, {{"valor", 9000}})}}),
+            U("Banco Macaco", 3650, "Banco: guarda a renda, que rende 20% de juros por rodada, até $14.000. Saque quando quiser.", J::object()),
+            U("Empréstimo do FMI", 7200, "Banco de $18.000. Habilidade: empréstimo de $9.000 (paga depois com metade da renda).", {{"hab", H("Empréstimo", "emprestimo", 85, {{"valor", 9000}})}}),
+            U("Macaconomia", 100000, "Banco de $30.000. Habilidade: $9.000 sem dívida.", {{"hab", H("Macaconomia", "dinheiro", 60, {{"valor", 9000}})}}),
         },
         {
-            U("Coleta Fácil", 250, "Coleta mais fácil.", J::object()),
+            U("Coleta Fácil", 250, "O cursor coleta bananas de mais longe.", J::object()),
             U("Salvamento de Bananas", 400, "Vende por 80%.", {{"venda", 0.8}}),
             U("Mercado", 2700, "Dinheiro automático: $320 por rodada.", {{"valor", 240}}),
             U("Mercado Central", 15000, "$1.120 por rodada.", {{"valor", 800}}),
-            U("Wall Street dos Macacos", 70000, "+$4.000 no fim de cada rodada.", {{"valor", 4000}}),
+            U("Wall Street dos Macacos", 70000, "+$4.000 no fim de cada rodada e +15 vidas na compra.", {{"valor", 4000}}),
         },
     };
     t.categoria = "suporte";
@@ -705,7 +705,7 @@ static DefTorre t_vila() {
             U("Comércio Macaco", 500, "15% de desconto.", {{"desconto", 0.15}}),
             U("Cidade Macaco", 10000, "Torres próximas ganham 50% mais por estouro.", {{"buffs", {{"ouro", 0.5}}}}),
             U("Metrópole Macaco", 3000, "+10 de alcance.", {{"alcance", 40}}),
-            U("Macacópolis", 5000, "Sacrifica fazendas para gerar dinheiro.", J::object()),
+            U("Macacópolis", 5000, "Sacrifica as Fazendas de Bananas no alcance: 15% do valor delas vira renda por rodada.", J::object()),
         },
     };
     t.categoria = "suporte";
@@ -730,8 +730,8 @@ static DefTorre t_engenheiro() {
             U("Área de Serviço Maior", 250, "+50% de alcance.", {{"alcance", 80}}),
             U("Desconstrução", 350, "+1 de dano em M.O.A.B. e fortificado.", {{"moab", 1}, {"fort", 1}}),
             U("Espuma Purificadora", 900, "Espuma remove camo e regeneração.", {{"novo", A("pilha", {{"cad", 4.0}, {"dano", 1}, {"pilha_pierce", 10}, {"pilha_vida", 8}, {"retira_camo", true}, {"retira_regen", true}, {"visual", "espuma"}})}}),
-            U("Overclock", 13500, "Habilidade: acelera torres próximas.", {{"hab", H("Overclock", "turbo_area", 45, {{"dur", 30}, {"valor", 0.6}})}}),
-            U("Ultraimpulso", 72000, "", {{"buffs", {{"cad", 0.7}}}, {"hab", H("Ultraimpulso", "turbo_area", 30, {{"dur", 45}, {"valor", 0.4}})}}),
+            U("Overclock", 13500, "Habilidade: a torre escolhida ataca 67% mais rápido por 30 s.", {{"hab", H("Overclock", "turbo_alvo", 45, {{"dur", 30}, {"valor", 0.6}})}}),
+            U("Ultraimpulso", 72000, "Habilidade mais forte, e cada uso deixa a torre escolhida 4% mais rápida para sempre (até 10 vezes).", {{"buffs", {{"cad", 0.7}}}, {"hab", H("Ultraimpulso", "turbo_alvo", 30, {{"dur", 45}, {"valor", 0.4}, {"ultra", true}})}}),
         },
         {
             U("Pregos Enormes", 450, "+5 pierce.", {{"pierce", 5}}),
@@ -1566,6 +1566,8 @@ const std::vector<Dificuldade> DIFICULDADES = {
     {"chimps", "CHIMPS", 1, 1.08, 100, 6, 1.25 / 1.1, 650, 1.0, true, true},
     {"metade", "Meio Dinheiro", 100, 1.08, 80, 3, 1.25 / 1.1, 325, 0.5},
     {"deflacao", "Deflação", 200, 0.85, 60, 31, 1.0 / 1.1, 20000, 0.0},
+    // Sandbox do BTD6: precos e velocidade do Medio, para testar torres a vontade
+    {"sandbox", "Sandbox", 999999, 1.0, 1000000000, 1, 1.0, 9999999, 1.0, false, false, true},
 };
 
 // Envios do modo Batalha (inspirados no Battles 2): custo, efeito na renda (eco) e desbloqueio

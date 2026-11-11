@@ -16,7 +16,7 @@ const std::set<std::string> SOMA = {"dano", "pierce", "n", "splash", "sdano", "s
                                     "fragiliza", "nivel_inv", "raio_aura"};
 const std::set<std::string> MULT = {"cad", "vel", "pilha_vida", "impreciso"};
 const std::set<std::string> NIVEL_TORRE = {"alcance", "alcance_x", "camo", "ouro", "ouro_chumbo", "desconto", "venda", "hab",
-                                           "persegue"};
+                                           "persegue", "buraco_negro"};
 
 const std::map<std::string, double Ataque::*> NUMEROS = {
     {"cad", &Ataque::cad}, {"dano", &Ataque::dano}, {"pierce", &Ataque::pierce}, {"vel", &Ataque::vel},
@@ -39,6 +39,7 @@ const std::map<std::string, bool Ataque::*> LOGICOS = {
     {"moab_cola", &Ataque::moab_cola}, {"moab_atordoa", &Ataque::moab_atordoa},
     {"na_trilha", &Ataque::na_trilha}, {"linha", &Ataque::linha},
     {"armadilha", &Ataque::armadilha}, {"prende_moab", &Ataque::prende_moab}, {"pocao", &Ataque::pocao},
+    {"encolhe", &Ataque::encolhe},
 };
 
 TipoAtaque tipo_de(const std::string& s) {
@@ -216,6 +217,7 @@ void aplicar(Stats& st, const J& ef) {
             else if (k == "camo") st.camo = v.get<bool>();
             else if (k == "venda") st.venda = num(v);
             else if (k == "persegue") st.persegue = v.get<bool>();
+            else if (k == "buraco_negro") st.buraco_negro = v.get<bool>();
             continue;
         }
         if (k == "novo") {
