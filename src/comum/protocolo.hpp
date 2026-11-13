@@ -15,6 +15,7 @@
 //     1B12:0            usar a habilidade 0 da torre 12
 //     2Sr8              jogador 2 envia "8 Vermelhos" ao oponente
 //     1N                coop: iniciar a proxima rodada
+//     1Y / 1Z           coop: alternar rodada automatica / velocidade 3x (valem para os dois)
 //     1H450,123456      hash do estado da simulacao no tick 450 (deteccao de dessincronia)
 //     1F                desistir
 //     1P                heartbeat
@@ -68,6 +69,8 @@ constexpr char ENVIO = 'S';
 constexpr char MIRA = 'A';    // 1A12@300,200: ponto de mira da torre 12 (Dartling, Helicoptero, Ace)
 constexpr char OPCAO = 'O';   // 1O12:1: opcao da torre 12 (mao do Bumerangue, rota do Heli, ...)
 constexpr char COLETA = 'C';  // 1C345: coletar a banana/caixa de id 345
+constexpr char AUTO = 'Y';    // coop: liga/desliga a rodada automatica para os dois
+constexpr char RAPIDO = 'Z';  // coop: alterna a velocidade 1x/3x para os dois
 constexpr char RODADA = 'N';  // coop: iniciar a proxima rodada (qualquer um dos dois)
 bool eh_comando_jogo(char c);
 

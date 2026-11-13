@@ -145,7 +145,7 @@ TESTE(protocolo_coop) {
 }
 
 TESTE(protocolo_invalidas) {
-    for (const char* l : {"", "X", "1Z", "1Tdardo@x,4", "1U5:7", "1V", "1M3:9", "0Fx", "1Pextra", "1J", "1Jso_um",
+    for (const char* l : {"", "X", "1Q", "1Tdardo@x,4", "1U5:7", "1V", "1M3:9", "0Fx", "1Pextra", "1J", "1Jso_um",
                           "0K1|9Tdardo@1,1", "0K1|1Qqq", "1Tdardo@12345,1", "0Ix,prado,a,b", "1H1"}) {
         std::string linha = l;
         if (!lanca([&] { P::interpretar(linha); })) throw Falha{"deveria ser invalida: " + linha};
@@ -1109,6 +1109,30 @@ TESTE(sim_coop_caixa_unico_e_torres_dos_dois) {
     CHECA_IGUAL(p.aplicar(2, "V1"), OK);              // e pode vende-la; o dinheiro volta ao caixa comum
     CHECA(p.pista(1).dinheiro > antes_venda);
     CHECA(p.pista(2).torres.empty());
+}
+
+TESTE(sim_coop_rodada_automatica_e_velocidade_por_comando) {
+    // pedido: no coop a rodada automatica e o 3x existem e valem para os dois (viram comandos Y e Z)
+    Partida p("coop", "prado", 1, "medio", {{1, "quincy"}, {2, "quincy"}});
+    CHECA(!p.automatico && !p.rapido);
+    CHECA_IGUAL(p.aplicar(2, "Y"), OK);
+    CHECA(p.automatico);
+    CHECA_IGUAL(p.aplicar(1, "Z"), OK);
+    CHECA(p.rapido);
+    CHECA_IGUAL(p.aplicar(1, "Z"), OK);  // alterna
+    CHECA(!p.rapido);
+    // com a automatica ligada, ao fim de uma rodada a proxima comeca sozinha
+    CHECA_IGUAL(p.aplicar(1, "N"), OK);
+    CHECA_IGUAL(p.rodada, 1);
+    for (int i = 0; i < 30 * 60 && p.rodada < 2; ++i) p.passo();
+    CHECA(p.rodada >= 2);
+    // so no coop: no solo e na batalha o comando e recusado
+    Partida solo("solo", "prado", 1, "medio", {{1, "quincy"}});
+    CHECA_IGUAL(solo.aplicar(1, "Y"), ERRO_INVALIDO);
+    Partida b("batalha", "prado", 1);
+    CHECA_IGUAL(b.aplicar(1, "Z"), ERRO_INVALIDO);
+    CHECA(P::comando_valido("Y") && P::comando_valido("Z") && !P::comando_valido("Y1"));
+    CHECA(P::interpretar("0K5|1Y|2Z").comandos.size() == 2);
 }
 
 TESTE(sim_coop_determinismo_e_nao_afeta_batalha) {

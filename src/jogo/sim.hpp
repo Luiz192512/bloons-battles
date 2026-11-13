@@ -369,6 +369,7 @@ public:
     bool fim = false;
     int vencedor = -1;  // -1 = ninguem ainda, 0 = empate/derrota no solo
     bool automatico = false;
+    bool rapido = false;  // coop: velocidade 3x, escolhida por comando para os dois clientes
     std::string dificuldade;
     int ultima_rodada;
     std::map<int, std::unique_ptr<Pista>> pistas;

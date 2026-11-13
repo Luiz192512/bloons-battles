@@ -387,7 +387,11 @@ void CenaJogo::proximo_modo_heli(int id) {
     mira_enviada_ = {-1, -1};
 }
 
-void CenaJogo::alternar_auto() { ctl_->partida->automatico = !ctl_->partida->automatico; }
+// coop: e um comando (vale para os dois); solo: so local
+void CenaJogo::alternar_auto() {
+    if (ctl_->online()) comando("Y");
+    else ctl_->partida->automatico = !ctl_->partida->automatico;
+}
 
 void CenaJogo::reiniciar() {
     if (auto* solo = dynamic_cast<ControladorSolo*>(ctl_.get())) app.iniciar_jogo(solo->reiniciar());
@@ -407,13 +411,25 @@ void CenaJogo::enviar(const Envio& env) {
 
 // ============================================================== atualizar
 void CenaJogo::atualizar(double dt) {
-    if (g_auto_jogar && ctl_->online() && !ctl_->terminou()) {
-        // roteiro de teste: cada jogador coloca um dardo, melhora o do outro e inicia a rodada
+    if (g_auto_jogar && !ctl_->terminou()) {
+        // roteiro de teste. Online: cada jogador coloca um dardo, melhora o do outro e inicia a rodada; depois o
+        // jogador 1 acelera e o 2 liga a rodada automatica. Solo: inicia, acelera e liga a rodada automatica.
         auto_t_ += dt;
         const bool eu1 = ctl_->meu == 1;
-        if (auto_passo_ == 0 && auto_t_ > 2) ctl_->enviar(eu1 ? "Tdardo@230,250" : "Tdardo@600,500"), auto_passo_ = 1;
-        if (auto_passo_ == 1 && auto_t_ > 5) ctl_->enviar(eu1 ? "U2:0" : "U1:0"), auto_passo_ = 2;
-        if (auto_passo_ == 2 && auto_t_ > 7) ctl_->botao_play(), auto_passo_ = 3;
+        if (ctl_->online()) {
+            if (auto_passo_ == 0 && auto_t_ > 2) ctl_->enviar(eu1 ? "Tdardo@230,250" : "Tdardo@600,500"), auto_passo_ = 1;
+            if (auto_passo_ == 1 && auto_t_ > 5) ctl_->enviar(eu1 ? "U2:0" : "U1:0"), auto_passo_ = 2;
+            if (auto_passo_ == 2 && auto_t_ > 7) ctl_->botao_play(), auto_passo_ = 3;
+            if (auto_passo_ == 3 && auto_t_ > 9) {
+                if (eu1) ctl_->botao_play();
+                else alternar_auto();
+                auto_passo_ = 4;
+            }
+        } else {
+            if (auto_passo_ == 0 && auto_t_ > 2) ctl_->botao_play(), auto_passo_ = 1;
+            if (auto_passo_ == 1 && auto_t_ > 4) ctl_->botao_play(), auto_passo_ = 2;
+            if (auto_passo_ == 2 && auto_t_ > 5) alternar_auto(), auto_passo_ = 3;
+        }
     }
     // cursor para as Dartlings em modo Normal; a simulacao so conhece o ponto que chega por comando
     mira_espera_ -= dt;
@@ -816,15 +832,6 @@ void CenaJogo::painel_lateral(Vector2 mouse) {
         for (float dx : {-16.0f, 4.0f}) triangulo({c.x + dx, c.y - 16}, {c.x + dx, c.y + 14}, {c.x + dx + 18, c.y - 1});
     }
     ui::tecla_centro("Espaço", c.x, r.y + r.height + 4, 8);
-    // coop: rodada automática e velocidade mudariam a simulação só neste PC (o lockstep não aceita)
-    if (ctl_->online()) {
-        ui::texto("COOP", PAINEL_X + 114, ui::ALTURA - 100.0f, 14, ui::AMARELO, 3, Ancora::MIDLEFT);
-        ui::texto(p.em_rodada ? "em rodada" : "pronto: Espaço", PAINEL_X + 114, ui::ALTURA - 76.0f, 12,
-                  ui::BEGE, 0, Ancora::MIDLEFT, ui::Peso::TEXTO);
-        if (sobre_play && !p.em_rodada)
-            dicas_.push_back({mouse, "Iniciar rodada", "Começa a próxima rodada para os dois jogadores."});
-        return;
-    }
     const Rectangle ra{PAINEL_X + 118, ui::ALTURA - 104.0f, 104, 34};
     ui::ret(ra, ui::TINTA, 17);
     ui::ret(ui::inflar(ra, -6, -6), ui::MADEIRA_ESCURA, 12);
@@ -1382,21 +1389,29 @@ void CenaJogo::tela_pausa() {
     const Rectangle r = sobreposicao("PAUSADO", ui::BRANCO);
     std::vector<std::tuple<std::string, Acao, Color>> opcoes;
     opcoes.emplace_back("Continuar", [this] { pausar(false); }, ui::VERDE);
-    if (!ctl_->online()) {
-        opcoes.emplace_back("Reiniciar", [this] { reiniciar(); }, ui::AMARELO);
+    if (!ctl_->online()) opcoes.emplace_back("Reiniciar", [this] { reiniciar(); }, ui::AMARELO);
+    if (!ctl_->vs())  // solo e coop (na Batalha cada um tem a sua pista e as rodadas sao fixas)
         opcoes.emplace_back(std::string("Rodada automática: ") + (ctl_->partida->automatico ? "ON" : "OFF"),
                             [this] { alternar_auto(); }, ui::AZUL);
-    } else {
-        opcoes.emplace_back("Desistir", [this] { desistir(); }, ui::VERMELHO);
-    }
+    if (ctl_->online()) opcoes.emplace_back("Desistir", [this] { desistir(); }, ui::VERMELHO);
     opcoes.emplace_back("Menu principal", [this] { app.ir_menu(); }, ui::VERMELHO);
     for (size_t i = 0; i < opcoes.size(); ++i) {
         auto& [rot, acao, cor] = opcoes[i];
-        ui::Botao b{{r.x + 90, r.y + 110 + i * 68.0f, r.width - 180, 56}, rot, cor, 20};
+        ui::Botao b{{r.x + 90, r.y + 104 + i * 60.0f, r.width - 180, 50}, rot, cor, 19};
         if (i == 0) b.atalho = "Esc";
         b.desenhar();
         botoes_menu_.push_back({b, acao});
     }
+    // volume: - barra +
+    const float y = r.y + 104 + opcoes.size() * 60.0f;
+    ui::Botao menos{{r.x + 90, y, 64, 50}, "-", ui::AZUL, 26}, mais{{r.x + r.width - 90 - 64, y, 64, 50}, "+", ui::AZUL, 26};
+    menos.desenhar();
+    mais.desenhar();
+    botoes_menu_.push_back({menos, [] { som::definir_volume(som::volume() - 10); som::tocar("colocar"); }});
+    botoes_menu_.push_back({mais, [] { som::definir_volume(som::volume() + 10); som::tocar("colocar"); }});
+    const float bx = r.x + 166, bw = r.width - 332;
+    ui::texto("Volume " + std::to_string(som::volume()) + "%", r.x + r.width / 2, y + 14, 15, ui::BRANCO, 3, Ancora::CENTER);
+    ui::barra({bx, y + 30, bw, 10}, static_cast<float>(som::volume()) / 100.0f, ui::VERDE);
 }
 
 void CenaJogo::tela_fim() {

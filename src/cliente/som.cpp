@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdio>
 #include <functional>
 #include <map>
 #include <random>
@@ -36,10 +37,36 @@ double seno(double freq, double t) { return std::sin(2 * PI_D * freq * t); }
 
 }  // namespace
 
+namespace {
+int volume_pct = 100;
+const char* const ARQ_CONFIG = "bloons_config.txt";
+
+void salvar_config() {
+    if (std::FILE* f = std::fopen(ARQ_CONFIG, "w")) {
+        std::fprintf(f, "volume=%d\n", volume_pct);
+        std::fclose(f);
+    }
+}
+}  // namespace
+
+int volume() { return volume_pct; }
+
+void definir_volume(int v) {
+    volume_pct = std::clamp(v, 0, 100);
+    if (ativo) SetMasterVolume(static_cast<float>(volume_pct) / 100.0f);
+    salvar_config();
+}
+
 void iniciar() {
+    if (std::FILE* f = std::fopen(ARQ_CONFIG, "r")) {
+        int v;
+        if (std::fscanf(f, "volume=%d", &v) == 1) volume_pct = std::clamp(v, 0, 100);
+        std::fclose(f);
+    }
     InitAudioDevice();
     if (!IsAudioDeviceReady()) return;  // sem placa de som: o jogo roda mudo
     ativo = true;
+    SetMasterVolume(static_cast<float>(volume_pct) / 100.0f);
     std::mt19937 rng(3);
     auto ruido = [&] { return std::uniform_real_distribution<double>(-1, 1)(rng); };
     gerar("pop", 0.07, [&](double t, double f) {

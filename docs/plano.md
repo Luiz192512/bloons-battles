@@ -75,7 +75,7 @@ Reaproveita a rede, a sala de espera e o lockstep da Batalha; não há segundo p
 | Vidas e dinheiro | Comuns (um só caixa e 150 vidas). Evita reescrever a economia por jogador. |
 | Propriedade das torres | Nenhuma: qualquer um coloca, melhora, vende e usa habilidade em qualquer torre. |
 | Herói | Um só por pista: o do anfitrião (jogador 1). O herói do jogador 2 é ignorado. |
-| Rodadas | Como no solo (dificuldade Médio, 60 rodadas). Qualquer um inicia a rodada com Espaço ou pelo botão, enviando `1N`/`2N`; se já houver rodada em andamento o comando é recusado de forma idêntica nos dois clientes. Sem velocidade 3x nem rodada automática (mudariam a simulação só num PC e quebrariam o lockstep). |
+| Rodadas | Como no solo (dificuldade Médio, 60 rodadas). Qualquer um inicia a rodada com Espaço ou pelo botão, enviando `1N`/`2N`; se já houver rodada em andamento o comando é recusado de forma idêntica nos dois clientes. Rodada automática e velocidade 3x existem, mas como **comandos** (`1Y` e `1Z`) que passam pelo servidor e mudam o estado nos dois clientes no mesmo tick; um botão local mudaria a simulação só num PC e quebraria o lockstep. No 3x cada cliente roda 6 passos por tick em vez de 2. |
 | Fim | Vitória: chegar à última rodada. Derrota: vidas zeradas. Se o parceiro sai ou desiste, o servidor envia `0F0` (fim sem vencedor) e a tela mostra "PARCEIRO SAIU". |
 | Menu e sala | Tela de hospedar tem o botão "Modo: Batalha 1v1 / Coop". Quem entra não escolhe o modo: ele vem na mensagem de início (`0I...,coop`). |
 | Exclusão mútua | Nada novo: `Sala` continua com `lock_sala`/`lock_fila`/`lock_hash`. O flag `coop` é escrito uma vez antes de qualquer thread existir e só lido depois. |
@@ -99,6 +99,7 @@ Origem `0` = servidor, `1`/`2` = jogador.
 | `1B12:0` | C→S | usar a habilidade 0 da torre 12 |
 | `2Sr8` | C→S | jogador 2 envia "8 Vermelhos" ao oponente |
 | `1N` | C→S | coop: iniciar a próxima rodada (qualquer um dos dois) |
+| `1Y` / `1Z` | C→S | coop: alternar rodada automática / velocidade 3x (valem para os dois) |
 | `1A12@300,200` | C→S | ponto de mira da torre 12 (Dartling, Helicóptero, Ás) |
 | `1O12:1` | C→S | opção da torre 12 (mão do Bumerangue, rota do Heli) |
 | `1C345` | C→S | coletar a banana ou caixa de id 345 |

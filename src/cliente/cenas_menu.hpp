@@ -20,6 +20,7 @@ public:
 
 private:
     std::vector<ui::Botao> botoes_;
+    ui::Botao vol_menos_, vol_mais_;  // volume geral (canto inferior esquerdo)
     double dt_ = 0.016;
 };
 

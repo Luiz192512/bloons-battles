@@ -112,7 +112,9 @@ char ControladorBatalha::checar(const std::string& cmd) {
 
 // coop: qualquer um dos dois inicia a rodada; o comando passa pelo servidor e vale para os dois
 void ControladorBatalha::botao_play() {
-    if (coop_ && !partida->em_rodada && !terminou()) conexao_->comando("N");
+    if (!coop_ || terminou()) return;
+    // sem rodada: inicia; durante a rodada: alterna 1x/3x (comando, para valer nos dois PCs)
+    conexao_->comando(partida->em_rodada ? "Z" : "N");
 }
 
 char ControladorBatalha::enviar(const std::string& cmd) {
@@ -131,7 +133,8 @@ void ControladorBatalha::atualizar(double) {
             tick_ = msg.tick;
             if (partida->fim) continue;
             for (auto& [jogador, cmd] : msg.comandos) partida->aplicar(jogador, cmd);
-            for (int i = 0; i < PASSOS_POR_TICK; ++i) partida->passo();
+            velocidade = partida->rapido ? 3 : 1;
+            for (int i = 0; i < PASSOS_POR_TICK * velocidade; ++i) partida->passo();
             publicar_placar();
             if (tick_ % HASH_A_CADA == 0) conexao_->enviar(P::hash_estado(meu, tick_, partida->hash()));
         } else if (msg.comando == P::DESSINC) {

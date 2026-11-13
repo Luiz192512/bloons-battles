@@ -28,8 +28,9 @@ precisa instalar nada (nem o Visual C++ Redistributable).
 - **Coop em LAN:** em "Batalha: Hospedar", clique em **Modo: Coop** antes de hospedar. O outro
   jogador entra normalmente por "Batalha: Entrar" e o modo vem do anfitrião. Os dois defendem a
   mesma pista, com vidas e dinheiro comuns; qualquer um coloca, melhora e vende qualquer torre, e
-  qualquer um inicia a rodada com Espaço. Só há um herói (o de quem hospeda). Não há velocidade 3x
-  nem rodada automática. Se o parceiro sai, a partida termina ("Parceiro saiu").
+  qualquer um inicia a rodada com Espaço, e o mesmo botão acelera para 3x durante a rodada. A
+  "Rodada automática" (botão AUTO ou menu de pausa) e o 3x valem para os dois jogadores ao mesmo
+  tempo. Só há um herói (o de quem hospeda). Se o parceiro sai, a partida termina ("Parceiro saiu").
 
 ### Firewall do Windows (dois PCs)
 
@@ -60,7 +61,7 @@ está marcada como **Privada** nas configurações do Windows.
 | F3 | mostrar FPS |
 | F9 / Shift+F9 | repetir a animação de disparo / habilidade da torre selecionada (só visual) |
 | F12 | salvar captura de tela (`captura_AAAAMMDD_HHMMSS.png`) |
-| Esc | cancelar / menu |
+| Esc | cancelar / menu (o menu de pausa tem rodada automática e volume) |
 
 ## Visual e ferramentas de arte
 

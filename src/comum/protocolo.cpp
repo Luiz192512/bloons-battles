@@ -52,7 +52,7 @@ std::string linha(int origem, const std::string& corpo) { return std::to_string(
 
 bool eh_comando_jogo(char c) {
     return c == TORRE || c == UPGRADE || c == VENDA || c == MODO || c == HABILIDADE || c == ENVIO || c == RODADA ||
-           c == MIRA || c == OPCAO || c == COLETA;
+           c == MIRA || c == OPCAO || c == COLETA || c == AUTO || c == RAPIDO;
 }
 
 bool comando_valido(const std::string& cmd) {
@@ -74,6 +74,8 @@ bool comando_valido(const std::string& cmd) {
         case HABILIDADE:
             return par(r, ':', d15, [](const std::string& s) { return digitos(s, 1, 1); });
         case RODADA:
+        case AUTO:
+        case RAPIDO:
             return r.empty();
         case MIRA:
             return par(r, '@', d15, [](const std::string& xy) {

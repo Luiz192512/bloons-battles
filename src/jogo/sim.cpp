@@ -1821,6 +1821,11 @@ char Partida::aplicar(int jogador, const std::string& cmd) {
             erro = enviar(jogador, corpo);
         } else if (c == 'N') {
             erro = iniciar_rodada();
+        } else if ((c == 'Y' || c == 'Z') && modo == "coop") {
+            // coop: o que no solo e um botao local vira comando, para os dois clientes mudarem juntos
+            bool& alvo = c == 'Y' ? automatico : rapido;
+            alvo = !alvo;
+            erro = OK;
         }
     } catch (const std::exception&) {
         erro = ERRO_INVALIDO;

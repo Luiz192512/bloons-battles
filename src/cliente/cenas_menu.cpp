@@ -73,9 +73,13 @@ CenaMenu::CenaMenu(App& a) : Cena(a) {
         {{x, 512, w, 48}, "Macacos e Upgrades", ui::AMARELO, 18},
         {{x, 568, w, 46}, "Sair", ui::VERMELHO, 18},
     };
+    vol_menos_ = {{24, 650, 52, 46}, "-", ui::AZUL, 24};
+    vol_mais_ = {{204, 650, 52, 46}, "+", ui::AZUL, 24};
 }
 
 void CenaMenu::evento(const ui::Evento& e) {
+    if (vol_menos_.clicou(e)) som::definir_volume(som::volume() - 10), som::tocar("colocar");
+    if (vol_mais_.clicou(e)) som::definir_volume(som::volume() + 10), som::tocar("colocar");
     for (size_t i = 0; i < botoes_.size(); ++i) {
         if (!botoes_[i].clicou(e)) continue;
         som::tocar("colocar");
@@ -102,6 +106,9 @@ void CenaMenu::desenhar() {
     // botoes num painel de madeira (hierarquia: jogar em verde, batalha em azul, sair em vermelho)
     ui::painel_menu({452, 300, 376, 330}, 22);
     for (auto& b : botoes_) b.desenhar();
+    vol_menos_.desenhar();
+    vol_mais_.desenhar();
+    ui::texto("Volume " + std::to_string(som::volume()) + "%", 140, 673, 15, ui::BRANCO, 3, Ancora::CENTER);
     ui::texto("Trabalho 02 de Sistemas Operacionais: comunicação entre processos", ui::LARGURA / 2.0f,
               ui::ALTURA - 30, 14, ui::BRANCO, 2, Ancora::CENTER, ui::Peso::TEXTO);
 }
