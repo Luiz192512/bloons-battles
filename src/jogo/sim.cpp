@@ -807,6 +807,11 @@ void Pista::comanches(Torre& t) {
 
 // ---------------------------------------------------------------- passo
 void Pista::passo() {
+    for (auto& b : bloons) {
+        b->ox = b->x;
+        b->oy = b->y;
+        b->ox_ok = true;
+    }
     tempo += DT;
     spawns();
     grade();

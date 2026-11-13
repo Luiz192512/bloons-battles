@@ -81,6 +81,9 @@ struct Bloon : std::enable_shared_from_this<Bloon> {
     double frag = 0;
     double regen_t = 0.0, dot = 0.0;
     double x = 0, y = 0, ang = 0;
+    // posicao no passo anterior: so a tela usa, para desenhar entre dois passos (nao entra no estado nem no hash)
+    double ox = 0, oy = 0;
+    bool ox_ok = false;
     bool vivo = true;
 };
 using BloonP = std::shared_ptr<Bloon>;

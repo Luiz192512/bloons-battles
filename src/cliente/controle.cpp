@@ -124,19 +124,13 @@ char ControladorBatalha::enviar(const std::string& cmd) {
     return OK;
 }
 
-void ControladorBatalha::atualizar(double) {
+void ControladorBatalha::atualizar(double dt) {
     std::vector<P::Mensagem> msgs;
     msgs.swap(pendentes_);
     for (auto& m : conexao_->pegar_mensagens()) msgs.push_back(std::move(m));
     for (const P::Mensagem& msg : msgs) {
         if (msg.comando == P::TICK) {
-            tick_ = msg.tick;
-            if (partida->fim) continue;
-            for (auto& [jogador, cmd] : msg.comandos) partida->aplicar(jogador, cmd);
-            velocidade = partida->rapido ? 3 : 1;
-            for (int i = 0; i < PASSOS_POR_TICK * velocidade; ++i) partida->passo();
-            publicar_placar();
-            if (tick_ % HASH_A_CADA == 0) conexao_->enviar(P::hash_estado(meu, tick_, partida->hash()));
+            fila_.push_back({msg.tick, msg.comandos});
         } else if (msg.comando == P::DESSINC) {
             dessinc_ = true;
             status = "Dessincronia detectada no tick " + std::to_string(msg.tick) + "!";
@@ -145,9 +139,47 @@ void ControladorBatalha::atualizar(double) {
             if (coop_ && !partida->fim) status = "Seu parceiro saiu da partida.";
         }
     }
+    avancar(dt);
     if (!conexao_->ativo() && !terminou()) {
         fim_remoto = 0;
         status = "Conexão perdida.";
+    }
+}
+
+void ControladorBatalha::avancar(double dt) {
+    if (partida->fim) {
+        fila_.clear();
+        return;
+    }
+    // pequena reserva no comeco absorve o jitter da rede (2 ticks = 130 ms)
+    if (!comecou_) {
+        if (fila_.size() < 2) return;
+        comecou_ = true;
+    }
+    const int mult = partida->rapido ? 3 : 1;
+    // se a fila crescer (janela arrastada, rede lenta), anda mais depressa ate alcançar
+    const double extra = fila_.size() > 4 ? 2.0 : 1.0;
+    credito_ = std::min(credito_ + std::min(dt, 0.1) * 30.0 * mult * extra, 12.0);
+    while (credito_ >= 1.0 && !partida->fim) {
+        if (passos_pend_ == 0) {
+            if (fila_.empty()) {
+                credito_ = std::min(credito_, 1.0);  // sem tick: espera, sem acumular passos para depois
+                break;
+            }
+            TickPendente t = std::move(fila_.front());
+            fila_.pop_front();
+            tick_ = t.tick;
+            for (auto& [jogador, cmd] : t.comandos) partida->aplicar(jogador, cmd);
+            velocidade = partida->rapido ? 3 : 1;
+            passos_pend_ = PASSOS_POR_TICK * velocidade;
+        }
+        partida->passo();
+        --passos_pend_;
+        credito_ -= 1.0;
+        if (passos_pend_ == 0) {  // tick completo: so agora o estado vale para o placar e o hash
+            publicar_placar();
+            if (tick_ % HASH_A_CADA == 0) conexao_->enviar(P::hash_estado(meu, tick_, partida->hash()));
+        }
     }
 }
 

@@ -1135,6 +1135,31 @@ TESTE(sim_coop_rodada_automatica_e_velocidade_por_comando) {
     CHECA(P::interpretar("0K5|1Y|2Z").comandos.size() == 2);
 }
 
+TESTE(sim_desempenho_rodadas_altas) {
+    // "bloons travados": mede o custo da simulacao com muitas torres em rodadas altas. O jogo precisa de 30 passos/s
+    // (33 ms por passo no maximo); aqui exige muito menos para sobrar folga ao desenho.
+    Partida p("solo", "prado", 3, "medio", {{1, "quincy"}});
+    const char* lugares[] = {"Tdardo@230,250", "Tdardo@600,500", "Ttachinha@150,300", "Tbomba@700,250", "Tgelo@500,400",
+                             "Tsniper@850,450", "Tmago@100,500", "Tsuper@300,120"};
+    p.pista(1).dinheiro = 400000;
+    for (const char* l : lugares) p.aplicar(1, l);
+    double pior = 0, total = 0;
+    int passos = 0;
+    for (int r = 0; r < 40 && !p.fim; ++r) {
+        p.aplicar(1, "N");
+        for (int i = 0; i < 30 * 70 && p.em_rodada && !p.fim; ++i) {
+            const auto t0 = std::chrono::steady_clock::now();
+            p.passo();
+            const double ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count();
+            total += ms;
+            pior = std::max(pior, ms);
+            ++passos;
+        }
+    }
+    std::printf("    rodada %d, %d passos: media %.3f ms, pior %.2f ms\n", p.rodada, passos, total / std::max(1, passos), pior);
+    CHECA(total / std::max(1, passos) < 8.0);
+}
+
 TESTE(sim_coop_determinismo_e_nao_afeta_batalha) {
     CHECA_IGUAL(jogar_coop(2), jogar_coop(2));
     // a batalha continua recusando N (so o solo e o coop iniciam rodada por comando)

@@ -17,6 +17,10 @@ struct Efeito {
     double t = 0, dur;
 };
 
+// Fracao (0 a 1) do passo da simulacao que ja passou no momento do desenho. Os bloons sao desenhados entre a posicao
+// anterior e a atual, para o movimento ficar liso a 60 fps mesmo com a simulacao a 30 passos por segundo.
+inline double alfa_render = 1.0;
+
 class RenderPista {
 public:
     RenderPista(Pista& pista, std::string chave_mapa, bool sons = true);

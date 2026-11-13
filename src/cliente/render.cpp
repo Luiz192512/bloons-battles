@@ -101,6 +101,18 @@ void RenderPista::consumir_eventos() {
     if (efeitos_.size() > 500) efeitos_.erase(efeitos_.begin(), efeitos_.end() - 500);
 }
 
+// Posicao entre o passo anterior e o atual. Saltos grandes (bloon que nasce de outro, volta no caminho) nao sao
+// interpolados para nao "deslizar" pela tela.
+static void posicao_suave(const Bloon& b, double& x, double& y) {
+    x = b.x;
+    y = b.y;
+    if (!b.ox_ok) return;
+    if (std::hypot(b.x - b.ox, b.y - b.oy) > 40.0) return;
+    const double a = std::clamp(alfa_render, 0.0, 1.0);
+    x = b.ox + (b.x - b.ox) * a;
+    y = b.oy + (b.y - b.oy) * a;
+}
+
 void RenderPista::atualizar(double dt) {
     animador_.observar(pista_, ui::tempo());
     for (auto& f : efeitos_) f.t += dt;
@@ -272,7 +284,9 @@ void RenderPista::desenhar_bloons() {
     });
     const double agora = ui::tempo();
     for (const Bloon* b : ordem) {
-        const float x = std::floor(static_cast<float>(b->x)), y = std::floor(static_cast<float>(b->y));
+        double bx, by;
+        posicao_suave(*b, bx, by);
+        const float x = std::floor(static_cast<float>(bx)), y = std::floor(static_cast<float>(by));
         if (b->tipo->moab) {
             double frac = b->vida / std::max(1.0, b->vida_max);
             int dano = frac > 0.8 ? 0 : frac > 0.6 ? 1 : frac > 0.4 ? 2 : frac > 0.2 ? 3 : 4;
@@ -423,7 +437,9 @@ void RenderPista::desenhar_mini(Rectangle r) {
     for (auto& b : pista_.bloons) {
         if (!b->vivo) continue;
         float rr = std::max(2.0f, std::floor(static_cast<float>(b->tipo->raio) * esc * 1.2f));
-        Vector2 c{r.x + std::floor(static_cast<float>(b->x) * esc), r.y + std::floor(static_cast<float>(b->y) * esc)};
+        double bx, by;
+        posicao_suave(*b, bx, by);
+        Vector2 c{r.x + std::floor(static_cast<float>(bx) * esc), r.y + std::floor(static_cast<float>(by) * esc)};
         DrawCircleV(c, rr + 1, ui::TINTA);
         DrawCircleV(c, rr, arte::cor(b->tipo->cor));
     }

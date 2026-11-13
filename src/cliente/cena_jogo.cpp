@@ -520,6 +520,7 @@ void CenaJogo::desenhar() {
     botoes_menu_.clear();
     dicas_.clear();
     TorreP sel = selecionada_ ? pista().torre(selecionada_) : nullptr;
+    alfa_render = ctl_->alfa();
     render_.desenhar(selecionada_);
     if (sel) circulo_alcance(static_cast<float>(sel->x), static_cast<float>(sel->y), sel->alcance(), true);
     if (TorreP alvo = sel && sel->escolhe_torre() ? pista().torre(sel->alvo_torre) : nullptr) {

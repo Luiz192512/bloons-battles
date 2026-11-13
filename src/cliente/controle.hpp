@@ -1,6 +1,7 @@
 // Controladores: ligam a tela de jogo a uma partida solo (local) ou batalha (rede).
 #pragma once
 
+#include <deque>
 #include <map>
 #include <memory>
 #include <string>
@@ -22,6 +23,8 @@ public:
     // Tem um oponente (pista dele, envios de bloons, renda)? So o modo Batalha; o coop e online
     // mas os dois jogadores defendem a mesma pista.
     virtual bool vs() const { return online(); }
+    // fracao do passo da simulacao ja transcorrida (0 a 1), para a tela desenhar entre dois passos
+    virtual double alfa() const { return 1.0; }
     virtual bool ganhou() const { return vencedor() == meu; }
     virtual char enviar(const std::string& cmd) = 0;  // OK ou codigo de erro
     virtual void botao_play() {}
@@ -49,6 +52,7 @@ public:
     ControladorSolo(const std::string& mapa, const std::string& dificuldade, const std::string& heroi, int seed,
                     const std::string& restricao = "");
     bool online() const override { return false; }
+    double alfa() const override { return pausado ? 1.0 : std::clamp(acc_ / DT, 0.0, 1.0); }
     std::unique_ptr<ControladorSolo> reiniciar() const;
     char enviar(const std::string& cmd) override { return partida->aplicar(1, cmd); }
     void botao_play() override;
@@ -73,6 +77,7 @@ public:
                        std::vector<proto::Mensagem> pendentes, int porta = proto::PORTA_PADRAO, bool coop = false);
     bool online() const override { return true; }
     bool vs() const override { return !coop_; }
+    double alfa() const override { return std::clamp(credito_, 0.0, 1.0); }
     bool coop() const { return coop_; }
     // coop: vencer e chegar ao fim das rodadas (vencedor 1); sair ou perder todas as vidas e derrota
     bool ganhou() const override { return coop_ ? vencedor() == 1 : vencedor() == meu; }
@@ -101,6 +106,20 @@ private:
     bool dessinc_ = false;
     int fim_remoto = -1;
     long tick_ = 0;
+
+    // Os ticks chegam da rede em rajadas de 15 por segundo. Rodar os passos de cada tick de uma vez fazia os
+    // bloons andarem aos saltos ("travados"); em vez disso os ticks entram numa fila e os passos sao gastos
+    // em ritmo constante (30 passos/s, 90 no 3x). A ordem e a quantidade de passos por tick nao mudam: o
+    // estado continua identico nos dois clientes.
+    struct TickPendente {
+        long tick;
+        std::vector<std::pair<int, std::string>> comandos;
+    };
+    void avancar(double dt);
+    std::deque<TickPendente> fila_;
+    double credito_ = 0.0;
+    int passos_pend_ = 0;  // passos que faltam do tick em andamento
+    bool comecou_ = false;
 };
 
 }  // namespace bl
