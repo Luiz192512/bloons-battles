@@ -1094,6 +1094,23 @@ TESTE(sim_coop_pista_unica_compartilhada) {
     CHECA_IGUAL(p.aplicar(1, "N"), ERRO_INVALIDO);          // ja em andamento
 }
 
+TESTE(sim_coop_caixa_unico_e_torres_dos_dois) {
+    // pedido: dinheiro compartilhado e cada um mexe nas torres do outro
+    Partida p("coop", "prado", 1, "medio", {{1, "quincy"}, {2, "quincy"}});
+    CHECA_IGUAL(p.aplicar(1, "Tdardo@230,250"), OK);  // torre 1 e do jogador 1
+    const double caixa = p.pista(1).dinheiro;
+    CHECA_IGUAL(p.pista(2).dinheiro, caixa);          // os dois veem o mesmo dinheiro
+    CHECA_IGUAL(p.aplicar(2, "U1:0"), OK);            // jogador 2 melhora a torre do jogador 1...
+    CHECA(p.pista(1).dinheiro < caixa);               // ...e quem paga e o caixa comum
+    CHECA_IGUAL(p.pista(1).torre(1)->caminhos[0], 1);
+    CHECA_IGUAL(p.aplicar(2, "M1:3"), OK);            // muda a prioridade de alvo da torre do outro
+    CHECA_IGUAL(p.pista(1).torre(1)->modo, 3);
+    const double antes_venda = p.pista(1).dinheiro;
+    CHECA_IGUAL(p.aplicar(2, "V1"), OK);              // e pode vende-la; o dinheiro volta ao caixa comum
+    CHECA(p.pista(1).dinheiro > antes_venda);
+    CHECA(p.pista(2).torres.empty());
+}
+
 TESTE(sim_coop_determinismo_e_nao_afeta_batalha) {
     CHECA_IGUAL(jogar_coop(2), jogar_coop(2));
     // a batalha continua recusando N (so o solo e o coop iniciam rodada por comando)
